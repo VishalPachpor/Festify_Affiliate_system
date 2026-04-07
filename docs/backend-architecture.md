@@ -1915,10 +1915,13 @@ The system should treat every provider event as an inbound financial fact:
 
 - persist raw event
 - normalize to a canonical event
+- validate against a centralized event schema registry at both producer and consumer boundaries
 - process asynchronously with idempotent, version-aware workers
 - write transactional business state and immutable ledger entries using strict money primitives
 - emit outbox events for projections, realtime delivery, and notifications
 - support replay, reconciliation, and lineage end-to-end
+- backfill historical data on provider connection with notification suppression
+- enforce rate limits at every public surface including redirect service and per-tenant aggregates
 
 This is the right production architecture for a white-label, multi-tenant affiliate attribution platform because it prioritizes:
 
@@ -1927,6 +1930,8 @@ This is the right production architecture for a white-label, multi-tenant affili
 - integration resilience
 - tenant isolation
 - operational simplicity
+- schema-driven contract safety across services and clients
+- cost-aware scaling with observable infrastructure economics
 - controlled evolution under changing schemas and providers
 
 In short, Festify backend is not "an API for dashboards." It is an event-driven attribution and financial processing system that happens to power dashboards.

@@ -1629,7 +1629,340 @@ Users commonly have multiple dashboard tabs open. State must stay consistent.
 - if another tab makes a mutation, background tabs see fresh data on focus
 - no cross-tab optimistic updates — each tab manages its own mutation state
 
-## 38. Final recommended architecture statement
+## 38. Shared contracts package
+
+### Why this matters
+
+Without a single source of truth for API and event schemas, frontend and backend drift silently. Runtime mismatches cause bugs that are hard to diagnose.
+
+### Recommended structure
+
+```text
+packages/
+  contracts/
+    events/
+      domain-events.ts
+      schemas/
+        sale-created.schema.ts
+        commission-updated.schema.ts
+        milestone-unlocked.schema.ts
+    api/
+      campaigns.ts
+      sales.ts
+      payouts.ts
+      affiliates.ts
+      assets.ts
+    shared/
+      money.ts
+      pagination.ts
+      error.ts
+```
+
+### How it works
+
+- backend defines Zod schemas and exports inferred TypeScript types
+- frontend imports types and schemas from `@festify/contracts`
+- event bridge validates incoming events against the contract schema
+- API response parsers use contract schemas instead of local duplicates
+
+### Rules
+
+- contracts package is versioned independently
+- breaking changes require a version bump and coordinated deploy
+- CI validates that frontend and backend both compile against the same contract version
+- the package contains only types, schemas, and constants — no runtime logic or side effects
+
+### When to introduce
+
+- start with local type files in phase 1
+- extract to a shared package once the API surface stabilizes (phase 2)
+- do not over-abstract during initial development
+
+## 39. Performance budgets per surface
+
+### Why this matters
+
+Without explicit per-surface budgets, dashboards slowly degrade as features accumulate. General "keep it fast" guidance is not actionable.
+
+### Route-level budgets
+
+| Surface | TTFB | LCP | Bundle (JS) | Max data points |
+| --- | --- | --- | --- | --- |
+| Public application page | < 800ms | < 1.5s | < 80KB | N/A |
+| Organizer dashboard | < 1.5s | < 2.5s | < 200KB | 6 panels |
+| Affiliate dashboard | < 1s | < 2s | < 150KB | 5 panels |
+| Sales table | < 1.5s | < 2.5s | < 180KB | 100 rows/page |
+| Charts (any surface) | N/A | N/A | lazy-loaded | max 1000 data points before aggregation |
+| Assets grid | < 1.5s | < 2.5s | < 150KB | 50 items/page, lazy thumbnails |
+
+### Enforcement
+
+- bundle analyzer report generated on every build
+- per-route budget checks in CI using `@next/bundle-analyzer`
+- Lighthouse CI with per-route configuration
+- budget violations block PR merge (warning at 90%, block at 100%)
+
+### Data budget rules
+
+- dashboard panels: max 6 concurrent queries on initial load
+- charts: aggregate server-side when data points exceed 1000
+- tables: always server-paginated, never load all rows
+- activity feed: max 50 items initially, load-more pagination
+
+## 40. Design system governance
+
+### Why this matters
+
+Without clear ownership and evolution rules, design systems fragment. Duplicate components appear, styles drift, and new team members reinvent existing patterns.
+
+### Component promotion lifecycle
+
+```text
+module-local component
+  → used by 2+ modules
+  → reviewed for API consistency
+  → promoted to src/components/
+  → documented in Storybook
+```
+
+### Ownership rules
+
+- shared components (`src/components/`) are owned by the design system maintainer (initially the frontend lead)
+- feature components stay in their module and are owned by the module team
+- no component moves to shared without a review of its prop interface and state assumptions
+
+### Breaking change policy
+
+- shared component API changes require a deprecation period (minimum 1 sprint)
+- deprecated props are marked with `@deprecated` JSDoc and console warnings in dev mode
+- breaking changes are batched into design system releases, not shipped ad hoc
+
+### Naming conventions
+
+- primitives: generic names (`Button`, `Input`, `Card`)
+- composites: descriptive role names (`DataTable`, `FilterBar`, `KPIStatCard`)
+- feature components: domain-prefixed (`AffiliateReviewTable`, `SalesBreakdownTable`)
+
+### Audit cadence
+
+- quarterly review of component usage to identify duplicates
+- unused shared components are deprecated and removed after one quarter
+
+## 41. Cold start and onboarding UX
+
+### Problem
+
+A new organizer sees an empty dashboard with no data, no guidance, and no motivation. A new affiliate sees a portal with zero earnings and no context.
+
+### Organizer first-time experience
+
+- **Setup checklist**: persistent progress bar showing: connect provider → create campaign → set commission rules → invite affiliates
+- **Empty state panels**: each dashboard panel shows a contextual CTA instead of blank space ("Connect a provider to see sales data here")
+- **Demo data toggle**: optional preview with sample data so the organizer understands what the dashboard will look like
+- **Quick start guide**: collapsible sidebar guide with links to key setup steps
+
+### Affiliate first-time experience
+
+- **Welcome state**: personalized greeting with the organizer's branding
+- **Action-oriented empty states**: "Share your referral link to start earning" with prominent copy button
+- **Milestone preview**: show upcoming milestone tiers even before progress begins
+- **Asset highlight**: surface the latest assets immediately, even before first sale
+
+### Implementation
+
+- onboarding state tracked via backend (`onboarding_progress` on tenant and affiliate records)
+- checklist items resolved dynamically (e.g., "connect provider" is complete when `provider_connections` count > 0)
+- onboarding UI is a feature module, not hardcoded into each page
+
+### Important rule
+
+Empty states are product surfaces, not afterthoughts. Every empty state should answer: "What do I do next?"
+
+## 42. Rate limit UX handling
+
+### Problem
+
+When the API returns `429 Too Many Requests`, the user sees a generic error unless the frontend handles it explicitly.
+
+### Recommended UX
+
+- parse `Retry-After` header from `429` responses
+- disable the triggering action temporarily with a countdown
+- show clear messaging: "Too many requests. You can try again in 30 seconds."
+- auto-retry the failed request after the `Retry-After` period (for read queries only, not mutations)
+
+### Implementation
+
+- add a global `429` interceptor in the API client
+- for queries: TanStack Query's `retryDelay` respects the `Retry-After` value
+- for mutations: surface the error via toast, disable the submit button with countdown timer
+- for real-time: if the event stream is throttled, show "Live updates paused. Resuming shortly."
+
+### Debounce patterns
+
+Prevent users from triggering rate limits in the first place:
+
+- search inputs: 300ms debounce
+- filter changes: 200ms debounce
+- rapid button clicks: disable button during in-flight mutation
+- bulk actions: queue with progress indicator, not parallel requests
+
+## 43. Event schema enforcement in frontend
+
+### Why this matters
+
+The backend may deploy a new event schema version before the frontend is updated. Without validation, the event bridge silently processes malformed data or crashes.
+
+### Validation flow
+
+```text
+SSE/WebSocket message received
+  → parse JSON
+  → validate against event schema (from contracts package)
+  → check event version
+  → route to handler
+```
+
+### On validation failure
+
+- log the invalid event to Sentry with full payload and expected schema
+- increment `event.validation.frontend.failure` metric
+- silently ignore the event (do not crash the event bridge)
+- the dashboard continues working with stale cached data
+
+### Version negotiation
+
+- frontend declares its supported event versions on connection
+- backend filters or transforms events to match the client's supported version
+- if the frontend is too far behind, show a "Please refresh for the latest updates" banner
+
+### Schema source
+
+- event schemas imported from `@festify/contracts` (shared package)
+- validated using the same Zod schemas as the backend
+- type inference flows from schema to handler automatically
+
+## 44. Data lineage and attribution transparency UI
+
+### Why this matters
+
+Organizers and affiliates need to understand how commissions are calculated. Support teams need to trace disputes. Transparency reduces support load and increases trust.
+
+### Attribution trace panel
+
+Available on sales detail views:
+
+- **Source**: webhook, polling, or manual import
+- **Provider**: Luma, Bizzabo, GevMe, etc.
+- **Attribution method**: discount code, referral link, click session, or unattributed
+- **Referral evidence**: the specific code, token, or click session that triggered attribution
+- **Commission calculation**: rate applied, rule source, computed amount, rounding
+- **Timeline**: inbound event → canonical event → attribution → commission → payout (with timestamps)
+
+### "Why this commission?" panel
+
+Accessible from any commission line item:
+
+- shows the rule that was applied (campaign default, affiliate override, milestone tier)
+- shows the sale it was derived from
+- shows any reversals or adjustments
+- links to the payout batch if allocated
+
+### Data source labels
+
+On dashboard panels and tables, show subtle labels indicating data freshness:
+
+- "via webhook — 2 min ago"
+- "via polling — last synced 15 min ago"
+- "reconciliation pending"
+
+### Implementation
+
+- attribution trace data is a dedicated API endpoint per sale
+- lazy-loaded in a drawer/side panel (not fetched for every table row)
+- available to organizer admins and support users, not to affiliates (affiliates see simplified commission explanations)
+
+## 45. Multi-tab performance optimization
+
+### Beyond sync: resource management
+
+Multi-tab sync (section 37) handles correctness. This section handles efficiency.
+
+### Background tab behavior
+
+- detect tab visibility via `document.visibilityState` and `visibilitychange` event
+- **background tabs**:
+  - pause TanStack Query polling (`refetchInterval` set to `false`)
+  - pause real-time event bridge (close SSE connection or reduce heartbeat)
+  - suppress toast notifications
+- **on tab focus**:
+  - resume polling
+  - reconnect event bridge
+  - trigger one-time refetch of stale queries
+
+### Connection pooling
+
+- maximum 1 SSE connection per tab (not per component)
+- event bridge multiplexes all subscriptions through a single connection
+- connection shared across modules via the realtime provider
+
+### Memory management
+
+- TanStack Query `gcTime` set to 5 minutes for inactive queries
+- large table data evicted from cache when navigating away from the surface
+- event bridge buffer limited to last 100 events (older events discarded)
+
+## 46. Analytics event discipline
+
+### Why this matters
+
+Without naming conventions and priority tiers, analytics become noisy, expensive, and unusable for product decisions.
+
+### Event naming convention
+
+```text
+{surface}.{action}.{target}
+
+Examples:
+  dashboard.view.loaded
+  sales_table.filter.applied
+  affiliate.referral_link.copied
+  campaign.milestone.viewed
+  payout.export.requested
+  onboarding.step.completed
+```
+
+### Event priority tiers
+
+| Tier | Description | Sampling | Examples |
+| --- | --- | --- | --- |
+| Critical | Core conversion and revenue events | 100% | application submitted, sale attributed, payout completed |
+| Product | Feature usage and engagement | 100% | asset downloaded, milestone viewed, broadcast sent |
+| Behavioral | Navigation and interaction patterns | 25-50% | page viewed, filter applied, tab switched |
+| Debug | Detailed interaction data | 10% or dev-only | scroll depth, hover events, tooltip shown |
+
+### Cost control
+
+- define a maximum events/user/session budget
+- batch analytics events (send every 5s or on page unload, not per-event)
+- use PostHog's `capture` with `$set_once` for user properties to avoid repeated writes
+- review analytics volume monthly and prune low-value events
+
+### Analytics code organization
+
+```text
+src/lib/telemetry/
+  analytics.ts        // PostHog wrapper with naming enforcement
+  events.ts           // event name constants (prevents typos)
+  sampling.ts         // sampling rules by tier
+  properties.ts       // standard property enrichment (tenant, role, campaign)
+```
+
+### Important rule
+
+Every tracked event must have a documented purpose: "We track X to understand Y." Events without a clear product question should not be shipped.
+
+## 47. Final recommended architecture statement
 
 Festify Affiliates should be built as a tenant-aware Next.js App Router application with:
 
@@ -1639,8 +1972,8 @@ Festify Affiliates should be built as a tenant-aware Next.js App Router applicat
 - URL state for analytics surfaces
 - Zustand limited to ephemeral shell state
 - runtime CSS-variable theming for white-label branding
-- typed API contracts with schema validation
-- versioned real-time events with a reducer-driven event bridge
+- typed API contracts with shared schema validation via `@festify/contracts`
+- versioned real-time events with schema-enforced reducer-driven event bridge
 - explicit freshness and degradation handling
 - feature-flag-aware rendering
 - accessibility baked into shared components
@@ -1652,9 +1985,13 @@ Festify Affiliates should be built as a tenant-aware Next.js App Router applicat
 - optimized image and media pipeline via CDN and Next.js Image
 - graceful offline resilience and network status handling
 - print and export views for financial reporting
-- CI/CD pipeline with bundle budgets, type checking, and visual regression
+- CI/CD pipeline with per-route performance budgets, type checking, and visual regression
 - MSW-based API mocking with schema contract validation
-- Storybook for component development and documentation
-- multi-tab session and data synchronization
+- Storybook for governed component development and documentation
+- multi-tab session sync with background-tab resource optimization
+- onboarding-first empty state UX for organizers and affiliates
+- rate limit UX with debouncing and graceful degradation
+- attribution transparency UI for trust and dispute resolution
+- disciplined analytics with naming conventions, priority tiers, and cost control
 
-This architecture treats the frontend not as "just pages", but as the orchestration layer for a financial attribution system where trust, consistency, tenant isolation, and global accessibility matter as much as UI quality.
+This architecture treats the frontend not as "just pages", but as the orchestration layer for a financial attribution system where trust, consistency, tenant isolation, operational resilience, and global accessibility matter as much as UI quality.
