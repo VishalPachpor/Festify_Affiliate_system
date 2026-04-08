@@ -2,17 +2,21 @@
 
 import { type ReactNode } from "react";
 import { QueryProvider } from "./query-provider";
-import { ThemeProvider, type TenantBranding } from "./theme-provider";
+import { TenantProvider } from "@/modules/tenant-shell";
+import { RealtimeProvider } from "@/modules/realtime";
+import type { Tenant } from "@/modules/tenant-shell";
 
 type AppProvidersProps = {
-  branding?: TenantBranding;
+  tenant?: Tenant | null;
   children: ReactNode;
 };
 
-export function AppProviders({ branding, children }: AppProvidersProps) {
+export function AppProviders({ tenant = null, children }: AppProvidersProps) {
   return (
     <QueryProvider>
-      <ThemeProvider branding={branding}>{children}</ThemeProvider>
+      <TenantProvider tenant={tenant}>
+        <RealtimeProvider>{children}</RealtimeProvider>
+      </TenantProvider>
     </QueryProvider>
   );
 }

@@ -1,0 +1,37 @@
+"use client";
+
+import { useTenant } from "@/modules/tenant-shell";
+
+const MOCK_NAME = "John";
+
+export function HeroBanner() {
+  const { tenant } = useTenant();
+  const eventName = tenant?.name?.startsWith("TOKEN2049")
+    ? (tenant.name.includes("2026") ? tenant.name : `${tenant.name} 2026`).replace(/\s+/g, " ").trim()
+    : tenant?.name ?? "TOKEN2049 Singapore 2026";
+
+  return (
+    <section
+      className="bg-hero-gradient relative flex min-h-[6.5rem] flex-col justify-center overflow-hidden rounded-[0.875rem] border border-[var(--color-border-ghost)] px-[2rem] py-[1.35rem]"
+      aria-label="Welcome banner"
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 right-0 w-[32%] opacity-25"
+        style={{
+          background:
+            "radial-gradient(circle at 40% 40%, rgba(255,255,255,0.18), transparent 68%)",
+        }}
+      />
+      <h1 className="font-[var(--font-display)] text-[2.55rem] font-bold leading-none tracking-[-0.04em] text-[var(--color-text-primary)]">
+        Welcome Back, {MOCK_NAME}!
+      </h1>
+      <p
+        aria-live="polite"
+        className="mt-[0.2rem] max-w-[46rem] font-[var(--font-sans)] text-[1.125rem] leading-[1.35] text-[rgba(255,255,255,0.9)]"
+      >
+        Track your performance and grow your earnings with {eventName}
+      </p>
+    </section>
+  );
+}

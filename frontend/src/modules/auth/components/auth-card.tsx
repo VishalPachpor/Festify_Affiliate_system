@@ -1,76 +1,91 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { AuthHeader } from "./auth-header";
-import { AuthSignUpForm } from "./auth-form";
+import { SocialButton } from "@/components/ui/social-button";
+import { Divider } from "@/components/ui/divider";
+import { Tabs } from "@/components/ui/tabs";
 
-function Divider({ label }: { label: string }) {
+const authTabs = [
+  { label: "Login", href: "/sign-in" },
+  { label: "Sign Up", href: "/sign-up" },
+] as const;
+
+export function AuthCard({
+  title,
+  subtitle,
+  children,
+  footerText,
+  footerLinkText,
+  footerLinkHref,
+}: {
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  footerText: string;
+  footerLinkText: string;
+  footerLinkHref: string;
+}) {
   return (
-    <div className="flex items-center gap-[var(--space-md)]">
-      <span className="h-px flex-1 bg-[var(--color-border)]" />
-      <span className="text-xs text-[var(--color-text-muted)]">{label}</span>
-      <span className="h-px flex-1 bg-[var(--color-border)]" />
-    </div>
-  );
-}
-
-function GoogleIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-      <path
-        fill="#4285F4"
-        d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z"
-      />
-      <path
-        fill="#34A853"
-        d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.997 8.997 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z"
-      />
-      <path
-        fill="#EA4335"
-        d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58Z"
-      />
-    </svg>
-  );
-}
-
-export function AuthCard() {
-  return (
-    <Card variant="elevated" className="w-full max-w-[400px]">
-      <AuthHeader
-        title="Create Account"
-        subtitle="Get started with Festify Affiliates"
-      />
-
-      <Card.Content>
-        <div className="flex flex-col gap-[var(--space-lg)]">
-          <Button variant="secondary" size="lg" className="w-full">
-            <GoogleIcon />
-            Continue with Google
-          </Button>
-
-          <Divider label="or continue with email" />
-
-          <AuthSignUpForm />
-        </div>
-      </Card.Content>
-
-      <Card.Footer className="justify-center pt-[var(--space-lg)]">
-        <p className="text-sm text-[var(--color-text-secondary)]">
-          Already have an account?{" "}
-          <Link
-            href="/sign-in"
-            className="font-medium text-[var(--color-primary)] hover:underline"
-          >
-            Sign in
-          </Link>
+    <div className="mx-auto flex w-[min(var(--card-w),90vw)] flex-col items-center gap-[1rem]">
+      {/* Logo */}
+      <div className="shrink-0 flex flex-col items-center gap-[0.6rem]">
+        <Image
+          src="/token.png"
+          alt="TOKEN2049"
+          width={187}
+          height={24}
+          className="h-[1.5rem] w-auto"
+          priority
+        />
+        <p className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-label)] text-[var(--color-text-white)] text-center">
+          Singapore 2026
         </p>
-      </Card.Footer>
-    </Card>
+      </div>
+
+      {/* Tabs */}
+      <div className="shrink-0 w-full">
+        <Tabs items={authTabs} />
+      </div>
+
+      {/* Card */}
+      <div className="w-full rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface-card)] px-[var(--card-pad-x)] py-[var(--card-pad-y)] shadow-[var(--shadow-card)]">
+        {/* Header */}
+        <div className="shrink-0 flex flex-col gap-[var(--space-2)]">
+          <h2 className="font-[var(--font-display)] font-bold text-[var(--text-2xl)] leading-[var(--leading-tight)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
+            {title}
+          </h2>
+          {subtitle && (
+            <p className="font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.45] text-[var(--color-text-secondary)]">
+              {subtitle}
+            </p>
+          )}
+          <p className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] tracking-[var(--tracking-caption)] uppercase text-[var(--color-text-secondary)]">
+            Required fields marked with *
+          </p>
+        </div>
+
+        {/* Google + Divider + Form */}
+        <div className="mt-[var(--card-gap)] flex flex-col gap-[var(--space-4)]">
+          <div className="shrink-0 flex flex-col gap-[var(--space-5)]">
+            <SocialButton provider="google" />
+            <Divider label="Or continue with email" />
+          </div>
+
+          {/* Form */}
+          {children}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-[var(--card-gap)] shrink-0 text-center">
+          <Link
+            href={footerLinkHref}
+            className="font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--leading-snug)] text-[var(--color-text-link)] underline transition-colors hover:text-[var(--color-text-link-hover)]"
+          >
+            {footerText} {footerLinkText}
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 }

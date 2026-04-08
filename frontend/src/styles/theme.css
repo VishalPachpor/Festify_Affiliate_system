@@ -1,84 +1,161 @@
 /*
- * Festify Affiliates — Semantic Design Tokens
+ * Festify Affiliates — Production Design System
  *
- * These CSS variables power the white-label theming system.
- * Organizer branding overrides are injected at runtime via
- * the tenant-shell module's buildTenantThemeVars().
+ * Source of truth: Figma node 72:3428 (Sign Up screen)
+ * Figma base viewport: 1440px
+ * Auth frame: 720 × 860
  *
- * Token naming: --color-{semantic-role}
- * Color space: oklch for perceptual uniformity
+ * All dimensions in rem — scales with viewport-relative root font-size.
+ * 1rem = 16px at 1440px viewport.
  */
 
 :root {
-  /* ── Surface ─────────────────────────────────── */
-  --color-bg: oklch(0.98 0.01 250);
-  --color-surface: oklch(1 0 0);
-  --color-surface-elevated: oklch(0.99 0.005 250);
-  --color-surface-sunken: oklch(0.96 0.01 250);
+  /* ── Base font ────────────────────────────────── */
+  --font-base: 14px;
+
+  /* ── Surface / Background ───────────────────── */
+  --color-page:            #0C0E1A;
+  --color-surface-card:    #111525;
+  --color-card:            var(--color-surface-card);
+  --color-input:           #111522;
+  --color-surface-white:   #FFFFFF;
+  --color-surface-white-hover: #f9fafb;
+  --color-surface-ghost-hover: rgba(255, 255, 255, 0.04);
+
+  /* Ghost button border (white at ~10% opacity) */
+  --color-border-ghost:    rgba(255, 255, 255, 0.10);
 
   /* ── Text ────────────────────────────────────── */
-  --color-text: oklch(0.22 0.02 255);
-  --color-text-secondary: oklch(0.45 0.02 255);
-  --color-text-muted: oklch(0.6 0.01 255);
-  --color-text-inverse: oklch(0.99 0.01 255);
+  --color-text-primary:    #F0F0F0;
+  --color-text-secondary:  #9CA4B7;
+  --color-text-muted:      #7F7F7F;
+  --color-text-inactive:   #DADADA;
+  --color-text-dark:       #1C1C1C;
+  --color-text-link:       #A6D1FF;
+  --color-text-link-hover: #FFFFFF;
+  --color-text-white:      #FFFFFF;
 
-  /* ── Primary (brand — overridden per tenant) ── */
-  --color-primary: oklch(0.63 0.18 255);
-  --color-primary-hover: oklch(0.56 0.18 255);
-  --color-primary-foreground: oklch(0.99 0.01 255);
+  /* ── Brand / Primary ─────────────────────────── */
+  --color-primary:            #1C4AA6;
+  --color-primary-hover:      #1a4299;
+  --color-primary-foreground: #F0F0F0;
+  --color-primary-rgb:        28, 74, 166;
 
-  /* ── Secondary ───────────────────────────────── */
-  --color-secondary: oklch(0.93 0.01 255);
-  --color-secondary-hover: oklch(0.88 0.02 255);
-  --color-secondary-foreground: oklch(0.22 0.02 255);
-
-  /* ── Semantic status ─────────────────────────── */
-  --color-success: oklch(0.6 0.15 145);
-  --color-success-bg: oklch(0.95 0.05 145);
-  --color-warning: oklch(0.7 0.15 75);
-  --color-warning-bg: oklch(0.95 0.05 75);
-  --color-error: oklch(0.55 0.2 25);
-  --color-error-bg: oklch(0.95 0.05 25);
-  --color-info: oklch(0.6 0.15 230);
-  --color-info-bg: oklch(0.95 0.05 230);
+  /* ── Focus ring ──────────────────────────────── */
+  --color-ring:            #1C4AA6;
 
   /* ── Border ──────────────────────────────────── */
-  --color-border: oklch(0.9 0.01 255);
-  --color-border-strong: oklch(0.8 0.01 255);
-  --color-ring: var(--color-primary);
+  --color-border:          rgba(255, 255, 255, 0.10);
+  --color-border-strong:   rgba(255, 255, 255, 0.24);
+  --color-border-hover:    rgba(255, 255, 255, 0.16);
+  --color-border-social:   #d1d5dc;
 
-  /* ── Chart tokens ────────────────────────────── */
-  --color-chart-1: oklch(0.63 0.18 255);
-  --color-chart-2: oklch(0.6 0.15 145);
-  --color-chart-3: oklch(0.7 0.15 75);
-  --color-chart-4: oklch(0.55 0.2 25);
-  --color-chart-5: oklch(0.6 0.15 310);
+  /* ── Semantic status ─────────────────────────── */
+  --color-error:           #ef4444;
+  --color-success:         #22c55e;
+  --color-warning:         #eab308;
+  --color-info:            #3b82f6;
+
+  /* ── Spacing (8pt grid, rem) ────────────────── */
+  --space-1:   0.25rem;    /*  4px */
+  --space-2:   0.5rem;     /*  8px */
+  --space-3:   0.75rem;    /* 12px */
+  --space-4:   1rem;       /* 16px */
+  --space-5:   1.25rem;    /* 20px */
+  --space-6:   1.5rem;     /* 24px */
+  --space-8:   2rem;       /* 32px */
+  --space-10:  2.5rem;     /* 40px */
+  --space-12:  3rem;       /* 48px */
+
+  /* Card-specific spacing (Figma exact) */
+  --card-pad-x: 2.0625rem; /* 33px */
+  --card-pad-y: 1.875rem;  /* 30px */
+  --card-gap:   1.25rem;   /* 20px */
+
+  /* ── Card dimensions ─────────────────────────── */
+  --card-w:    35.9375rem;  /* ~503px at 14px root — matches Figma 575px container proportionally */
+  --card-h:    53.75rem;    /* 860px */
 
   /* ── Radius ──────────────────────────────────── */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-full: 9999px;
-
-  /* ── Spacing scale ───────────────────────────── */
-  --space-xs: 0.25rem;
-  --space-sm: 0.5rem;
-  --space-md: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2rem;
-  --space-2xl: 3rem;
+  --radius:    0.5rem;      /* 8px */
 
   /* ── Shadows ─────────────────────────────────── */
-  --shadow-sm: 0 1px 2px 0 oklch(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px oklch(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px oklch(0 0 0 / 0.1);
+  --shadow-card:   0px 25px 50px 0px rgba(22, 25, 35, 0.5);
+  --shadow-button: 0px 1px 3px 0px rgba(0, 0, 0, 0.1),
+                   0px 1px 2px 0px rgba(0, 0, 0, 0.1);
 
-  /* ── Typography ──────────────────────────────── */
-  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), monospace;
+  /* ── Typography — Font families ─────────────── */
+  --font-display: 'Oswald', sans-serif;
+  --font-sans:    'Open Sauce Sans', sans-serif;
+  --font-mono:    var(--font-geist-mono), monospace;
+
+  /* ── Typography — Scale (rem) ───────────────── */
+  --text-xs:   0.75rem;     /* 12px */
+  --text-sm:   0.875rem;    /* 14px */
+  --text-base: 1rem;        /* 16px */
+  --text-lg:   1.25rem;     /* 20px */
+  --text-xl:   1.5rem;      /* 24px */
+  --text-2xl:  2rem;        /* 32px */
+
+  /* Line heights */
+  --leading-tight:  2rem;       /* 32px — headings */
+  --leading-normal: 1.75rem;    /* 28px — body-1 */
+  --leading-snug:   1.3125rem;  /* 21px — body-2 */
+  --leading-tab:    1.25rem;    /* 20px — tab text (Figma node 82:6) */
+  --leading-label:  1.125rem;   /* 18px — labels */
+  --leading-caption: 0.875rem;  /* 14px — captions */
+
+  /* Letter spacing */
+  --tracking-heading: -0.03rem;   /* -0.48px */
+  --tracking-label:   0.25rem;    /* 4px */
+  --tracking-caption:  0.03125rem; /* 0.5px */
+
+  /* ── Component sizes ────────────────────────── */
+  --size-input:  2.5rem;      /* 40px */
+  --size-btn:    2.8125rem;   /* 45px */
+  --size-tab:    2.375rem;    /* 38px */
+  --size-icon:   1.25rem;     /* 20px */
 
   /* ── Transitions ─────────────────────────────── */
-  --duration-fast: 100ms;
+  --duration-fast:   100ms;
   --duration-normal: 200ms;
-  --duration-slow: 300ms;
+  --duration-slow:   300ms;
+
+  /* ── Gradients ───────────────────────────────── */
+  --gradient-hero: linear-gradient(
+    135deg,
+    rgba(var(--color-primary-rgb), 0.95) 0%,
+    rgba(var(--color-primary-rgb), 0.55) 55%,
+    rgba(var(--color-primary-rgb), 0.28) 100%
+  );
+
+  /* ── Dashboard layout ────────────────────────── */
+  --container-dashboard: 60rem;
+
+  /* ── App shell ───────────────────────────────── */
+  --sidebar-w:              16rem;       /* 224px sidebar width */
+  --header-h:               3.6rem;     /* top header */
+  --color-surface-sidebar:  #0B0F1A;    /* sidebar surface, dark navy matching Figma */
+  --color-nav-active-bg:    rgba(var(--color-primary-rgb), 0.18); /* active nav row */
+  --color-nav-active-text:  var(--color-text-primary);
+  --color-avatar-bg:        var(--color-primary);                 /* JD avatar circle */
+
+  /* ── Shared control height (input + button) ─── */
+  --size-control: 2.5rem;       /* 40px — aligns Button and TextInput */
+
+  /* ── Indicator dot ───────────────────────────── */
+  --size-dot:    0.375rem;      /* 6px  — activity status dot */
+  --offset-dot:  0.35rem;       /* optical top offset to first text baseline */
+
+  /* ── Progress bar ────────────────────────────── */
+  --color-progress-track: rgba(255, 255, 255, 0.14);
+
+  /* ── Display line-height (hero heading) ──────── */
+  --leading-display: 2.5rem;    /* 40px — ratio >1 for --text-2xl (2rem) */
+
+  /* ── Table column widths ─────────────────────── */
+  --col-rank:      1rem;        /* rank number */
+  --col-sales:     4.5rem;      /* "XX sales" at --text-xs */
+  --col-revenue:   5rem;        /* currency value */
+  --col-timestamp: 3.5rem;      /* "just now" at --text-xs */
 }

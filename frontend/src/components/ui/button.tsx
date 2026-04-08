@@ -3,44 +3,52 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
+/*
+ * Button — 3 variants from Figma
+ *
+ * primary (node 117:179): h=45px, px=32, bg=#1c4aa6, text=#f0f0f0, semibold
+ * ghost   (auth):         h=38px, px=auto, bg=transparent, border=white/10, text=#dadada, medium
+ * social  (node 117:156): h=auto (py=12), px=24, gap=16, bg=white, border=#d1d5dc, text=#1c1c1c, semibold, shadow
+ */
+
 const buttonVariants = cva(
   [
-    "relative inline-flex items-center justify-center gap-2",
-    "rounded-[var(--radius-md)] font-medium",
-    "transition-all duration-[var(--duration-normal)]",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-offset-2",
-    "disabled:opacity-50 disabled:pointer-events-none",
-    "active:brightness-95",
+    "relative inline-flex items-center justify-center",
+    "rounded-[var(--radius)]",
+    "font-[var(--font-sans)]",
+    "transition-colors duration-[var(--duration-normal)]",
+    "disabled:pointer-events-none disabled:opacity-50",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface-card)]",
   ],
   {
     variants: {
       variant: {
         primary: [
+          "h-[var(--size-btn)] px-[var(--space-8)]",
           "bg-[var(--color-primary)] text-[var(--color-primary-foreground)]",
+          "text-[var(--text-sm)] leading-[var(--leading-snug)] font-semibold",
           "hover:bg-[var(--color-primary-hover)]",
-        ],
-        secondary: [
-          "border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]",
-          "hover:bg-[var(--color-surface-sunken)]",
+          "active:brightness-95",
         ],
         ghost: [
-          "bg-transparent text-[var(--color-text-secondary)]",
-          "hover:bg-[var(--color-secondary)] hover:text-[var(--color-text)]",
+          "h-[var(--size-tab)]",
+          "bg-transparent border border-[var(--color-border-ghost)]",
+          "text-[var(--text-sm)] leading-[var(--leading-tab)] font-medium",
+          "text-[var(--color-text-inactive)]",
+          "hover:bg-[var(--color-surface-ghost-hover)] hover:text-[var(--color-text-primary)]",
         ],
-        danger: [
-          "bg-[var(--color-error)] text-white",
-          "hover:brightness-110",
+        social: [
+          "w-full gap-[var(--space-4)] px-[var(--space-6)] py-[var(--space-3)]",
+          "bg-[var(--color-surface-white)] border border-[var(--color-border-social)]",
+          "text-[var(--text-sm)] leading-[var(--leading-snug)] font-semibold",
+          "text-[var(--color-text-dark)]",
+          "shadow-[var(--shadow-button)]",
+          "hover:bg-[var(--color-surface-white-hover)]",
         ],
-      },
-      size: {
-        sm: "h-8 px-3 text-sm",
-        md: "h-10 px-4 text-sm",
-        lg: "h-12 px-6 text-base",
       },
     },
     defaultVariants: {
       variant: "primary",
-      size: "md",
     },
   },
 );
@@ -56,7 +64,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     {
       className,
       variant,
-      size,
       loading,
       disabled,
       asChild = false,
@@ -71,7 +78,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <Comp
         ref={ref}
-        className={cn(buttonVariants({ variant, size }), className)}
+        className={cn(buttonVariants({ variant }), className)}
         disabled={disabled || loading}
         data-state={loading ? "loading" : "idle"}
         {...(!asChild && { type: type ?? "button" })}
@@ -82,10 +89,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             className="absolute inset-0 flex items-center justify-center"
             aria-hidden="true"
           >
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            <span className="size-[var(--space-4)] animate-spin rounded-full border-2 border-current border-t-transparent" />
           </span>
         )}
-        <span className={cn(loading && "opacity-0")}>{children}</span>
+        <span className={cn("inline-flex items-center justify-center gap-[inherit]", loading && "opacity-0")}>
+          {children}
+        </span>
       </Comp>
     );
   },

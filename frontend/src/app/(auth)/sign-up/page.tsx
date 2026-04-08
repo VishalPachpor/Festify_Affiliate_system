@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AuthCard } from "@/modules/auth/components/auth-card";
+import { AuthSignUpForm } from "@/modules/auth/components/auth-form";
 
 export const metadata: Metadata = {
   title: "Sign Up — Festify Affiliates",
@@ -8,8 +9,14 @@ export const metadata: Metadata = {
 
 export default function SignUpPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center px-[var(--space-md)]">
-      <AuthCard />
-    </main>
+    <AuthCard
+      title="Create Account"
+      subtitle="Join the affiliate program and earn 10% commission on every ticket sold."
+      footerText="Already have an account?"
+      footerLinkText="Log in"
+      footerLinkHref="/sign-in"
+    >
+      <AuthSignUpForm />
+    </AuthCard>
   );
 }

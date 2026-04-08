@@ -1,59 +1,95 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FormField } from "@/components/ui/form-field";
+import { TextInput } from "@/components/ui/text-input";
+import { PasswordInput } from "@/components/ui/password-input";
+import { useAuthForm } from "../hooks/use-auth-form";
+import { useSignupMutation } from "../hooks/use-signup";
+import { signUpSchema, type SignUpFormValues } from "../schemas";
 
 export function AuthSignUpForm() {
-  const [loading, setLoading] = useState(false);
+  const mutation = useSignupMutation();
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
-    // TODO: connect to backend
-    setTimeout(() => setLoading(false), 1500);
-  }
+  const { register, formRef, submitWithFocus, isSubmitting, errors } =
+    useAuthForm(signUpSchema, async (data: SignUpFormValues) => {
+      await mutation.mutateAsync(data);
+    });
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-[var(--space-md)]">
-      <Input required>
-        <Input.Label>Full Name</Input.Label>
-        <Input.Field
-          type="text"
-          placeholder="John Doe"
-          autoComplete="name"
-        />
-      </Input>
+    <form
+      ref={formRef}
+      onSubmit={submitWithFocus}
+      noValidate
+      className="flex flex-col gap-[0.8rem]"
+    >
+      <FormField label="Full Name" error={errors.fullName?.message} required>
+        {(a11y) => (
+          <TextInput
+            {...a11y}
+            {...register("fullName")}
+            placeholder="Your name"
+            autoComplete="name"
+            error={!!errors.fullName}
+            disabled={isSubmitting}
+          />
+        )}
+      </FormField>
 
-      <Input required>
-        <Input.Label>Email</Input.Label>
-        <Input.Field
-          type="email"
-          placeholder="you@example.com"
-          autoComplete="email"
-        />
-      </Input>
+      <FormField label="Affiliate Email" error={errors.email?.message} required>
+        {(a11y) => (
+          <TextInput
+            {...a11y}
+            {...register("email")}
+            type="email"
+            placeholder="your@email.com"
+            autoComplete="email"
+            spellCheck={false}
+            error={!!errors.email}
+            disabled={isSubmitting}
+          />
+        )}
+      </FormField>
 
-      <Input required>
-        <Input.Label>Password</Input.Label>
-        <Input.Field
-          type="password"
-          placeholder="Min. 8 characters"
-          autoComplete="new-password"
-        />
-      </Input>
+      <FormField label="Password" error={errors.password?.message} required>
+        {(a11y) => (
+          <PasswordInput
+            {...a11y}
+            {...register("password")}
+            placeholder="••••••••"
+            autoComplete="new-password"
+            error={!!errors.password}
+            disabled={isSubmitting}
+          />
+        )}
+      </FormField>
 
-      <Input required>
-        <Input.Label>Confirm Password</Input.Label>
-        <Input.Field
-          type="password"
-          placeholder="Re-enter password"
-          autoComplete="new-password"
-        />
-      </Input>
+      <FormField label="Confirm Password" error={errors.confirmPassword?.message} required>
+        {(a11y) => (
+          <PasswordInput
+            {...a11y}
+            {...register("confirmPassword")}
+            placeholder="••••••••"
+            autoComplete="new-password"
+            error={!!errors.confirmPassword}
+            disabled={isSubmitting}
+          />
+        )}
+      </FormField>
 
-      <Button type="submit" variant="primary" size="lg" loading={loading} className="w-full mt-[var(--space-xs)]">
-        Create Account
+      {errors.root && (
+        <p className="font-[var(--font-sans)] text-[var(--text-xs)] text-[var(--color-error)] text-center" role="alert">
+          {errors.root.message}
+        </p>
+      )}
+
+      <Button
+        type="submit"
+        variant="primary"
+        loading={isSubmitting}
+        className="w-full"
+      >
+        Sign up
       </Button>
     </form>
   );
