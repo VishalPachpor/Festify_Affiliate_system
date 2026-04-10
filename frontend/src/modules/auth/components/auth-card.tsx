@@ -19,6 +19,7 @@ export function AuthCard({
   footerLinkText,
   footerLinkHref,
   showGoogle = true,
+  showTabs = true,
   googleMode = "login",
 }: {
   title: string;
@@ -28,6 +29,7 @@ export function AuthCard({
   footerLinkText: string;
   footerLinkHref: string;
   showGoogle?: boolean;
+  showTabs?: boolean;
   googleMode?: "login" | "affiliate_signup";
 }) {
   return (
@@ -48,9 +50,11 @@ export function AuthCard({
       </div>
 
       {/* Tabs */}
-      <div className="shrink-0 w-full">
-        <Tabs items={authTabs} />
-      </div>
+      {showTabs && (
+        <div className="shrink-0 w-full">
+          <Tabs items={authTabs} />
+        </div>
+      )}
 
       {/* Card */}
       <div className="w-full rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface-card)] px-[var(--card-pad-x)] py-[var(--card-pad-y)] shadow-[var(--shadow-card)]">
