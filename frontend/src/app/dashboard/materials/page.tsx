@@ -75,14 +75,24 @@ function formatAddedDate(iso: string) {
 }
 
 function AssetCard({ asset }: { asset: Asset }) {
+  const isImage = asset.mimeType.startsWith("image/");
+
   return (
     <article className="h-full overflow-hidden rounded-[0.45rem] border border-[rgba(255,255,255,0.08)] bg-[rgba(20,24,42,0.92)]">
       <div
-        className="flex h-[12.6rem] items-center justify-center text-[rgba(255,255,255,0.72)]"
+        className="relative flex h-[12.6rem] items-center justify-center overflow-hidden text-[rgba(255,255,255,0.72)]"
         style={{ background: asset.thumbnailBg }}
         aria-hidden="true"
       >
-        <PreviewIcon type={asset.type} />
+        {isImage ? (
+          <img
+            src={asset.fileUrl}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <PreviewIcon type={asset.type} />
+        )}
       </div>
 
       <div className="px-[0.9rem] pb-[0.9rem] pt-[0.8rem]">

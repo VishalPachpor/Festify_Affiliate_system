@@ -371,17 +371,15 @@ export default function SalesPage() {
                 label="Total Sales"
                 value={formatCurrency(summaryData?.totalRevenue ?? 0, currency)}
                 accentColor="#FFFFFF"
-                change="+18.2%"
+              />
+              <SummaryCard
+                label="Commission Earned"
+                value={formatCurrency(summaryData?.totalCommissions ?? 0, currency)}
+                accentColor="#5B8DEF"
               />
               <SummaryCard
                 label="Tickets Sold"
-                value={formatCurrency(summaryData?.totalCommissions ?? 0, currency)}
-                accentColor="#5B8DEF"
-                change={`+${summaryData?.pendingCount ?? 8}`}
-              />
-              <SummaryCard
-                label="Commission Rate"
-                value="10%"
+                value={String(summaryData?.totalSales ?? 0)}
                 accentColor="#22C55E"
               />
             </>

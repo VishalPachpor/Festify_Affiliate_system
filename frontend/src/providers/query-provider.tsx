@@ -11,6 +11,7 @@ function makeQueryClient() {
         staleTime: 60 * 1000,
         refetchOnWindowFocus: true,
         retry(failureCount, error) {
+          if (!error) return false;
           if (isAuthError(error)) return false;
           return failureCount < 2;
         },

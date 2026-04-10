@@ -88,12 +88,13 @@ function IconChevron() {
 // ── Nav config ────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { href: "/admin",              label: "Dashboard",   Icon: IconDashboard   },
-  { href: "/admin/affiliates",   label: "Affiliates",  Icon: IconAffiliates  },
-  { href: "/admin/materials",    label: "Materials",    Icon: IconMaterials   },
-  { href: "/admin/milestones",   label: "Milestones",  Icon: IconMilestones  },
-  { href: "/admin/commissions",  label: "Commissions", Icon: IconCommissions },
-  { href: "/admin/settings",     label: "Settings",    Icon: IconSettings    },
+  { href: "/admin",              label: "Dashboard",    Icon: IconDashboard    },
+  { href: "/admin/affiliates",   label: "Affiliates",   Icon: IconAffiliates   },
+  { href: "/admin/materials",    label: "Materials",     Icon: IconMaterials    },
+  { href: "/admin/milestones",   label: "Milestones",   Icon: IconMilestones   },
+  { href: "/admin/commissions",  label: "Commissions",  Icon: IconCommissions  },
+  { href: "/admin/integrations", label: "Integrations", Icon: IconIntegrations },
+  { href: "/admin/settings",     label: "Settings",     Icon: IconSettings     },
 ] as const;
 
 function isNavActive(href: string, pathname: string): boolean {
