@@ -12,10 +12,22 @@ export type TabItem = {
 export function Tabs({ items }: { items: readonly TabItem[] }) {
   const pathname = usePathname();
 
+  function isTabActive(href: string): boolean {
+    if (href === "/sign-in") {
+      return pathname === "/sign-in";
+    }
+
+    if (href === "/sign-up") {
+      return pathname === "/sign-up" || pathname.startsWith("/signup/");
+    }
+
+    return pathname === href;
+  }
+
   return (
     <div className="flex gap-[var(--space-2)] h-[var(--size-tab)] w-full">
       {items.map((tab) => {
-        const isActive = pathname === tab.href;
+        const isActive = isTabActive(tab.href);
         return (
           <Link
             key={tab.href}
