@@ -41,19 +41,20 @@ export const lumaAdapter: ProviderAdapter = {
   },
 
   extractEventId(body): string {
-    const data = body as Record<string, unknown>;
-    const inner = data.data as Record<string, unknown> | undefined;
-    return String(inner?.id ?? data.id ?? "");
+    const raw = body as Record<string, unknown>;
+    const data = raw.data as Record<string, unknown> | undefined;
+    return String(data?.api_id ?? data?.id ?? raw.id ?? "");
   },
 
   normalize(body): NormalizedEvent {
     const raw = body as Record<string, unknown>;
-    const eventType = raw.event as string;
+    // Luma sends "type" (not "event") at the top level
+    const eventType = (raw.type as string) ?? (raw.event as string) ?? "";
     const data = raw.data as Record<string, unknown>;
 
     if (!data) throw new Error("Luma payload missing 'data' field");
 
-    const orderId = String(data.order_id ?? data.id ?? "");
+    const orderId = String(data.order_id ?? data.api_id ?? data.id ?? "");
     if (!orderId) throw new Error("Luma payload missing order identifier");
 
     // Luma sends amount in dollars — convert to minor units
@@ -62,13 +63,23 @@ export const lumaAdapter: ProviderAdapter = {
 
     const type = eventType === "ticket.refunded" ? "ticket.refunded" as const : "ticket.purchased" as const;
 
+    // Luma coupon/discount code — check multiple possible field names.
+    // When a guest registers via ?coupon=XYZ, Luma includes it in the payload.
+    const referralCode =
+      (data.coupon_code as string) ??
+      (data.coupon as string) ??
+      (data.discount_code as string) ??
+      (data.referral_code as string) ??
+      (data.promo_code as string) ??
+      null;
+
     return {
       externalEventId: this.extractEventId(body),
       externalOrderId: orderId,
       type,
       amountMinor,
       currency: String(data.currency ?? "USD").toUpperCase(),
-      referralCode: (data.referral_code as string) ?? (data.discount_code as string) ?? null,
+      referralCode,
       buyerEmail: (data.email as string) ?? (data.user_email as string) ?? null,
       campaignId: (data.campaign_id as string) ?? null,
       occurredAt: (data.created_at as string) ?? new Date().toISOString(),
