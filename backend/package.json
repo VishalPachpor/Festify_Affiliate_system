@@ -7,7 +7,7 @@
     "dev": "ts-node src/server.ts",
     "worker": "ts-node src/processors/worker.ts",
     "worker:events": "ts-node src/workers/event-worker.ts",
-    "build": "tsc",
+    "build": "tsc && npx prisma db push && npx ts-node prisma/seed.ts",
     "start": "node dist/server.js",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
