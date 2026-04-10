@@ -59,12 +59,25 @@ router.post("/api/webhooks/:provider", async (req: Request, res: Response) => {
     }
 
     // ── 3. Extract identifiers ──────────────────────────────────────────
+    // Prefer explicit header, but fall back to finding the single active
+    // connection for this provider — Luma doesn't support custom headers.
+    let providerConnectionId: string;
     const rawConnectionId = req.headers["x-provider-connection-id"];
-    if (typeof rawConnectionId !== "string" || !rawConnectionId.trim()) {
-      res.status(400).json({ error: "Missing x-provider-connection-id header" });
-      return;
+    if (typeof rawConnectionId === "string" && rawConnectionId.trim()) {
+      providerConnectionId = rawConnectionId.trim();
+    } else {
+      const fallback = await prisma.providerConnection.findFirst({
+        where: { provider, status: "active" },
+        select: { connectionId: true },
+        orderBy: { createdAt: "desc" },
+      });
+      if (!fallback) {
+        console.warn(`[webhook-ingest] No connection header and no active ${provider} connection found`);
+        res.status(400).json({ error: "No active connection for this provider" });
+        return;
+      }
+      providerConnectionId = fallback.connectionId;
     }
-    const providerConnectionId = rawConnectionId.trim();
 
     const externalEventId = adapter.extractEventId(body).trim();
     if (!externalEventId) {

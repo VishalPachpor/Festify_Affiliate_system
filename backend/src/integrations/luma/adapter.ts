@@ -15,13 +15,10 @@ export const lumaAdapter: ProviderAdapter = {
   verifySignature(headers, _body, rawBody): boolean {
     const secret = process.env.LUMA_WEBHOOK_SECRET;
 
-    // Fail closed in production — never accept unsigned webhooks if secret missing.
+    // If no secret is configured, skip verification. Luma's free webhook
+    // tier doesn't provide a signing secret — only the API key.
     if (!secret) {
-      if (process.env.NODE_ENV?.toLowerCase() === "production") {
-        console.error("[luma-adapter] LUMA_WEBHOOK_SECRET not set in production — rejecting webhook");
-        return false;
-      }
-      console.warn("[luma-adapter] LUMA_WEBHOOK_SECRET not set — skipping verification (dev only)");
+      console.warn("[luma-adapter] LUMA_WEBHOOK_SECRET not set — accepting webhook without signature verification");
       return true;
     }
 
