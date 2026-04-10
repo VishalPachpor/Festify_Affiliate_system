@@ -1,1 +1,1 @@
-{"version":3,"file":"integrations.d.ts","sourceRoot":"","sources":["../../src/routes/integrations.ts"],"names":[],"mappings":"AAKA,QAAA,MAAM,MAAM,4CAAW,CAAC;AAmFxB,OAAO,EAAE,MAAM,IAAI,kBAAkB,EAAE,CAAC"}
+{"version":3,"file":"integrations.d.ts","sourceRoot":"","sources":["../../src/routes/integrations.ts"],"names":[],"mappings":"AAKA,QAAA,MAAM,MAAM,4CAAW,CAAC;AAgHxB,OAAO,EAAE,MAAM,IAAI,kBAAkB,EAAE,CAAC"}

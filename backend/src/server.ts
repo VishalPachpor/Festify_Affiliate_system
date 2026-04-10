@@ -23,16 +23,31 @@ const app = express();
 const PORT = process.env.PORT ?? 3001;
 const LOCALHOST_ORIGIN = /^http:\/\/localhost:\d+$/;
 
+function getAllowedOrigins(): Set<string> {
+  const configuredOrigins = [
+    process.env.APP_URL,
+    process.env.FRONTEND_APP_URL,
+    process.env.PUBLIC_FRONTEND_URL,
+    process.env.CORS_ORIGIN,
+  ]
+    .flatMap((value) => String(value ?? "").split(","))
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  return new Set(configuredOrigins);
+}
+
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+  const allowedOrigins = getAllowedOrigins();
 
-  if (origin && LOCALHOST_ORIGIN.test(origin)) {
+  if (origin && (LOCALHOST_ORIGIN.test(origin) || allowedOrigins.has(origin))) {
     res.header("Access-Control-Allow-Origin", origin);
     res.header("Vary", "Origin");
     res.header("Access-Control-Allow-Credentials", "true");
     res.header(
       "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, x-tenant-id",
+      "Content-Type, Authorization, x-tenant-id, x-affiliate-id",
     );
     res.header(
       "Access-Control-Allow-Methods",

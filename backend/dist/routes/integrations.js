@@ -25,12 +25,38 @@ router.get("/api/integrations/:provider/status", async (req, res) => {
             orderBy: { createdAt: "desc" },
         });
         const baseUrl = process.env.PUBLIC_API_URL ?? "http://localhost:3001";
+        // Get event stats for this connection
+        let eventCount = 0;
+        let lastEventType = null;
+        let lastEventAt = connection?.lastEventAt?.toISOString() ?? null;
+        if (connection) {
+            const [count, lastEvent] = await Promise.all([
+                prisma_1.prisma.inboundEvent.count({
+                    where: { tenantId, provider, providerConnectionId: connection.connectionId },
+                }),
+                prisma_1.prisma.inboundEvent.findFirst({
+                    where: { tenantId, provider, providerConnectionId: connection.connectionId },
+                    orderBy: { createdAt: "desc" },
+                    select: { createdAt: true, payload: true },
+                }),
+            ]);
+            eventCount = count;
+            if (lastEvent) {
+                lastEventAt = lastEvent.createdAt.toISOString();
+                // Extract event type from payload
+                const payload = lastEvent.payload;
+                const raw = payload?.raw;
+                lastEventType = raw?.event ?? null;
+            }
+        }
         res.status(200).json({
             provider,
             connected: !!connection,
             webhookUrl: `${baseUrl}/api/webhooks/${provider}`,
             connectionId: connection?.connectionId ?? null,
-            lastEventAt: connection?.lastEventAt?.toISOString() ?? null,
+            lastEventAt,
+            eventCount,
+            lastEventType,
         });
     }
     catch (err) {
