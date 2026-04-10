@@ -7,13 +7,18 @@ export const assetSchema = z.object({
   id: z.string(),
   title: z.string(),
   type: assetTypeSchema,
+  fileUrl: z.string(),
+  sizeBytes: z.number(),
   sizeLabel: z.string(),
+  mimeType: z.string(),
+  visible: z.boolean(),
   addedAt: z.string(),
   thumbnailBg: z.string(), // CSS color token name used for thumbnail bg
 });
 
 export const assetsResponseSchema = z.object({
   assets: z.array(assetSchema),
+  total: z.number().optional(),
 });
 
 export type Asset = z.infer<typeof assetSchema>;

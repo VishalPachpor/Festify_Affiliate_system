@@ -1,12 +1,11 @@
 import { apiClient } from "@/services/api/client";
-import { authResponseSchema, type AuthResponse } from "../types";
+import { sessionResponseSchema, type SessionResponse } from "../types";
 import type { LoginFormValues } from "../schemas";
 
-export async function login(data: LoginFormValues): Promise<AuthResponse> {
+export async function login(data: LoginFormValues): Promise<SessionResponse> {
   const raw = await apiClient<unknown>("/auth/login", {
     method: "POST",
-    body: data,
+    body: { email: data.email, password: data.password },
   });
-
-  return authResponseSchema.parse(raw);
+  return sessionResponseSchema.parse(raw);
 }

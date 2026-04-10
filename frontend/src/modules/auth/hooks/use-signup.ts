@@ -2,18 +2,17 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { signup } from "../api/signup";
+import { useAuth } from "../provider";
 import type { SignUpFormValues } from "../schemas";
 
 export function useSignupMutation() {
   const router = useRouter();
+  const { signup } = useAuth();
 
   return useMutation({
     mutationFn: (data: SignUpFormValues) => signup(data),
-    onSuccess: (_response, variables) => {
-      router.push(
-        `/verify-email?email=${encodeURIComponent(variables.email)}`,
-      );
+    onSuccess: ({ email }) => {
+      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     },
   });
 }

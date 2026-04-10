@@ -1,37 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { DashboardContainer } from "@/modules/dashboard/components/dashboard-layout";
 import { DashboardStageCanvas } from "@/modules/dashboard/components/dashboard-stage-canvas";
-
-// ── Types & mock data ─────────────────────────────────────────────────────────
+import { useTenant } from "@/modules/tenant-shell";
+import { usePayoutSummary } from "@/modules/payouts/hooks/use-payout-summary";
+import { useSalesList } from "@/modules/sales/hooks/use-sales-list";
+import { useSalesFilters } from "@/modules/sales/hooks/use-sales-filters";
+import type { Sale } from "@/modules/sales/types";
 
 type CommissionStatus = "paid" | "approved" | "pending";
-
-type CommissionRow = {
-  id: string;
-  affiliate: string;
-  totalSales: number;
-  commission: number;
-  status: CommissionStatus;
-  paid: number;
-  outstanding: number;
-  payoutDate: string | null;
-};
-
-const COMMISSIONS: CommissionRow[] = [
-  { id: "1", affiliate: "Sarah Chen", totalSales: 43500, commission: 4350, status: "paid", paid: 4350, outstanding: 0, payoutDate: "2026-04-01" },
-  { id: "2", affiliate: "Michael Wong", totalSales: 32000, commission: 3200, status: "approved", paid: 0, outstanding: 3200, payoutDate: "2026-04-05" },
-  { id: "3", affiliate: "Emily Rodriguez", totalSales: 26000, commission: 2600, status: "approved", paid: 0, outstanding: 2600, payoutDate: "2026-04-05" },
-  { id: "4", affiliate: "David Kim", totalSales: 20500, commission: 2050, status: "pending", paid: 0, outstanding: 2050, payoutDate: null },
-  { id: "5", affiliate: "Lisa Tan", totalSales: 19000, commission: 1900, status: "pending", paid: 0, outstanding: 1900, payoutDate: null },
-];
-
-const SUMMARY = {
-  totalEarned: 52480,
-  totalPaid: 32480,
-  outstanding: 20000,
-};
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 
@@ -142,13 +118,25 @@ function KpiCard({ label, value, accentColor }: { label: string; value: string; 
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
-export default function AdminCommissionsPage() {
-  const [search, setSearch] = useState("");
-  const [currentPage] = useState(1);
+function toCommissionStatus(s: Sale["status"]): CommissionStatus {
+  if (s === "paid") return "paid";
+  if (s === "confirmed") return "approved";
+  return "pending";
+}
 
-  const filtered = search
-    ? COMMISSIONS.filter((c) => c.affiliate.toLowerCase().includes(search.toLowerCase()))
-    : COMMISSIONS;
+export default function AdminCommissionsPage() {
+  const { tenant } = useTenant();
+  const { filters, setFilters } = useSalesFilters();
+  const { data: salesData } = useSalesList(tenant?.id, filters);
+  const { data: summaryData } = usePayoutSummary(tenant?.id);
+
+  const sales: Sale[] = salesData?.sales ?? [];
+  const filtered = sales;
+
+  const totalPaid = summaryData?.totalPaid ?? 0;
+  const totalPending = summaryData?.totalPending ?? 0;
+  const totalEarned = totalPaid + totalPending;
+  const currentPage = filters.page;
 
   return (
     <DashboardStageCanvas>
@@ -157,17 +145,17 @@ export default function AdminCommissionsPage() {
         <dl className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-3">
           <KpiCard
             label="Total Earned"
-            value={formatCurrency(SUMMARY.totalEarned)}
+            value={formatCurrency(totalEarned)}
             accentColor="rgba(255,255,255,0.50)"
           />
           <KpiCard
             label="Total Paid"
-            value={formatCurrency(SUMMARY.totalPaid)}
+            value={formatCurrency(totalPaid)}
             accentColor="rgba(255,255,255,0.50)"
           />
           <KpiCard
             label="Outstanding"
-            value={formatCurrency(SUMMARY.outstanding)}
+            value={formatCurrency(totalPending)}
             accentColor="#F5A623"
           />
         </dl>
@@ -181,8 +169,8 @@ export default function AdminCommissionsPage() {
             <input
               type="search"
               placeholder="Search affiliates..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={filters.search ?? ""}
+              onChange={(e) => setFilters({ search: e.target.value || undefined })}
               className="h-[2.5rem] w-full rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] pl-[2.2rem] pr-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.35)] focus:border-[var(--color-ring)] focus:outline-none transition-colors"
             />
           </div>
@@ -227,15 +215,18 @@ export default function AdminCommissionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((row) => (
+                {filtered.map((row) => {
+                  const cStatus = toCommissionStatus(row.status);
+                  const isPaid = row.status === "paid";
+                  return (
                   <tr key={row.id} className="border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
                     {/* Affiliate */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] whitespace-nowrap">
-                      {row.affiliate}
+                      {row.affiliateName}
                     </td>
                     {/* Total Sales */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] text-[#FFFFFF] whitespace-nowrap">
-                      {formatCurrency(row.totalSales)}
+                      {formatCurrency(row.amount)}
                     </td>
                     {/* Commission */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] text-[#F5A623] whitespace-nowrap">
@@ -243,31 +234,32 @@ export default function AdminCommissionsPage() {
                     </td>
                     {/* Status */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] whitespace-nowrap">
-                      <StatusCell status={row.status} />
+                      <StatusCell status={cStatus} />
                     </td>
                     {/* Paid */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] text-[#22C55E] whitespace-nowrap">
-                      {formatCurrency(row.paid)}
+                      {formatCurrency(isPaid ? row.commission : 0)}
                     </td>
                     {/* Outstanding */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] text-[#F5A623] whitespace-nowrap">
-                      {formatCurrency(row.outstanding)}
+                      {formatCurrency(isPaid ? 0 : row.commission)}
                     </td>
                     {/* Payout Date */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] text-[rgba(255,255,255,0.55)] whitespace-nowrap">
-                      {row.payoutDate ?? "—"}
+                      {row.createdAt ?? "—"}
                     </td>
                     {/* Actions */}
                     <td className="py-[var(--space-3)] whitespace-nowrap">
-                      {row.status === "approved" && (
+                      {cStatus === "approved" && (
                         <ActionButton label="Mark Paid" variant="primary" />
                       )}
-                      {row.status === "pending" && (
+                      {cStatus === "pending" && (
                         <ActionButton label="Approve" variant="outline" />
                       )}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

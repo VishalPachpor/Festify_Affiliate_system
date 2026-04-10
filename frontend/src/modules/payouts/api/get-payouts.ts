@@ -1,5 +1,4 @@
 import { apiClient } from "@/services/api/client";
-import { isMockEnabled } from "@/mocks/utils";
 import {
   payoutsListResponseSchema,
   type PayoutsListResponse,
@@ -14,16 +13,13 @@ export type GetPayoutsParams = {
 export async function getPayouts(
   params: GetPayoutsParams,
 ): Promise<PayoutsListResponse> {
-  if (isMockEnabled()) {
-    const { mockGetPayouts } = await import("@/mocks/handlers/payouts");
-    return mockGetPayouts(params.filters);
-  }
-
   const { tenantId, filters } = params;
 
   const raw = await apiClient<unknown>("/payouts", {
+    headers: {
+      "x-tenant-id": tenantId,
+    },
     searchParams: {
-      tenantId,
       page: filters.page,
       pageSize: filters.pageSize,
       status: filters.status,

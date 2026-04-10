@@ -11,7 +11,7 @@ export function useTopAffiliates(
   return useQuery({
     queryKey: dashboardKeys.topAffiliate(tenantId ?? "", limit),
     queryFn: () =>
-      getTopAffiliates({ tenantId: tenantId!, limit }),
+      getTopAffiliates(limit),
     enabled: !!tenantId,
   });
 }

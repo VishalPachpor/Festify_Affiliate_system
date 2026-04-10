@@ -10,11 +10,12 @@ export const metadata: Metadata = {
 export default function SignUpPage() {
   return (
     <AuthCard
-      title="Create Account"
-      subtitle="Join the affiliate program and earn 10% commission on every ticket sold."
+      title="Join as an Affiliate"
+      subtitle="Create your affiliate account to start promoting events and earning commissions."
       footerText="Already have an account?"
       footerLinkText="Log in"
       footerLinkHref="/sign-in"
+      googleMode="affiliate_signup"
     >
       <AuthSignUpForm />
     </AuthCard>

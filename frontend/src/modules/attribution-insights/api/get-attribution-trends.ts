@@ -1,5 +1,4 @@
 import { apiClient } from "@/services/api/client";
-import { isMockEnabled } from "@/mocks/utils";
 import {
   attributionTrendResponseSchema,
   type AttributionTrendResponse,
@@ -8,13 +7,8 @@ import {
 export async function getAttributionTrends(
   tenantId: string,
 ): Promise<AttributionTrendResponse> {
-  if (isMockEnabled()) {
-    const { mockGetAttributionTrends } = await import("@/mocks/handlers/attribution");
-    return mockGetAttributionTrends();
-  }
-
   const raw = await apiClient<unknown>("/attribution/trends", {
-    searchParams: { tenantId },
+    headers: { "x-tenant-id": tenantId },
   });
   return attributionTrendResponseSchema.parse(raw);
 }

@@ -1,40 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useTenant } from "@/modules/tenant-shell";
+import { useAuth } from "@/modules/auth";
+import { useDashboardSummary } from "@/modules/dashboard/hooks/use-dashboard-summary";
+import { useTopAffiliates } from "@/modules/dashboard/hooks/use-top-affiliates";
+import { useRecentActivity } from "@/modules/dashboard/hooks/use-recent-activity";
 import { DashboardContainer } from "@/modules/dashboard/components/dashboard-layout";
 import { DashboardStageCanvas } from "@/modules/dashboard/components/dashboard-stage-canvas";
-
-// ── Mock data (admin-specific) ────────────────────────────────────────────────
-
-const ADMIN_KPI = {
-  totalAffiliates: 247,
-  pendingReview: 5,
-  affiliateChange: 23,
-  totalRevenue: 524800,
-  revenueAffiliates: 247,
-  revenueChangePct: 15.3,
-  totalCommissionsPaid: 52480,
-  commissionRate: 10,
-  pendingApprovals: 18,
-  pendingCommissions: 0,
-  currency: "USD",
-};
-
-const TOP_AFFILIATES = [
-  { rank: 1, name: "Sarah Chen", email: "sarah.c@email.com", referralCode: "sarah378", sales: 43500, tier: "platinum" as const },
-  { rank: 2, name: "Michael Wong", email: "michael.w@email.com", referralCode: "michael294", sales: 32000, tier: "gold" as const },
-  { rank: 3, name: "Emily Rodriguez", email: "emily.r@email.com", referralCode: "emily123", sales: 26000, tier: "gold" as const },
-  { rank: 4, name: "David Kim", email: "david.k@email.com", referralCode: "david856", sales: 20500, tier: "silver" as const },
-  { rank: 5, name: "Lisa Tan", email: "lisa.t@email.com", referralCode: "lisa555", sales: 19000, tier: "silver" as const },
-];
-
-const RECENT_ACTIVITY = [
-  { id: "1", title: "New affiliate signup", person: "Alex Johnson", time: "5 min ago", color: "#F5A623" },
-  { id: "2", title: "Status changed to Active", person: "Priya Sharma", time: "5 min ago", color: "#F5A623" },
-  { id: "3", title: "Commission approved", person: "Tom Anderson", time: "1 hour ago", color: "#F5A623" },
-  { id: "4", title: "Milestone unlocked", person: "Maria Garcia", time: "2 hours ago", color: "#F5A623" },
-  { id: "5", title: "New asset uploaded", person: "Admin User", time: "3 hours ago", color: "#F5A623" },
-];
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 
@@ -154,9 +127,9 @@ function AdminKpiCard({
 
 function AdminHeroBanner() {
   const { tenant } = useTenant();
-  const eventName = tenant?.name?.startsWith("TOKEN2049")
-    ? (tenant.name.includes("2026") ? tenant.name : `${tenant.name} 2026`).replace(/\s+/g, " ").trim()
-    : tenant?.name ?? "TOKEN2049 Singapore 2026";
+  const { user } = useAuth();
+  const firstName = user?.fullName?.split(" ")[0] ?? "there";
+  const eventName = tenant?.name ?? "your";
 
   return (
     <section
@@ -177,7 +150,7 @@ function AdminHeroBanner() {
       aria-label="Welcome banner"
     >
       <h2 className="relative z-10 font-[var(--font-display)] text-[2.55rem] font-bold leading-none tracking-[-0.04em] text-[var(--color-text-primary)]">
-        Welcome Back, John!
+        Welcome Back, {firstName}!
       </h2>
       <p className="relative z-10 mt-[0.2rem] max-w-[46rem] font-[var(--font-sans)] text-[1.125rem] leading-[1.35] text-[rgba(255,255,255,0.9)]">
         Monitor and manage the {eventName} Affiliate Program
@@ -188,8 +161,25 @@ function AdminHeroBanner() {
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
 export default function AdminDashboardPage() {
-  const currency = ADMIN_KPI.currency;
+  const { tenant } = useTenant();
+  const { data: summary } = useDashboardSummary(tenant?.id);
+  const { data: topAffData } = useTopAffiliates(tenant?.id, 5);
+  const { data: activityData } = useRecentActivity(tenant?.id);
+
+  const currency = summary?.currency ?? "USD";
+  const topAffiliates = topAffData?.affiliates ?? [];
+  const activityItems = activityData?.items ?? [];
 
   return (
     <DashboardStageCanvas>
@@ -201,28 +191,26 @@ export default function AdminDashboardPage() {
         <dl className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2 lg:grid-cols-4">
           <AdminKpiCard
             label="Total Affiliates"
-            value={String(ADMIN_KPI.totalAffiliates)}
-            subtitle={`${ADMIN_KPI.pendingReview} pending review`}
+            value={String(summary?.totalAffiliates ?? 0)}
+            subtitle="Active affiliates"
             accentColor="#FFFFFF"
-            change={`+${ADMIN_KPI.affiliateChange}`}
           />
           <AdminKpiCard
             label="Total Affiliate Revenue"
-            value={formatCurrency(ADMIN_KPI.totalRevenue, currency)}
-            subtitle={`${ADMIN_KPI.revenueAffiliates} affiliates`}
+            value={formatCurrency(summary?.totalRevenue ?? 0, currency)}
+            subtitle={`${summary?.totalAffiliates ?? 0} affiliates`}
             accentColor="#5B8DEF"
-            change={`+${ADMIN_KPI.revenueChangePct}%`}
           />
           <AdminKpiCard
             label="Total Commissions Paid"
-            value={formatCurrency(ADMIN_KPI.totalCommissionsPaid, currency)}
-            subtitle={`At ${ADMIN_KPI.commissionRate}% rate`}
+            value={formatCurrency(summary?.totalCommissions ?? 0, currency)}
+            subtitle={`${summary?.conversionRate ?? 0}% conversion`}
             accentColor="#22C55E"
           />
           <AdminKpiCard
-            label="Pending Approvals"
-            value={String(ADMIN_KPI.pendingApprovals)}
-            subtitle={`${ADMIN_KPI.pendingCommissions} commissions pending review`}
+            label="Paid Out"
+            value={formatCurrency(summary?.paidOut ?? 0, currency)}
+            subtitle="To affiliates"
             accentColor="#5B8DEF"
           />
         </dl>
@@ -233,27 +221,27 @@ export default function AdminDashboardPage() {
             Quick Actions
           </h3>
           <div className="mt-[var(--space-4)] flex flex-wrap gap-[var(--space-3)]">
-            <button
-              type="button"
+            <Link
+              href="/admin/affiliates?status=pending"
               className="flex items-center gap-[0.5rem] rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
             >
               <IconApprove />
               Approve Pending
-            </button>
-            <button
-              type="button"
+            </Link>
+            <Link
+              href="/admin/materials"
               className="flex items-center gap-[0.5rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.04)]"
             >
               <IconCreateAsset />
               Create Asset
-            </button>
-            <button
-              type="button"
+            </Link>
+            <Link
+              href="/admin/milestones"
               className="flex items-center gap-[0.5rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.04)]"
             >
               <IconSetMilestone />
               Set Milestone
-            </button>
+            </Link>
           </div>
         </section>
 
@@ -265,12 +253,12 @@ export default function AdminDashboardPage() {
               <h3 className="font-[var(--font-display)] font-bold text-[var(--text-lg)] leading-[var(--leading-tight)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
                 Top Affiliates
               </h3>
-              <button
-                type="button"
+              <Link
+                href="/admin/affiliates"
                 className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-xs)] text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.2)]"
               >
                 View all
-              </button>
+              </Link>
             </div>
 
             {/* Table header */}
@@ -294,12 +282,12 @@ export default function AdminDashboardPage() {
 
             {/* Table rows */}
             <div className="divide-y divide-[rgba(255,255,255,0.06)]">
-              {TOP_AFFILIATES.map((aff) => (
+              {topAffiliates.map((aff, i) => (
                 <div
-                  key={aff.rank}
+                  key={aff.id}
                   className="grid grid-cols-[2.5rem_1fr_7rem_5.5rem_5rem] items-center gap-[var(--space-3)] py-[var(--space-3)]"
                 >
-                  <RankBadge rank={aff.rank} />
+                  <RankBadge rank={i + 1} />
                   <div className="min-w-0">
                     <p className="truncate font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)]">
                       {aff.name}
@@ -309,12 +297,17 @@ export default function AdminDashboardPage() {
                     </p>
                   </div>
                   <span className="font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.60)]">
-                    {aff.referralCode}
+                    {aff.totalSales} sales
                   </span>
                   <span className="font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">
-                    {formatCurrency(aff.sales, currency)}
+                    {formatCurrency(aff.totalRevenue, currency)}
                   </span>
-                  <TierBadge tier={aff.tier} />
+                  <TierBadge tier={
+                    aff.totalRevenue >= 250000 ? "platinum" :
+                    aff.totalRevenue >= 100000 ? "gold" :
+                    aff.totalRevenue >= 50000 ? "silver" :
+                    aff.totalRevenue > 0 ? "bronze" : "—"
+                  } />
                 </div>
               ))}
             </div>
@@ -327,22 +320,22 @@ export default function AdminDashboardPage() {
             </h3>
 
             <div className="mt-[var(--space-4)] flex flex-col gap-[var(--space-5)]">
-              {RECENT_ACTIVITY.map((item) => (
+              {activityItems.slice(0, 5).map((item) => (
                 <div key={item.id} className="flex items-start gap-[var(--space-3)]">
                   <span
                     className="mt-[0.35rem] size-[0.5rem] shrink-0 rounded-full"
-                    style={{ background: item.color }}
+                    style={{ background: "#F5A623" }}
                     aria-hidden="true"
                   />
                   <div className="min-w-0">
                     <p className="font-[var(--font-sans)] text-[var(--text-sm)] font-medium leading-[var(--leading-snug)] text-[var(--color-text-primary)]">
-                      {item.title}
+                      {item.description}
                     </p>
                     <p className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] text-[rgba(255,255,255,0.50)]">
-                      {item.person}
+                      {item.affiliateName}
                     </p>
                     <p className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] text-[rgba(255,255,255,0.35)]">
-                      {item.time}
+                      {timeAgo(item.timestamp)}
                     </p>
                   </div>
                 </div>

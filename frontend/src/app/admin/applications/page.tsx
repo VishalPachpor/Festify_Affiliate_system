@@ -1,0 +1,211 @@
+"use client";
+
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTenant } from "@/modules/tenant-shell";
+import { apiClient } from "@/services/api/client";
+
+type Application = {
+  id: string;
+  firstName: string;
+  email: string;
+  socialProfiles: string | null;
+  audienceSize: string | null;
+  experience: string | null;
+  fitReason: string;
+  status: "pending" | "approved" | "rejected";
+  affiliateId: string | null;
+  campaignId: string;
+  campaignName: string;
+  campaignSlug: string;
+  createdAt: string;
+  reviewedAt: string | null;
+};
+
+type ApplicationsListResponse = {
+  applications: Application[];
+};
+
+export default function ApplicationsReviewPage() {
+  const { tenant } = useTenant();
+  const queryClient = useQueryClient();
+  const [filter, setFilter] = useState<"pending" | "approved" | "rejected" | "all">("pending");
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["applications", tenant?.id, filter],
+    queryFn: () =>
+      apiClient<ApplicationsListResponse>("/applications", {
+        headers: { "x-tenant-id": tenant!.id },
+        searchParams: filter === "all" ? undefined : { status: filter },
+      }),
+    enabled: !!tenant?.id,
+  });
+
+  const reviewMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: "approved" | "rejected" }) =>
+      apiClient<{ id: string; status: string }>(`/applications/${id}/status`, {
+        method: "PATCH",
+        headers: { "x-tenant-id": tenant!.id },
+        body: { status },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
+      queryClient.invalidateQueries({ queryKey: ["affiliate"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+
+  const errorMessage = error instanceof Error ? error.message : null;
+  const reviewError = reviewMutation.error instanceof Error ? reviewMutation.error.message : null;
+
+  return (
+    <div className="px-[var(--space-7)] py-[var(--space-7)]">
+      <header className="flex items-center justify-between gap-[var(--space-4)]">
+        <div>
+          <h1 className="font-[var(--font-display)] text-[1.75rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
+            Applications
+          </h1>
+          <p className="mt-[0.3rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
+            Review and approve incoming affiliate applications.
+          </p>
+        </div>
+        <div className="flex items-center gap-[0.5rem]">
+          {(["pending", "approved", "rejected", "all"] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setFilter(f)}
+              className={`rounded-[var(--radius)] px-[var(--space-3)] py-[0.4rem] font-[var(--font-sans)] text-[var(--text-xs)] capitalize transition-colors ${
+                filter === f
+                  ? "bg-[var(--color-primary)] text-[var(--color-primary-foreground)]"
+                  : "border border-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.70)] hover:border-[rgba(255,255,255,0.24)]"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {reviewError && (
+        <div className="mt-[var(--space-5)] rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-4)] py-[0.6rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[#FCA5A5]">
+          Review failed: {reviewError}
+        </div>
+      )}
+      {errorMessage && (
+        <div className="mt-[var(--space-5)] rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-4)] py-[0.6rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[#FCA5A5]">
+          {errorMessage}
+        </div>
+      )}
+
+      <div className="mt-[var(--space-6)] flex flex-col gap-[var(--space-4)]">
+        {isLoading && (
+          <div className="font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
+            Loading…
+          </div>
+        )}
+
+        {data && data.applications.length === 0 && (
+          <div className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-transparent px-[var(--space-6)] py-[var(--space-6)] text-center font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
+            No {filter === "all" ? "" : filter} applications.
+          </div>
+        )}
+
+        {data?.applications.map((app) => (
+          <article
+            key={app.id}
+            className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-transparent p-[var(--space-5)]"
+          >
+            <header className="flex items-start justify-between gap-[var(--space-4)]">
+              <div>
+                <h2 className="font-[var(--font-display)] text-[1.15rem] font-bold leading-none tracking-[-0.02em] text-[var(--color-text-primary)]">
+                  {app.firstName}
+                </h2>
+                <p className="mt-[0.25rem] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
+                  {app.email} · {app.campaignName} · applied {new Date(app.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+
+              <StatusBadge status={app.status} />
+            </header>
+
+            <dl className="mt-[var(--space-4)] grid gap-[var(--space-3)] text-[var(--text-sm)] text-[rgba(255,255,255,0.78)] lg:grid-cols-2">
+              {app.socialProfiles && (
+                <div>
+                  <dt className="text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.45)]">
+                    Socials
+                  </dt>
+                  <dd className="mt-[0.15rem]">{app.socialProfiles}</dd>
+                </div>
+              )}
+              {app.audienceSize && (
+                <div>
+                  <dt className="text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.45)]">
+                    Audience
+                  </dt>
+                  <dd className="mt-[0.15rem]">{app.audienceSize}</dd>
+                </div>
+              )}
+              {app.experience && (
+                <div className="lg:col-span-2">
+                  <dt className="text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.45)]">
+                    Experience
+                  </dt>
+                  <dd className="mt-[0.15rem]">{app.experience}</dd>
+                </div>
+              )}
+              <div className="lg:col-span-2">
+                <dt className="text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.45)]">
+                  Why they're a fit
+                </dt>
+                <dd className="mt-[0.15rem] whitespace-pre-line">{app.fitReason}</dd>
+              </div>
+            </dl>
+
+            {app.status === "pending" && (
+              <div className="mt-[var(--space-4)] flex items-center gap-[var(--space-3)]">
+                <button
+                  type="button"
+                  onClick={() => reviewMutation.mutate({ id: app.id, status: "approved" })}
+                  disabled={reviewMutation.isPending}
+                  className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[0.5rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+                >
+                  Approve
+                </button>
+                <button
+                  type="button"
+                  onClick={() => reviewMutation.mutate({ id: app.id, status: "rejected" })}
+                  disabled={reviewMutation.isPending}
+                  className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.18)] px-[var(--space-4)] py-[0.5rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.32)] disabled:opacity-50"
+                >
+                  Reject
+                </button>
+              </div>
+            )}
+
+            {app.status === "approved" && app.affiliateId && (
+              <div className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
+                Approved · affiliate id: <code className="text-[var(--color-text-primary)]">{app.affiliateId}</code>
+              </div>
+            )}
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: "pending" | "approved" | "rejected" }) {
+  const styles = {
+    pending: "border-[rgba(255,255,255,0.18)] bg-[rgba(255,255,255,0.04)] text-[rgba(255,255,255,0.70)]",
+    approved: "border-[rgba(34,197,94,0.30)] bg-[rgba(34,197,94,0.12)] text-[#22C55E]",
+    rejected: "border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.10)] text-[#FCA5A5]",
+  } as const;
+  return (
+    <span
+      className={`inline-flex items-center gap-[0.3rem] rounded-full border px-[0.7rem] py-[0.2rem] font-[var(--font-sans)] text-[var(--text-xs)] font-medium capitalize ${styles[status]}`}
+    >
+      {status}
+    </span>
+  );
+}

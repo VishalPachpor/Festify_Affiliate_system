@@ -1,5 +1,4 @@
 import { apiClient } from "@/services/api/client";
-import { isMockEnabled } from "@/mocks/utils";
 import { salesListResponseSchema, type SalesListResponse, type SalesFilterState } from "../types";
 
 export type GetSalesListParams = {
@@ -11,16 +10,13 @@ export type GetSalesListParams = {
 export async function getSalesList(
   params: GetSalesListParams,
 ): Promise<SalesListResponse> {
-  if (isMockEnabled()) {
-    const { mockGetSalesList } = await import("@/mocks/handlers/sales");
-    return mockGetSalesList(params.filters);
-  }
-
   const { tenantId, campaignId, filters } = params;
 
   const raw = await apiClient<unknown>("/sales", {
+    headers: {
+      "x-tenant-id": tenantId,
+    },
     searchParams: {
-      tenantId,
       campaignId,
       page: filters.page,
       pageSize: filters.pageSize,

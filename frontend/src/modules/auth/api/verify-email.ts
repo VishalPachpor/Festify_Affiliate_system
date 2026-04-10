@@ -1,14 +1,10 @@
 import { apiClient } from "@/services/api/client";
-import {
-  verifyEmailResponseSchema,
-  type VerifyEmailResponse,
-} from "../types";
+import { sessionResponseSchema, type SessionResponse } from "../types";
 
-export async function verifyEmail(code: string): Promise<VerifyEmailResponse> {
+export async function verifyEmail(email: string, code: string): Promise<SessionResponse> {
   const raw = await apiClient<unknown>("/auth/verify-email", {
     method: "POST",
-    body: { code },
+    body: { email, code },
   });
-
-  return verifyEmailResponseSchema.parse(raw);
+  return sessionResponseSchema.parse(raw);
 }

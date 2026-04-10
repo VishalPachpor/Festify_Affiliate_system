@@ -1,22 +1,18 @@
 import { apiClient } from "@/services/api/client";
-import { isMockEnabled } from "@/mocks/utils";
 import { assetsResponseSchema, type AssetsResponse, type AssetType } from "../types";
 
 export type GetAssetsParams = {
   tenantId: string;
   type?: AssetType;
+  visibleOnly?: boolean;
 };
 
 export async function getAssets(params: GetAssetsParams): Promise<AssetsResponse> {
-  if (isMockEnabled()) {
-    const { mockGetAssets } = await import("@/mocks/handlers/assets");
-    return mockGetAssets(params.type);
-  }
-
   const raw = await apiClient<unknown>("/assets", {
+    headers: { "x-tenant-id": params.tenantId },
     searchParams: {
-      tenantId: params.tenantId,
       ...(params.type ? { type: params.type } : {}),
+      ...(params.visibleOnly ? { visible: "true" } : {}),
     },
   });
 

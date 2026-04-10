@@ -1,5 +1,4 @@
 import { apiClient } from "@/services/api/client";
-import { isMockEnabled } from "@/mocks/utils";
 import { dashboardSummarySchema, type DashboardSummary } from "../types";
 
 export type GetDashboardSummaryParams = {
@@ -10,14 +9,11 @@ export type GetDashboardSummaryParams = {
 export async function getDashboardSummary(
   params: GetDashboardSummaryParams,
 ): Promise<DashboardSummary> {
-  if (isMockEnabled()) {
-    const { mockGetDashboardSummary } = await import("@/mocks/handlers/dashboard");
-    return mockGetDashboardSummary();
-  }
-
   const raw = await apiClient<unknown>("/dashboard/summary", {
+    headers: {
+      "x-tenant-id": params.tenantId,
+    },
     searchParams: {
-      tenantId: params.tenantId,
       campaignId: params.campaignId,
     },
   });

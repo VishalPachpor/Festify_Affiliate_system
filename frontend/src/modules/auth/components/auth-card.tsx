@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { SocialButton } from "@/components/ui/social-button";
 import { Divider } from "@/components/ui/divider";
 import { Tabs } from "@/components/ui/tabs";
+import { GoogleSignInButton } from "./google-sign-in";
 
 const authTabs = [
   { label: "Login", href: "/sign-in" },
@@ -18,6 +18,8 @@ export function AuthCard({
   footerText,
   footerLinkText,
   footerLinkHref,
+  showGoogle = true,
+  googleMode = "login",
 }: {
   title: string;
   subtitle?: string;
@@ -25,6 +27,8 @@ export function AuthCard({
   footerText: string;
   footerLinkText: string;
   footerLinkHref: string;
+  showGoogle?: boolean;
+  googleMode?: "login" | "affiliate_signup";
 }) {
   return (
     <div className="mx-auto flex w-[min(var(--card-w),90vw)] flex-col items-center gap-[1rem]">
@@ -67,10 +71,12 @@ export function AuthCard({
 
         {/* Google + Divider + Form */}
         <div className="mt-[var(--card-gap)] flex flex-col gap-[var(--space-4)]">
-          <div className="shrink-0 flex flex-col gap-[var(--space-5)]">
-            <SocialButton provider="google" />
-            <Divider label="Or continue with email" />
-          </div>
+          {showGoogle && (
+            <div className="shrink-0 flex flex-col gap-[var(--space-5)]">
+              <GoogleSignInButton mode={googleMode} />
+              <Divider label="Or continue with email" />
+            </div>
+          )}
 
           {/* Form */}
           {children}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useTenant } from "@/modules/tenant-shell";
+import { useAuth } from "@/modules/auth";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,16 @@ function IconCommissions() {
   );
 }
 
+function IconIntegrations() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="2" width="5" height="5" rx="1" />
+      <rect x="9" y="9" width="5" height="5" rx="1" />
+      <path d="M7 4.5h3a1.5 1.5 0 011.5 1.5v3" />
+    </svg>
+  );
+}
+
 function IconSettings() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -95,6 +106,7 @@ function isNavActive(href: string, pathname: string): boolean {
 export function AdminSidebar() {
   const pathname = usePathname();
   const { tenant } = useTenant();
+  const { user } = useAuth();
   const brandSubtitle = tenant?.name?.startsWith("TOKEN2049")
     ? (() => {
         const subtitle = tenant.name.replace(/^TOKEN2049\s*/i, "").trim();
@@ -155,7 +167,7 @@ export function AdminSidebar() {
       {/* User footer */}
       <div className="mx-[1.5rem] h-px bg-[var(--color-border)]" />
       <Link
-        href="/admin/profile"
+        href="/admin/settings"
         className="flex items-center gap-[var(--space-3)] px-[1.15rem] py-[1.05rem] transition-colors duration-[var(--duration-normal)] hover:bg-[var(--color-surface-ghost-hover)]"
       >
         <div
@@ -163,15 +175,15 @@ export function AdminSidebar() {
           aria-hidden="true"
         >
           <span className="font-[var(--font-sans)] font-semibold text-[var(--text-xs)] text-[var(--color-primary-foreground)]">
-            JD
+            {user?.fullName?.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() ?? "??"}
           </span>
         </div>
         <div className="flex-1 min-w-0">
           <p className="truncate font-[var(--font-sans)] font-medium text-[0.84rem] leading-[1.05rem] text-[var(--color-text-primary)]">
-            John Doe
+            {user?.fullName ?? "User"}
           </p>
           <p className="truncate font-[var(--font-sans)] text-[0.7rem] leading-[0.9rem] text-[var(--color-text-secondary)]">
-            Gold Tier
+            {user?.role === "admin" ? "Organizer Admin" : "Affiliate"}
           </p>
         </div>
         <span

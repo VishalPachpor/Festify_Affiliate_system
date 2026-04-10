@@ -1,11 +1,12 @@
 "use client";
 
 import { useTenant } from "@/modules/tenant-shell";
-
-const MOCK_NAME = "John";
+import { useAuth } from "@/modules/auth";
 
 export function HeroBanner() {
   const { tenant } = useTenant();
+  const { user } = useAuth();
+  const firstName = user?.fullName?.split(/\s+/)[0] ?? "there";
   const eventName = tenant?.name?.startsWith("TOKEN2049")
     ? (tenant.name.includes("2026") ? tenant.name : `${tenant.name} 2026`).replace(/\s+/g, " ").trim()
     : tenant?.name ?? "TOKEN2049 Singapore 2026";
@@ -24,7 +25,7 @@ export function HeroBanner() {
         }}
       />
       <h1 className="font-[var(--font-display)] text-[2.55rem] font-bold leading-none tracking-[-0.04em] text-[var(--color-text-primary)]">
-        Welcome Back, {MOCK_NAME}!
+        Welcome Back, {firstName}!
       </h1>
       <p
         aria-live="polite"

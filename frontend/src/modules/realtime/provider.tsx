@@ -1,24 +1,15 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { useTenant } from "@/modules/tenant-shell";
-import { useEventBridge } from "./use-event-bridge";
 
 /**
- * RealtimeProvider — activates the SSE event bridge when a tenant is resolved.
- * Must be rendered inside QueryProvider and TenantProvider.
+ * RealtimeProvider — placeholder for an SSE event bridge.
+ *
+ * The backend does not have a /api/events/stream endpoint yet, so the
+ * bridge is disabled to stop 404 spam in the network tab. Re-enable
+ * RealtimeBridge when the backend ships the SSE route — the hook
+ * (use-event-bridge.ts) is already written and ready to connect.
  */
-function RealtimeBridge() {
-  const { tenant } = useTenant();
-  useEventBridge(tenant?.id);
-  return null;
-}
-
 export function RealtimeProvider({ children }: { children: ReactNode }) {
-  return (
-    <>
-      <RealtimeBridge />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }

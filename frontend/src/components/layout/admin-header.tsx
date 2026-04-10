@@ -1,6 +1,9 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { NotificationBell } from "./notification-bell";
+import { UserMenu } from "./user-menu";
 
 function IconSearch() {
   return (
@@ -11,32 +14,61 @@ function IconSearch() {
   );
 }
 
-function IconBell() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5.4 7.8a3.6 3.6 0 017.2 0c0 2.7.9 3.6.9 3.6H4.5s.9-.9.9-3.6z" />
-      <path d="M9 14.4a1.8 1.8 0 01-1.8-1.8h3.6A1.8 1.8 0 019 14.4z" />
-    </svg>
-  );
-}
-
 const PAGE_TITLES: Record<string, string> = {
-  "/admin":             "Admin Dashboard",
-  "/admin/affiliates":  "Affiliates",
-  "/admin/materials":   "Materials",
-  "/admin/milestones":  "Milestones",
-  "/admin/commissions": "Commissions",
-  "/admin/profile":     "Profile",
-  "/admin/settings":    "Settings",
+  "/admin":              "Admin Dashboard",
+  "/admin/applications": "Applications",
+  "/admin/affiliates":   "Affiliates",
+  "/admin/materials":    "Materials",
+  "/admin/milestones":   "Milestones",
+  "/admin/commissions":  "Commissions",
+  "/admin/integrations": "Integrations",
+  "/admin/profile":      "Profile",
+  "/admin/settings":     "Settings",
 };
 
 function getTitle(pathname: string): string {
   return PAGE_TITLES[pathname] ?? "Admin Dashboard";
 }
 
+const SEARCHABLE_PATHS = new Set([
+  "/admin/affiliates",
+  "/admin/commissions",
+]);
+
 export function AdminHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const title = getTitle(pathname);
+  const isSearchable = SEARCHABLE_PATHS.has(pathname);
+  const [, startTransition] = useTransition();
+  const [searchValue, setSearchValue] = useState(searchParams.get("search") ?? "");
+
+  useEffect(() => {
+    setSearchValue(searchParams.get("search") ?? "");
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!isSearchable) return;
+
+    const timeout = window.setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (searchValue.trim()) {
+        params.set("search", searchValue.trim());
+        params.set("page", "1");
+      } else {
+        params.delete("search");
+        params.delete("page");
+      }
+
+      startTransition(() => {
+        const qs = params.toString();
+        router.replace(qs ? `${pathname}?${qs}` : pathname);
+      });
+    }, 200);
+
+    return () => window.clearTimeout(timeout);
+  }, [isSearchable, pathname, router, searchParams, searchValue, startTransition]);
 
   return (
     <header className="flex h-[3.6rem] shrink-0 items-center justify-between border-b border-[var(--color-border)] px-[1.25rem]">
@@ -51,31 +83,18 @@ export function AdminHeader() {
           </span>
           <input
             type="search"
-            placeholder="Search..."
+            placeholder={isSearchable ? "Search..." : "Search unavailable"}
             aria-label="Search"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            disabled={!isSearchable}
             className="h-[2.1rem] w-[9.5rem] rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-input)] pl-[1.9rem] pr-[0.75rem] font-[var(--font-sans)] text-[0.78rem] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-ring)] transition-colors duration-[var(--duration-normal)] md:w-[11rem] xl:w-[12.5rem]"
           />
         </div>
 
-        <button
-          aria-label="Notifications"
-          className="relative flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors duration-[var(--duration-normal)]"
-        >
-          <IconBell />
-          <span
-            aria-hidden="true"
-            className="absolute right-0 top-0 size-[0.375rem] rounded-full bg-[var(--color-error)]"
-          />
-        </button>
+        <NotificationBell recipient="tenant" />
 
-        <div
-          aria-label="User menu"
-          className="flex size-[var(--space-8)] items-center justify-center rounded-full bg-[var(--color-avatar-bg)] cursor-pointer"
-        >
-          <span className="font-[var(--font-sans)] font-semibold text-[var(--text-xs)] text-[var(--color-primary-foreground)]">
-            JD
-          </span>
-        </div>
+        <UserMenu />
       </div>
     </header>
   );

@@ -16,6 +16,7 @@ export function useAffiliatesFilters() {
     page: Number(searchParams.get("page")) || DEFAULT_PAGE,
     pageSize: Number(searchParams.get("pageSize")) || DEFAULT_PAGE_SIZE,
     status: (searchParams.get("status") as AffiliateStatus) || undefined,
+    tier: (searchParams.get("tier") as AffiliatesFilterState["tier"]) || undefined,
     search: searchParams.get("search") || undefined,
     sortBy: (searchParams.get("sortBy") as AffiliatesFilterState["sortBy"]) || undefined,
     sortOrder: (searchParams.get("sortOrder") as AffiliatesFilterState["sortOrder"]) || undefined,

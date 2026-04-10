@@ -7,10 +7,18 @@ import type { AssetType } from "../types";
 
 const CAMPAIGN_PLACEHOLDER = "default";
 
-export function useAssets(tenantId: string | undefined, type?: AssetType) {
+export function useAssets(
+  tenantId: string | undefined,
+  type?: AssetType,
+  options?: { visibleOnly?: boolean },
+) {
+  const visibleOnly = options?.visibleOnly ?? false;
   return useQuery({
-    queryKey: assetKeys.list(tenantId ?? "", CAMPAIGN_PLACEHOLDER, type ? { type } : undefined),
-    queryFn: () => getAssets({ tenantId: tenantId!, type }),
+    queryKey: [
+      ...assetKeys.list(tenantId ?? "", CAMPAIGN_PLACEHOLDER, type ? { type } : undefined),
+      visibleOnly ? "visible" : "all",
+    ],
+    queryFn: () => getAssets({ tenantId: tenantId!, type, visibleOnly }),
     enabled: !!tenantId,
   });
 }

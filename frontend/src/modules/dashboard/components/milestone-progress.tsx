@@ -33,11 +33,15 @@ export function MilestoneProgress() {
   const { data, isLoading } = useMilestoneProgress(tenant?.id);
 
   if (isLoading) return <MilestoneSkeleton />;
+  if (!data?.nextTier) {
+    // All tiers unlocked or no milestones defined — show nothing.
+    return null;
+  }
 
-  const current = data?.currentAmount ?? 0;
-  const target = data?.targetAmount ?? 1;
-  const currency = data?.currency ?? "USD";
-  const tierName = data?.tierName ?? "Gold";
+  const current = data.currentRevenue ?? 0;
+  const target = data.nextTierTarget || 1;
+  const currency = data.currency ?? "USD";
+  const tierName = data.nextTier.charAt(0).toUpperCase() + data.nextTier.slice(1);
 
   const pct = Math.min(100, Math.round((current / target) * 100));
   const remaining = target - current;

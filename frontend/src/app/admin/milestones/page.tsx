@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardContainer } from "@/modules/dashboard/components/dashboard-layout";
 import { DashboardStageCanvas } from "@/modules/dashboard/components/dashboard-stage-canvas";
+import { useTenant } from "@/modules/tenant-shell";
+import { useMilestoneTiers } from "@/modules/milestones";
+import type { MilestoneTier } from "@/modules/milestones";
+import { apiClient } from "@/services/api/client";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -29,14 +34,18 @@ const TIER_PRESETS: Record<string, { tileText: string; tileBorder: string; tileB
   platinum: { tileText: "#E2E4EB", tileBorder: "#8C909D", tileBg: "rgba(226,228,235,0.12)" },
 };
 
-// ── Initial data ──────────────────────────────────────────────────────────────
-
-const INITIAL_MILESTONES: Milestone[] = [
-  { id: "bronze", letter: "B", name: "Bronze", description: "Event VIP pass upgrade", threshold: 1000, unlockType: "Auto-unlock", ...TIER_PRESETS.bronze },
-  { id: "silver", letter: "S", name: "Silver", description: "Backstage / speaker lounge access", threshold: 5000, unlockType: "Auto-unlock", ...TIER_PRESETS.silver },
-  { id: "gold", letter: "G", name: "Gold", description: "Speaking / panel opportunity", threshold: 10000, unlockType: "Locked", ...TIER_PRESETS.gold },
-  { id: "platinum", letter: "P", name: "Platinum", description: "Revenue share increase to 15%", threshold: 25000, unlockType: "Locked", ...TIER_PRESETS.platinum },
-];
+function tierToMilestone(tier: MilestoneTier): Milestone {
+  const preset = TIER_PRESETS[tier.name.toLowerCase()] ?? TIER_PRESETS.bronze;
+  return {
+    id: tier.id,
+    letter: tier.letter,
+    name: tier.name,
+    description: tier.description,
+    threshold: tier.targetAmount,
+    unlockType: tier.unlocked ? "Auto-unlock" : "Locked",
+    ...preset,
+  };
+}
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 
@@ -253,34 +262,113 @@ function AddMilestoneModal({
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function AdminMilestonesPage() {
-  const [milestones, setMilestones] = useState<Milestone[]>(INITIAL_MILESTONES);
+  const queryClient = useQueryClient();
+  const { tenant } = useTenant();
+  const { data: tiersData } = useMilestoneTiers(tenant?.id);
+
+  const apiMilestones = (tiersData?.tiers ?? []).map(tierToMilestone);
+  const milestones = apiMilestones;
   const [showModal, setShowModal] = useState(false);
+  const [drafts, setDrafts] = useState<Record<string, { threshold: string; name: string; description: string }>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setDrafts((prev) => {
+      const next: Record<string, { threshold: string; name: string; description: string }> = {};
+      for (const m of apiMilestones) {
+        next[m.id] = prev[m.id] ?? { threshold: formatCurrency(m.threshold), name: m.name, description: m.description };
+      }
+      return next;
+    });
+  }, [tiersData]);
+
+  const invalidateMilestones = () =>
+    queryClient.invalidateQueries({
+      predicate: (query) => query.queryKey.includes("milestones"),
+    });
+
+  const addMutation = useMutation({
+    mutationFn: (data: { name: string; threshold: number; reward: string }) =>
+      apiClient("/milestones", {
+        method: "POST",
+        body: {
+          name: data.name,
+          description: data.reward,
+          targetAmount: data.threshold,
+          letter: data.name.charAt(0).toUpperCase(),
+        },
+      }),
+    onSuccess: async () => {
+      setShowModal(false);
+      await invalidateMilestones();
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, ...body }: { id: string; targetAmount?: number; name?: string; description?: string }) =>
+      apiClient(`/milestones/${id}`, {
+        method: "PATCH",
+        body,
+      }),
+    onSuccess: async () => {
+      setEditingId(null);
+      await invalidateMilestones();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiClient(`/milestones/${id}`, {
+        method: "DELETE",
+      }),
+    onSuccess: async () => {
+      await invalidateMilestones();
+    },
+  });
 
   function handleAdd(data: { name: string; threshold: number; reward: string; unlockType: UnlockType }) {
-    const letter = data.name.charAt(0).toUpperCase();
-    const preset = TIER_PRESETS.bronze; // default style for new tiers
-    const newMilestone: Milestone = {
-      id: `custom-${Date.now()}`,
-      letter,
+    void addMutation.mutateAsync({
       name: data.name,
-      description: data.reward,
       threshold: data.threshold,
-      unlockType: data.unlockType,
-      ...preset,
-    };
-    setMilestones((prev) => [...prev, newMilestone]);
-    setShowModal(false);
+      reward: data.reward,
+    });
   }
 
   function handleDelete(id: string) {
-    setMilestones((prev) => prev.filter((m) => m.id !== id));
+    void deleteMutation.mutateAsync(id);
   }
 
-  function handleThresholdChange(id: string, value: string) {
-    const num = Number(value.replace(/[^0-9]/g, ""));
-    setMilestones((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, threshold: num } : m)),
-    );
+  function updateDraft(id: string, field: "threshold" | "name" | "description", value: string) {
+    setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+  }
+
+  function handleSave(m: Milestone) {
+    const draft = drafts[m.id];
+    if (!draft) return;
+
+    const numericThreshold = Number(draft.threshold.replace(/[^0-9]/g, ""));
+    const body: Record<string, unknown> = {};
+
+    if (draft.name !== m.name) body.name = draft.name;
+    if (draft.description !== m.description) body.description = draft.description;
+    if (Number.isFinite(numericThreshold) && numericThreshold > 0 && numericThreshold !== m.threshold) {
+      body.targetAmount = numericThreshold;
+    }
+
+    if (Object.keys(body).length === 0) {
+      setEditingId(null);
+      return;
+    }
+
+    void updateMutation.mutateAsync({ id: m.id, ...body });
+  }
+
+  function handleCancel(m: Milestone) {
+    setDrafts((prev) => ({
+      ...prev,
+      [m.id]: { threshold: formatCurrency(m.threshold), name: m.name, description: m.description },
+    }));
+    setEditingId(null);
   }
 
   return (
@@ -308,10 +396,14 @@ export default function AdminMilestonesPage() {
 
         {/* Milestone cards */}
         <div className="flex flex-col gap-[var(--space-4)]">
-          {milestones.map((m) => (
+          {milestones.map((m) => {
+            const isEditing = editingId === m.id;
+            const draft = drafts[m.id];
+            return (
             <article
               key={m.id}
-              className="rounded-[0.45rem] border border-[rgba(255,255,255,0.08)] bg-transparent px-[1.5rem] py-[1.3rem]"
+              className="cursor-pointer rounded-[0.45rem] border border-[rgba(255,255,255,0.08)] bg-transparent px-[1.5rem] py-[1.3rem] transition-colors hover:border-[rgba(255,255,255,0.16)]"
+              onClick={() => { if (!isEditing) setEditingId(m.id); }}
             >
               <div className="flex items-start justify-between">
                 {/* Left: tile + info */}
@@ -322,42 +414,97 @@ export default function AdminMilestonesPage() {
                     tileBorder={m.tileBorder}
                     tileBg={m.tileBg}
                   />
-                  <div>
-                    <h3 className="font-[var(--font-display)] text-[1.35rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
-                      {m.name}
-                    </h3>
-                    <p className="mt-[0.25rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
-                      {m.description}
-                    </p>
-
-                    {/* Revenue threshold input */}
-                    <div className="mt-[0.75rem]">
-                      <label className={LABEL_CLASS}>Revenue Threshold ($)</label>
-                      <input
-                        type="text"
-                        value={formatCurrency(m.threshold)}
-                        onChange={(e) => handleThresholdChange(m.id, e.target.value)}
-                        className={`mt-[0.35rem] max-w-[16rem] ${INPUT_CLASS}`}
-                      />
-                    </div>
+                  <div onClick={isEditing ? (e) => e.stopPropagation() : undefined}>
+                    {isEditing ? (
+                      <>
+                        <div className="flex flex-col gap-[0.4rem]">
+                          <label className={LABEL_CLASS}>Tier Name</label>
+                          <input
+                            type="text"
+                            value={draft?.name ?? m.name}
+                            onChange={(e) => updateDraft(m.id, "name", e.target.value)}
+                            className={`max-w-[20rem] ${INPUT_CLASS}`}
+                          />
+                        </div>
+                        <div className="mt-[0.6rem] flex flex-col gap-[0.4rem]">
+                          <label className={LABEL_CLASS}>Reward Description</label>
+                          <input
+                            type="text"
+                            value={draft?.description ?? m.description}
+                            onChange={(e) => updateDraft(m.id, "description", e.target.value)}
+                            className={`max-w-[20rem] ${INPUT_CLASS}`}
+                          />
+                        </div>
+                        <div className="mt-[0.6rem] flex flex-col gap-[0.4rem]">
+                          <label className={LABEL_CLASS}>Revenue Threshold ($)</label>
+                          <input
+                            type="text"
+                            value={draft?.threshold ?? formatCurrency(m.threshold)}
+                            onChange={(e) => updateDraft(m.id, "threshold", e.target.value)}
+                            className={`max-w-[16rem] ${INPUT_CLASS}`}
+                          />
+                        </div>
+                        <div className="mt-[0.75rem] flex gap-[var(--space-3)]">
+                          <button
+                            type="button"
+                            onClick={() => handleSave(m)}
+                            disabled={updateMutation.isPending}
+                            className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-5)] py-[0.4rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+                          >
+                            {updateMutation.isPending ? "Saving..." : "Save"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleCancel(m)}
+                            className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-5)] py-[0.4rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="font-[var(--font-display)] text-[1.35rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
+                          {m.name}
+                        </h3>
+                        <p className="mt-[0.25rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
+                          {m.description}
+                        </p>
+                        <p className="mt-[0.5rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">
+                          Threshold: {formatCurrency(m.threshold)}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingId(m.id);
+                          }}
+                          className="mt-[0.3rem] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)] underline decoration-[rgba(255,255,255,0.22)] underline-offset-[0.15rem] transition-colors hover:text-[var(--color-text-primary)]"
+                        >
+                          Click to edit
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
                 {/* Right: badge + delete */}
-                <div className="flex items-center gap-[var(--space-3)]">
+                <div className="flex items-center gap-[var(--space-3)]" onClick={(e) => e.stopPropagation()}>
                   <UnlockBadge type={m.unlockType} />
                   <button
                     type="button"
                     onClick={() => handleDelete(m.id)}
                     aria-label={`Delete ${m.name}`}
-                    className="flex items-center justify-center text-[#EF4444] transition-colors hover:text-[#FF6B6B]"
+                    disabled={m.unlockType !== "Locked" || deleteMutation.isPending}
+                    className="flex items-center justify-center text-[#EF4444] transition-colors hover:text-[#FF6B6B] disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <IconTrash />
                   </button>
                 </div>
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
       </DashboardContainer>
 

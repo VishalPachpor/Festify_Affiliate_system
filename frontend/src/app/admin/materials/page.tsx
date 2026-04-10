@@ -3,30 +3,34 @@
 import { useState } from "react";
 import { DashboardContainer } from "@/modules/dashboard/components/dashboard-layout";
 import { DashboardStageCanvas } from "@/modules/dashboard/components/dashboard-stage-canvas";
+import { useTenant } from "@/modules/tenant-shell";
+import {
+  useAssets,
+  useDeleteAsset,
+  useSetAssetVisibility,
+} from "@/modules/assets";
+import type { AssetType } from "@/modules/assets";
+import { UploadAssetModal } from "@/modules/assets/components/upload-asset-modal";
 
-// ── Types & mock data ─────────────────────────────────────────────────────────
+type MaterialType = AssetType;
 
-type MaterialType = "banner" | "email" | "social" | "copy" | "guide";
+type ThumbIcon = "image" | "email" | "document" | "download";
 
-type Material = {
-  id: string;
-  title: string;
-  type: MaterialType;
-  size: string;
-  visible: boolean;
-  addedAt: string;
-  thumbnailGradient: string;
-  icon: "image" | "email" | "document" | "download";
+const TYPE_TO_ICON: Record<MaterialType, ThumbIcon> = {
+  banner: "image",
+  email: "email",
+  social: "image",
+  copy: "document",
+  guide: "download",
 };
 
-const MATERIALS: Material[] = [
-  { id: "1", title: "TOKEN2049 Hero Banner", type: "banner", size: "2.4 MB", visible: true, addedAt: "2026-03-25", thumbnailGradient: "linear-gradient(135deg, #4A3728 0%, #6B5D52 50%, #7A6E8A 100%)", icon: "image" },
-  { id: "2", title: "Email Invite Template", type: "email", size: "156 KB", visible: true, addedAt: "2026-03-25", thumbnailGradient: "linear-gradient(135deg, #1A4A4A 0%, #2B6B6B 50%, #3A7A7A 100%)", icon: "email" },
-  { id: "3", title: "Social Media Square", type: "social", size: "1.8 MB", visible: true, addedAt: "2026-03-25", thumbnailGradient: "linear-gradient(135deg, #5A3A5A 0%, #7A4A6A 50%, #9A6A8A 100%)", icon: "image" },
-  { id: "4", title: "Promo Copy Snippets", type: "copy", size: "24 KB", visible: true, addedAt: "2026-03-25", thumbnailGradient: "linear-gradient(135deg, #4A3A28 0%, #5A4A38 50%, #6A5A48 100%)", icon: "document" },
-  { id: "5", title: "Affiliate Best Practices", type: "guide", size: "1.2 MB", visible: true, addedAt: "2026-03-25", thumbnailGradient: "linear-gradient(135deg, #1A3A4A 0%, #2A5A6A 50%, #3A6A7A 100%)", icon: "download" },
-  { id: "6", title: "Instagram Story Template", type: "social", size: "980 KB", visible: true, addedAt: "2026-03-25", thumbnailGradient: "linear-gradient(135deg, #4A3A6A 0%, #6A4A8A 50%, #8A6A9A 100%)", icon: "image" },
-];
+const TYPE_TO_GRADIENT: Record<MaterialType, string> = {
+  banner: "linear-gradient(135deg, #4A3728 0%, #6B5D52 50%, #7A6E8A 100%)",
+  email: "linear-gradient(135deg, #1A4A4A 0%, #2B6B6B 50%, #3A7A7A 100%)",
+  social: "linear-gradient(135deg, #5A3A5A 0%, #7A4A6A 50%, #9A6A8A 100%)",
+  copy: "linear-gradient(135deg, #4A3A28 0%, #5A4A38 50%, #6A5A48 100%)",
+  guide: "linear-gradient(135deg, #1A3A4A 0%, #2A5A6A 50%, #3A6A7A 100%)",
+};
 
 const FILTER_TABS: { label: string; value: MaterialType | "all" }[] = [
   { label: "All", value: "all" },
@@ -126,7 +130,7 @@ function ThumbIconDownload() {
   );
 }
 
-const THUMB_ICONS: Record<Material["icon"], () => React.JSX.Element> = {
+const THUMB_ICONS: Record<ThumbIcon, () => React.JSX.Element> = {
   image: ThumbIconImage,
   email: ThumbIconEmail,
   document: ThumbIconDocument,
@@ -157,16 +161,60 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void 
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
+function formatAddedAt(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
 export default function AdminMaterialsPage() {
+  const { tenant } = useTenant();
   const [activeFilter, setActiveFilter] = useState<MaterialType | "all">("all");
-  const [materials, setMaterials] = useState(MATERIALS);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
-  const filtered = activeFilter === "all" ? materials : materials.filter((m) => m.type === activeFilter);
+  // Real list. The previous version reached around to apiClient with the wrong
+  // URL ("/tenants/<id>/assets") and silently 404'd — useAssets() goes through
+  // the canonical /api/assets route with the x-tenant-id header.
+  const { data: assetsData, isLoading } = useAssets(
+    tenant?.id,
+    activeFilter === "all" ? undefined : activeFilter,
+  );
+  const deleteMutation = useDeleteAsset();
+  const visibilityMutation = useSetAssetVisibility();
 
-  function toggleVisibility(id: string) {
-    setMaterials((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, visible: !m.visible } : m)),
-    );
+  const assets = assetsData?.assets ?? [];
+
+  const materials = assets.map((a) => ({
+    id: a.id,
+    title: a.title,
+    type: a.type,
+    size: a.sizeLabel,
+    visible: a.visible,
+    fileUrl: a.fileUrl,
+    mimeType: a.mimeType,
+    addedAt: formatAddedAt(a.addedAt),
+    thumbnailGradient: TYPE_TO_GRADIENT[a.type] ?? TYPE_TO_GRADIENT.banner,
+    icon: TYPE_TO_ICON[a.type] ?? ("image" as ThumbIcon),
+    isImage: a.mimeType.startsWith("image/"),
+  }));
+
+  // Filter is enforced server-side via useAssets(type), so the array is
+  // already narrowed when activeFilter !== "all".
+  const filtered = materials;
+
+  function handleToggleVisibility(id: string, current: boolean) {
+    visibilityMutation.mutate({ assetId: id, visible: !current });
+  }
+
+  function handleDelete(id: string) {
+    if (typeof window !== "undefined" && !window.confirm("Delete this asset? This cannot be undone.")) {
+      return;
+    }
+    deleteMutation.mutate(id);
+  }
+
+  function handleDownload(fileUrl: string) {
+    if (typeof window !== "undefined") window.open(fileUrl, "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -184,6 +232,7 @@ export default function AdminMaterialsPage() {
           </div>
           <button
             type="button"
+            onClick={() => setUploadOpen(true)}
             className="flex items-center gap-[0.5rem] rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
           >
             <IconUpload />
@@ -213,6 +262,15 @@ export default function AdminMaterialsPage() {
           })}
         </div>
 
+        {/* Empty state */}
+        {!isLoading && filtered.length === 0 && (
+          <div className="rounded-[var(--radius)] border border-dashed border-[rgba(255,255,255,0.14)] bg-transparent px-[var(--space-6)] py-[var(--space-8)] text-center">
+            <p className="font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.55)]">
+              No materials yet. Click <strong className="text-[var(--color-text-primary)]">Upload Asset</strong> to share your first banner, email template, or guide with affiliates.
+            </p>
+          </div>
+        )}
+
         {/* Material cards grid */}
         <div className="grid grid-cols-1 gap-[var(--space-5)] md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((mat) => {
@@ -224,10 +282,18 @@ export default function AdminMaterialsPage() {
               >
                 {/* Thumbnail */}
                 <div
-                  className="flex h-[10rem] items-center justify-center"
+                  className="relative flex h-[10rem] items-center justify-center overflow-hidden"
                   style={{ background: mat.thumbnailGradient }}
                 >
-                  <ThumbIcon />
+                  {mat.isImage ? (
+                    <img
+                      src={mat.fileUrl}
+                      alt={mat.title}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  ) : (
+                    <ThumbIcon />
+                  )}
                 </div>
 
                 {/* Content */}
@@ -257,7 +323,7 @@ export default function AdminMaterialsPage() {
                     </span>
                     <Toggle
                       checked={mat.visible}
-                      onChange={() => toggleVisibility(mat.id)}
+                      onChange={() => handleToggleVisibility(mat.id, mat.visible)}
                     />
                   </div>
 
@@ -265,6 +331,7 @@ export default function AdminMaterialsPage() {
                   <div className="mt-[0.7rem] flex items-center gap-[var(--space-2)]">
                     <button
                       type="button"
+                      onClick={() => handleDownload(mat.fileUrl)}
                       className="flex flex-1 items-center justify-center gap-[0.4rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-3)] py-[0.4rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)] hover:bg-[rgba(255,255,255,0.04)]"
                     >
                       <IconDownload />
@@ -272,6 +339,7 @@ export default function AdminMaterialsPage() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => handleDownload(mat.fileUrl)}
                       aria-label="Preview"
                       className="flex items-center justify-center rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] p-[0.4rem] text-[rgba(255,255,255,0.40)] transition-colors hover:text-[rgba(255,255,255,0.80)] hover:border-[rgba(255,255,255,0.20)]"
                     >
@@ -279,8 +347,10 @@ export default function AdminMaterialsPage() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => handleDelete(mat.id)}
+                      disabled={deleteMutation.isPending}
                       aria-label="Delete"
-                      className="flex items-center justify-center rounded-[var(--radius)] border border-[rgba(239,68,68,0.25)] p-[0.4rem] text-[#EF4444] transition-colors hover:bg-[rgba(239,68,68,0.10)] hover:border-[rgba(239,68,68,0.40)]"
+                      className="flex items-center justify-center rounded-[var(--radius)] border border-[rgba(239,68,68,0.25)] p-[0.4rem] text-[#EF4444] transition-colors hover:bg-[rgba(239,68,68,0.10)] hover:border-[rgba(239,68,68,0.40)] disabled:opacity-40"
                     >
                       <IconTrash />
                     </button>
@@ -301,6 +371,8 @@ export default function AdminMaterialsPage() {
           })}
         </div>
       </DashboardContainer>
+
+      <UploadAssetModal open={uploadOpen} onClose={() => setUploadOpen(false)} />
     </DashboardStageCanvas>
   );
 }

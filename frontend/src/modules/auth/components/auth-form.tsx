@@ -36,7 +36,7 @@ export function AuthSignUpForm() {
         )}
       </FormField>
 
-      <FormField label="Affiliate Email" error={errors.email?.message} required>
+      <FormField label="Email" error={errors.email?.message} required>
         {(a11y) => (
           <TextInput
             {...a11y}

@@ -16,6 +16,8 @@ export const affiliateSchema = z.object({
   totalSales: z.number(),
   currency: z.string(),
   joinedAt: z.string(),
+  referralCode: z.string().nullable().optional(),
+  tier: z.string().nullable().optional(),
 });
 
 export type Affiliate = z.infer<typeof affiliateSchema>;
@@ -49,6 +51,7 @@ export type AffiliatesFilterState = {
   page: number;
   pageSize: number;
   status?: AffiliateStatus;
+  tier?: "bronze" | "silver" | "gold" | "platinum" | "none";
   search?: string;
   sortBy?: "joinedAt" | "totalRevenue" | "totalSales";
   sortOrder?: "asc" | "desc";

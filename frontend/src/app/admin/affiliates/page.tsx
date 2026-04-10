@@ -3,40 +3,15 @@
 import { useState } from "react";
 import { DashboardContainer } from "@/modules/dashboard/components/dashboard-layout";
 import { DashboardStageCanvas } from "@/modules/dashboard/components/dashboard-stage-canvas";
+import { useTenant } from "@/modules/tenant-shell";
+import { useAffiliatesList } from "@/modules/affiliates/hooks/use-affiliates-list";
+import { useAffiliatesFilters } from "@/modules/affiliates/hooks/use-affiliates-filters";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@/services/api/client";
+import type { Affiliate } from "@/modules/affiliates/types";
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
-
-type AffiliateRow = {
-  id: string;
-  initials: string;
-  avatarColor: string;
-  name: string;
-  email: string;
-  referralCode: string;
-  tier: "platinum" | "gold" | "silver" | "bronze" | "none";
-  referrals: number | null;
-  revenue: number | null;
-  commissionDue: number | null;
-  status: "active" | "pending" | "rejected";
-};
-
-const ALL_AFFILIATES: AffiliateRow[] = [
-  { id: "1", initials: "SC", avatarColor: "#C4A24D", name: "Sarah Chen", email: "sarah.chen@email.com", referralCode: "SARAH2049", tier: "platinum", referrals: 87, revenue: 43500, commissionDue: 4350, status: "active" },
-  { id: "2", initials: "MW", avatarColor: "#C4A24D", name: "Michael Wong", email: "michael.wong@email.com", referralCode: "MWONG2049", tier: "gold", referrals: 64, revenue: 32000, commissionDue: 3200, status: "active" },
-  { id: "3", initials: "MW", avatarColor: "#C4A24D", name: "Emily Rodriguez", email: "emily.r@email.com", referralCode: "EMILY2049", tier: "gold", referrals: 52, revenue: 26000, commissionDue: 2600, status: "active" },
-  { id: "4", initials: "DK", avatarColor: "#C4A24D", name: "David Kim", email: "david.kim@email.com", referralCode: "DKIM2049", tier: "silver", referrals: 41, revenue: 20500, commissionDue: 2050, status: "active" },
-  { id: "5", initials: "LT", avatarColor: "#C4A24D", name: "Lisa Tan", email: "lisa.tan@email.com", referralCode: "LTAN2049", tier: "none", referrals: null, revenue: null, commissionDue: null, status: "pending" },
-  { id: "6", initials: "LT", avatarColor: "#C4A24D", name: "James Wilson", email: "james.w@email.com", referralCode: "JWILSON49", tier: "bronze", referrals: 12, revenue: 6000, commissionDue: 600, status: "active" },
-  { id: "7", initials: "AP", avatarColor: "#C4A24D", name: "Ana Patel", email: "ana.patel@email.com", referralCode: "APATEL49", tier: "silver", referrals: 38, revenue: 19000, commissionDue: 1900, status: "active" },
-  { id: "8", initials: "RJ", avatarColor: "#C4A24D", name: "Ryan Jones", email: "ryan.j@email.com", referralCode: "RJONES49", tier: "gold", referrals: 55, revenue: 27500, commissionDue: 2750, status: "active" },
-  { id: "9", initials: "KL", avatarColor: "#C4A24D", name: "Karen Lee", email: "karen.lee@email.com", referralCode: "KLEE2049", tier: "none", referrals: null, revenue: null, commissionDue: null, status: "pending" },
-  { id: "10", initials: "TM", avatarColor: "#C4A24D", name: "Tom Martinez", email: "tom.m@email.com", referralCode: "TMART49", tier: "bronze", referrals: 8, revenue: 4000, commissionDue: 400, status: "active" },
-  { id: "11", initials: "NW", avatarColor: "#C4A24D", name: "Nina White", email: "nina.w@email.com", referralCode: "NWHITE49", tier: "silver", referrals: 29, revenue: 14500, commissionDue: 1450, status: "active" },
-  { id: "12", initials: "JB", avatarColor: "#C4A24D", name: "Jake Brown", email: "jake.b@email.com", referralCode: "JBROWN49", tier: "none", referrals: null, revenue: null, commissionDue: null, status: "rejected" },
-];
-
-const TOTAL_AFFILIATES = 247;
 const PAGE_SIZE = 6;
+const TIER_FILTERS = ["all", "bronze", "silver", "gold", "platinum", "none"] as const;
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 
@@ -186,7 +161,7 @@ function ReferralCodeBadge({ code }: { code: string }) {
   );
 }
 
-function StatusCell({ status }: { status: AffiliateRow["status"] }) {
+function StatusCell({ status }: { status: "active" | "pending" | "rejected" }) {
   if (status === "active") {
     return (
       <span className="font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.55)]">
@@ -214,11 +189,12 @@ function StatusCell({ status }: { status: AffiliateRow["status"] }) {
   );
 }
 
-function ActionButton({ children, label }: { children: React.ReactNode; label: string }) {
+function ActionButton({ children, label, onClick }: { children: React.ReactNode; label: string; onClick?: () => void }) {
   return (
     <button
       type="button"
       aria-label={label}
+      onClick={onClick}
       className="flex items-center justify-center text-[rgba(255,255,255,0.40)] transition-colors hover:text-[rgba(255,255,255,0.80)]"
     >
       {children}
@@ -229,30 +205,55 @@ function ActionButton({ children, label }: { children: React.ReactNode; label: s
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function AdminAffiliatesPage() {
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [tierFilter, setTierFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
+  const { tenant } = useTenant();
+  const { filters, setFilters } = useAffiliatesFilters();
+  const { data } = useAffiliatesList(tenant?.id, { ...filters, pageSize: PAGE_SIZE });
+  const queryClient = useQueryClient();
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteFeedback, setInviteFeedback] = useState<{ kind: "success" | "error"; message: string } | null>(null);
+  const [selectedAffiliate, setSelectedAffiliate] = useState<Affiliate | null>(null);
 
-  // Filter
-  let filtered = ALL_AFFILIATES;
-  if (search) {
-    const q = search.toLowerCase();
-    filtered = filtered.filter(
-      (a) => a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q) || a.referralCode.toLowerCase().includes(q),
-    );
-  }
-  if (statusFilter !== "all") {
-    filtered = filtered.filter((a) => a.status === statusFilter);
-  }
-  if (tierFilter !== "all") {
-    filtered = filtered.filter((a) => a.tier === tierFilter);
-  }
+  const reviewMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: "approved" | "rejected" }) =>
+      apiClient(`/applications/${id}/status`, {
+        method: "PATCH",
+        body: { status },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["affiliates"] });
+    },
+  });
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const inviteMutation = useMutation({
+    mutationFn: ({ email }: { email: string }) =>
+      apiClient<{ success: boolean; applyUrl: string }>("/affiliates/invite", {
+        method: "POST",
+        body: { email },
+      }),
+    onSuccess: (result, variables) => {
+      setInviteEmail("");
+      setIsInviteOpen(false);
+      setInviteFeedback({
+        kind: "success",
+        message: `Invite sent to ${variables.email}. Application link: ${result.applyUrl}`,
+      });
+    },
+    onError: (error) => {
+      setInviteFeedback({
+        kind: "error",
+        message: error instanceof Error ? error.message : "Failed to send invite",
+      });
+    },
+  });
+
+  const affiliates: Affiliate[] = data?.affiliates ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = data?.totalPages ?? 1;
+  const currentPage = filters.page;
+
   const startItem = (currentPage - 1) * PAGE_SIZE + 1;
-  const endItem = Math.min(currentPage * PAGE_SIZE, filtered.length);
+  const endItem = Math.min(currentPage * PAGE_SIZE, total);
 
   // Page numbers
   const pageNumbers: number[] = [];
@@ -261,6 +262,15 @@ export default function AdminAffiliatesPage() {
   const ep = Math.min(totalPages, sp + maxBtns - 1);
   if (ep - sp < maxBtns - 1) sp = Math.max(1, ep - maxBtns + 1);
   for (let i = sp; i <= ep; i++) pageNumbers.push(i);
+
+  const currentTierFilter = filters.tier ?? "all";
+  const nextTierFilter = TIER_FILTERS[(TIER_FILTERS.indexOf(currentTierFilter) + 1) % TIER_FILTERS.length];
+  const tierLabel =
+    currentTierFilter === "all"
+      ? "All tiers"
+      : currentTierFilter === "none"
+        ? "No tier"
+        : currentTierFilter;
 
   return (
     <DashboardStageCanvas>
@@ -277,12 +287,51 @@ export default function AdminAffiliatesPage() {
           </div>
           <button
             type="button"
+            onClick={() => {
+              setInviteFeedback(null);
+              setIsInviteOpen((open) => !open);
+            }}
             className="flex items-center gap-[0.5rem] rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
           >
             <IconInvite />
             Invite Affiliate
           </button>
         </div>
+
+        {(isInviteOpen || inviteFeedback) && (
+          <div className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.03)] p-[var(--space-4)]">
+            <div className="flex flex-wrap items-end gap-[var(--space-3)]">
+              <label className="flex min-w-[18rem] flex-1 flex-col gap-[0.45rem]">
+                <span className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.55)]">
+                  Affiliate email
+                </span>
+                <input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  className="h-[2.75rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.35)] focus:border-[var(--color-ring)] focus:outline-none"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => inviteMutation.mutate({ email: inviteEmail.trim() })}
+                disabled={!inviteEmail.trim() || inviteMutation.isPending}
+                className="h-[2.75rem] rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-5)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {inviteMutation.isPending ? "Sending..." : "Send invite"}
+              </button>
+            </div>
+            {inviteFeedback && (
+              <p
+                className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)]"
+                style={{ color: inviteFeedback.kind === "success" ? "#86EFAC" : "#FCA5A5" }}
+              >
+                {inviteFeedback.message}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Search + Filters */}
         <div className="flex items-center gap-[var(--space-3)]">
@@ -293,25 +342,25 @@ export default function AdminAffiliatesPage() {
             <input
               type="search"
               placeholder="Search affiliates..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+              value={filters.search ?? ""}
+              onChange={(e) => { setFilters({ search: e.target.value || undefined }); }}
               className="h-[2.5rem] w-full rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] pl-[2.2rem] pr-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.35)] focus:border-[var(--color-ring)] focus:outline-none transition-colors"
             />
           </div>
           <button
             type="button"
-            onClick={() => { setStatusFilter(statusFilter === "all" ? "active" : statusFilter === "active" ? "pending" : "all"); setCurrentPage(1); }}
+            onClick={() => { const next = !filters.status ? "approved" : filters.status === "approved" ? "pending" : undefined; setFilters({ status: next }); }}
             className="flex items-center gap-[0.4rem] rounded-[var(--radius)] bg-[rgba(255,255,255,0.06)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.10)]"
           >
-            {statusFilter === "all" ? "All status" : statusFilter}
+            {!filters.status ? "All status" : filters.status}
             <IconChevronDown />
           </button>
           <button
             type="button"
-            onClick={() => { setTierFilter(tierFilter === "all" ? "platinum" : tierFilter === "platinum" ? "gold" : tierFilter === "gold" ? "silver" : "all"); setCurrentPage(1); }}
+            onClick={() => setFilters({ tier: nextTierFilter === "all" ? undefined : nextTierFilter })}
             className="flex items-center gap-[0.4rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
           >
-            {tierFilter === "all" ? "All tiers" : tierFilter}
+            {tierLabel}
             <IconChevronDown />
           </button>
         </div>
@@ -334,12 +383,14 @@ export default function AdminAffiliatesPage() {
                 </tr>
               </thead>
               <tbody>
-                {paged.map((aff) => (
+                {affiliates.map((aff) => {
+                  const initials = aff.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+                  return (
                   <tr key={aff.id} className="border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
                     {/* Name + email */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] whitespace-nowrap">
                       <div className="flex items-center gap-[0.65rem]">
-                        <Avatar initials={aff.initials} color={aff.avatarColor} />
+                        <Avatar initials={initials} />
                         <div>
                           <p className="font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)]">
                             {aff.name}
@@ -352,44 +403,63 @@ export default function AdminAffiliatesPage() {
                     </td>
                     {/* Referral Code */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] whitespace-nowrap">
-                      <ReferralCodeBadge code={aff.referralCode} />
+                      {aff.referralCode ? (
+                        <ReferralCodeBadge code={aff.referralCode} />
+                      ) : (
+                        <span className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.35)]">--</span>
+                      )}
                     </td>
                     {/* Tier */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] whitespace-nowrap">
-                      <TierBadge tier={aff.tier} />
+                      {aff.tier ? (
+                        <TierBadge tier={aff.tier} />
+                      ) : (
+                        <span className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.35)]">--</span>
+                      )}
                     </td>
                     {/* Referrals */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] text-center whitespace-nowrap text-[rgba(255,255,255,0.60)]">
-                      {aff.referrals ?? "--"}
+                      {aff.totalSales}
                     </td>
                     {/* Revenue */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] whitespace-nowrap text-[#FFFFFF]">
-                      {aff.revenue != null ? formatCurrency(aff.revenue) : "--"}
+                      {formatCurrency(aff.totalRevenue)}
                     </td>
                     {/* Commission Due */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] whitespace-nowrap text-[#22C55E]">
-                      {aff.commissionDue != null ? formatCurrency(aff.commissionDue) : "--"}
+                      {formatCurrency(aff.totalCommission)}
                     </td>
                     {/* Status */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] whitespace-nowrap">
-                      <StatusCell status={aff.status} />
+                      <StatusCell status={aff.status === "approved" ? "active" : aff.status} />
                     </td>
                     {/* Actions */}
                     <td className="py-[var(--space-3)] whitespace-nowrap">
                       <div className="flex items-center gap-[0.5rem]">
-                        <ActionButton label="View"><IconView /></ActionButton>
+                        <ActionButton label="View" onClick={() => setSelectedAffiliate(aff)}><IconView /></ActionButton>
                         {aff.status === "pending" && (
                           <>
-                            <ActionButton label="Approve"><IconApprove /></ActionButton>
-                            <ActionButton label="Reject"><IconReject /></ActionButton>
+                            <ActionButton
+                              label="Approve"
+                              onClick={() => reviewMutation.mutate({ id: aff.id, status: "approved" })}
+                            >
+                              <IconApprove />
+                            </ActionButton>
+                            <ActionButton
+                              label="Reject"
+                              onClick={() => reviewMutation.mutate({ id: aff.id, status: "rejected" })}
+                            >
+                              <IconReject />
+                            </ActionButton>
                           </>
                         )}
-                        <ActionButton label="Edit"><IconEdit /></ActionButton>
-                        <ActionButton label="More"><IconMore /></ActionButton>
+                        <ActionButton label="Edit" onClick={() => setSelectedAffiliate(aff)}><IconEdit /></ActionButton>
+                        <ActionButton label="More" onClick={() => setSelectedAffiliate(aff)}><IconMore /></ActionButton>
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -398,13 +468,13 @@ export default function AdminAffiliatesPage() {
           {totalPages > 0 && (
             <div className="flex items-center justify-between border-t px-[var(--space-6)] py-[var(--space-4)]" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
               <p className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.45)]">
-                Showing {startItem}-{endItem} of {TOTAL_AFFILIATES} affiliates
+                Showing {startItem}-{endItem} of {total} affiliates
               </p>
               <div className="flex gap-[var(--space-2)]">
                 <button
                   type="button"
                   disabled={currentPage <= 1}
-                  onClick={() => setCurrentPage(currentPage - 1)}
+                  onClick={() => setFilters({ page: currentPage - 1 })}
                   className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.60)] transition-colors hover:border-[rgba(255,255,255,0.20)] hover:text-[var(--color-text-primary)] disabled:pointer-events-none disabled:opacity-40"
                 >
                   Previous
@@ -413,7 +483,7 @@ export default function AdminAffiliatesPage() {
                   <button
                     key={num}
                     type="button"
-                    onClick={() => setCurrentPage(num)}
+                    onClick={() => setFilters({ page: num })}
                     className={[
                       "rounded-[var(--radius)] border px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] transition-colors",
                       currentPage === num
@@ -427,7 +497,7 @@ export default function AdminAffiliatesPage() {
                 <button
                   type="button"
                   disabled={currentPage >= totalPages}
-                  onClick={() => setCurrentPage(currentPage + 1)}
+                  onClick={() => setFilters({ page: currentPage + 1 })}
                   className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.60)] transition-colors hover:border-[rgba(255,255,255,0.20)] hover:text-[var(--color-text-primary)] disabled:pointer-events-none disabled:opacity-40"
                 >
                   Next
@@ -437,6 +507,79 @@ export default function AdminAffiliatesPage() {
           )}
         </div>
       </DashboardContainer>
+
+      {/* Affiliate Detail Panel */}
+      {selectedAffiliate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,0,0.60)]" onClick={() => setSelectedAffiliate(null)}>
+          <div
+            className="w-full max-w-[28rem] rounded-[0.75rem] border border-[rgba(255,255,255,0.08)] bg-[#111525] px-[2rem] py-[1.75rem]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="font-[var(--font-display)] text-[1.5rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
+                Affiliate Details
+              </h2>
+              <button
+                type="button"
+                onClick={() => setSelectedAffiliate(null)}
+                className="text-[rgba(255,255,255,0.40)] transition-colors hover:text-[var(--color-text-primary)]"
+                aria-label="Close"
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l10 10M14 4L4 14" /></svg>
+              </button>
+            </div>
+
+            <div className="mt-[1.5rem] flex flex-col gap-[1.25rem]">
+              <div className="flex items-center gap-[0.75rem]">
+                <div className="flex size-[3rem] shrink-0 items-center justify-center rounded-full bg-[var(--color-avatar-bg)]">
+                  <span className="font-[var(--font-sans)] text-[0.9rem] font-semibold text-white">
+                    {selectedAffiliate.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-[var(--font-sans)] text-[var(--text-base)] font-medium text-[var(--color-text-primary)]">{selectedAffiliate.name}</p>
+                  <p className="font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">{selectedAffiliate.email}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-[1rem]">
+                <div>
+                  <p className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.50)]">Status</p>
+                  <p className="mt-[0.25rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">{selectedAffiliate.status === "approved" ? "Active" : selectedAffiliate.status}</p>
+                </div>
+                <div>
+                  <p className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.50)]">Referral Code</p>
+                  <p className="mt-[0.25rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">{selectedAffiliate.referralCode ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.50)]">Revenue</p>
+                  <p className="mt-[0.25rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">{formatCurrency(selectedAffiliate.totalRevenue)}</p>
+                </div>
+                <div>
+                  <p className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.50)]">Commission Due</p>
+                  <p className="mt-[0.25rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[#22C55E]">{formatCurrency(selectedAffiliate.totalCommission)}</p>
+                </div>
+                <div>
+                  <p className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.50)]">Total Sales</p>
+                  <p className="mt-[0.25rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">{selectedAffiliate.totalSales}</p>
+                </div>
+                <div>
+                  <p className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.50)]">Joined</p>
+                  <p className="mt-[0.25rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">{new Date(selectedAffiliate.joinedAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setSelectedAffiliate(null)}
+              className="mt-[1.5rem] w-full rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent py-[0.6rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </DashboardStageCanvas>
   );
 }

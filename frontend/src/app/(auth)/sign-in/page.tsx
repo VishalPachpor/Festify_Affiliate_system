@@ -10,10 +10,12 @@ export const metadata: Metadata = {
 export default function SignInPage() {
   return (
     <AuthCard
-      title="Affiliate Login"
-      footerText="Not an affiliate yet?"
-      footerLinkText="Sign up here"
+      title="Log In"
+      subtitle="Sign in as an organizer or affiliate."
+      footerText="Don't have an account?"
+      footerLinkText="Sign up"
       footerLinkHref="/sign-up"
+      googleMode="login"
     >
       <LoginForm />
     </AuthCard>

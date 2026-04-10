@@ -5,14 +5,16 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTenant } from "@/modules/tenant-shell";
 import { useApplicationStatus } from "../hooks/use-application-status";
 
-const PROTECTED_PREFIXES = [
-  "/dashboard/materials",
-  "/dashboard/milestones",
-  "/dashboard/sales",
-];
-
 function isProtectedRoute(pathname: string): boolean {
-  return PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+  if (pathname === "/dashboard") {
+    return true;
+  }
+
+  if (!pathname.startsWith("/dashboard/")) {
+    return false;
+  }
+
+  return !pathname.startsWith("/dashboard/application");
 }
 
 export function ApplicationGate({ children }: { children: ReactNode }) {

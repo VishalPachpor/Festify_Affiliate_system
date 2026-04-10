@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useTenant } from "@/modules/tenant-shell";
+import { useAuth } from "@/modules/auth";
+import { useApplicationStatus } from "@/modules/application";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -76,8 +78,11 @@ function isNavActive(href: string, pathname: string): boolean {
 export function AppSidebar() {
   const pathname = usePathname();
   const { tenant } = useTenant();
-  const isApplicationFlow = pathname.startsWith("/dashboard/application");
-  const visibleNavItems = isApplicationFlow
+  const { user } = useAuth();
+  const { data, isLoading } = useApplicationStatus(tenant?.id);
+  const isApproved = data?.status === "approved";
+  const isRestrictedAffiliate = user?.role === "affiliate" && (!isApproved || isLoading);
+  const visibleNavItems = isRestrictedAffiliate
     ? [{ ...NAV_ITEMS[0], label: "Home" }]
     : NAV_ITEMS;
   const brandSubtitle = tenant?.name?.startsWith("TOKEN2049")
@@ -148,15 +153,17 @@ export function AppSidebar() {
           aria-hidden="true"
         >
           <span className="font-[var(--font-sans)] font-semibold text-[var(--text-xs)] text-[var(--color-primary-foreground)]">
-            JD
+            {user?.fullName
+              ? user.fullName.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase()
+              : "?"}
           </span>
         </div>
         <div className="flex-1 min-w-0">
           <p className="truncate font-[var(--font-sans)] font-medium text-[0.84rem] leading-[1.05rem] text-[var(--color-text-primary)]">
-            John Doe
+            {user?.fullName ?? "User"}
           </p>
           <p className="truncate font-[var(--font-sans)] text-[0.7rem] leading-[0.9rem] text-[var(--color-text-secondary)]">
-            {isApplicationFlow ? "New User" : "Gold Tier"}
+            {user?.email ?? (isRestrictedAffiliate ? "New User" : "Affiliate")}
           </p>
         </div>
         <span

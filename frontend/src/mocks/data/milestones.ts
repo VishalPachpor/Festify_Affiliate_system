@@ -1,15 +1,14 @@
 import type { MilestoneProgress, MilestoneTiersResponse } from "@/modules/milestones/types";
 
 export const mockMilestoneProgress: MilestoneProgress = {
-  tierName: "Gold",
-  currentAmount: 18450,
-  targetAmount: 25000,
+  currentRevenue: 18450,
+  currentTier: "gold",
+  nextTier: "platinum",
+  nextTierTarget: 25000,
   currency: "USD",
 };
 
 export const mockMilestoneTiers: MilestoneTiersResponse = {
-  totalEarned: 18450,
-  currency: "USD",
   tiers: [
     {
       id: "bronze",
@@ -21,7 +20,6 @@ export const mockMilestoneTiers: MilestoneTiersResponse = {
       description: "Event VIP pass upgrade",
       color: "#D8913D",
       unlocked: true,
-      isCurrent: false,
     },
     {
       id: "silver",
@@ -33,7 +31,6 @@ export const mockMilestoneTiers: MilestoneTiersResponse = {
       description: "Backstage / speaker lounge access",
       color: "#E5E7EB",
       unlocked: true,
-      isCurrent: false,
     },
     {
       id: "gold",
@@ -45,7 +42,6 @@ export const mockMilestoneTiers: MilestoneTiersResponse = {
       description: "Speaking / panel opportunity",
       color: "#FFC800",
       unlocked: true,
-      isCurrent: false,
     },
     {
       id: "platinum",
@@ -57,7 +53,6 @@ export const mockMilestoneTiers: MilestoneTiersResponse = {
       description: "Revenue share increase to 15%",
       color: "#E5E7EB",
       unlocked: false,
-      isCurrent: false,
     },
   ],
 };

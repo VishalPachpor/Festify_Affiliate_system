@@ -1,20 +1,16 @@
 import { apiClient } from "@/services/api/client";
-import { isMockEnabled } from "@/mocks/utils";
 import type { ApplicationSubmission } from "../types";
 
 export async function submitApplication(
   tenantId: string,
   data: ApplicationSubmission,
-): Promise<{ success: boolean }> {
-  if (isMockEnabled()) {
-    const { mockSubmitApplication } = await import(
-      "@/mocks/handlers/application"
-    );
-    return mockSubmitApplication();
-  }
-
-  return apiClient<{ success: boolean }>("/application/submit", {
-    method: "POST",
-    body: JSON.stringify({ tenantId, ...data }),
-  });
+): Promise<{ success: boolean; duplicate?: boolean; id?: string }> {
+  return apiClient<{ success: boolean; duplicate?: boolean; id?: string }>(
+    "/application/submit",
+    {
+      method: "POST",
+      headers: { "x-tenant-id": tenantId },
+      body: data, // apiClient JSON.stringifies for us — do NOT pre-encode
+    },
+  );
 }

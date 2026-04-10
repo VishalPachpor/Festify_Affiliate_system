@@ -24,7 +24,7 @@ export function LoginForm() {
       noValidate
       className="flex flex-col gap-[var(--space-4)]"
     >
-      <FormField label="Affiliate Email" error={errors.email?.message} required>
+      <FormField label="Email" error={errors.email?.message} required>
         {(a11y) => (
           <TextInput
             {...a11y}

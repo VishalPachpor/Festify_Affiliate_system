@@ -16,5 +16,6 @@ export function useDashboardSummary(
         campaignId,
       }),
     enabled: !!tenantId,
+    refetchInterval: 3000, // demo: keep dashboard counters updating live after webhook fires
   });
 }

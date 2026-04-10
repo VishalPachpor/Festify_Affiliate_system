@@ -1,0 +1,43 @@
+# One-command local infra: Postgres + Redis.
+#
+# Usage:
+#   docker compose up -d
+#   cd backend && pnpm db:push && pnpm db:seed && pnpm dev
+#   cd frontend && pnpm dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: festify-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: festify
+      POSTGRES_PASSWORD: festify
+      POSTGRES_DB: festify_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - festify-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U festify -d festify_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: festify-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - festify-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  festify-postgres-data:
+  festify-redis-data:

@@ -2,15 +2,17 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { verifyEmail } from "../api/verify-email";
+import { useAuth, destinationForRole } from "../provider";
 
 export function useVerifyEmailMutation() {
   const router = useRouter();
+  const { verifyEmail } = useAuth();
 
   return useMutation({
-    mutationFn: (code: string) => verifyEmail(code),
-    onSuccess: () => {
-      router.push("/dashboard");
+    mutationFn: ({ email, code }: { email: string; code: string }) =>
+      verifyEmail(email, code),
+    onSuccess: (user) => {
+      router.push(destinationForRole(user.role));
     },
   });
 }

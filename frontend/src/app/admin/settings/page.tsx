@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardStageCanvas } from "@/modules/dashboard/components/dashboard-stage-canvas";
+import { apiClient } from "@/services/api/client";
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
@@ -11,24 +13,52 @@ const LABEL_CLASS =
 const INPUT_CLASS =
   "h-[3.35rem] w-full rounded-[0.6rem] border border-[rgba(255,255,255,0.10)] bg-[rgba(17,21,34,0.96)] px-[1.1rem] font-[var(--font-sans)] text-[1.05rem] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.30)] focus:border-[var(--color-ring)] focus:outline-none transition-colors";
 
+type Settings = { eventName: string; orgName: string; commissionRate: number };
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AdminSettingsPage() {
-  const [eventName, setEventName] = useState("TOKEN2049 Singapore 2026");
-  const [orgName, setOrgName] = useState("TOKEN2049");
-  const [commissionRate, setCommissionRate] = useState("10%");
+  const queryClient = useQueryClient();
 
-  const [saved, setSaved] = useState({ eventName: "TOKEN2049 Singapore 2026", orgName: "TOKEN2049 Singapore 2026", commissionRate: "10%" });
+  const { data: settings } = useQuery<Settings>({
+    queryKey: ["settings"],
+    queryFn: () => apiClient<Settings>("/dashboard/settings"),
+  });
 
-  function handleSave() {
-    setSaved({ eventName, orgName, commissionRate });
-  }
+  const [eventName, setEventName] = useState("");
+  const [orgName, setOrgName] = useState("");
+  const [commissionRate, setCommissionRate] = useState("");
+
+  // Sync form when API data loads
+  useEffect(() => {
+    if (settings) {
+      setEventName(settings.eventName);
+      setOrgName(settings.orgName);
+      setCommissionRate(String(settings.commissionRate));
+    }
+  }, [settings]);
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      apiClient("/dashboard/settings", {
+        method: "PATCH",
+        body: {
+          eventName,
+          orgName,
+          commissionRate: parseFloat(commissionRate) || 10,
+        },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["settings"] });
+    },
+  });
 
   function handleReset() {
-    setEventName("TOKEN2049 Singapore 2026");
-    setOrgName("TOKEN2049");
-    setCommissionRate("10%");
-    setSaved({ eventName: "TOKEN2049 Singapore 2026", orgName: "TOKEN2049 Singapore 2026", commissionRate: "10%" });
+    if (settings) {
+      setEventName(settings.eventName);
+      setOrgName(settings.orgName);
+      setCommissionRate(String(settings.commissionRate));
+    }
   }
 
   return (
@@ -88,21 +118,27 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* Buttons */}
-            <div className="mt-auto flex gap-[1.5rem] pt-[3.2rem]">
+            <div className="mt-auto flex items-center gap-[1.5rem] pt-[3.2rem]">
               <button
                 type="button"
-                onClick={handleSave}
-                className="h-[3.35rem] min-w-[12.8rem] rounded-[0.65rem] bg-[var(--color-primary)] px-[2rem] font-[var(--font-sans)] text-[1rem] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
+                onClick={() => saveMutation.mutate()}
+                disabled={saveMutation.isPending}
+                className="h-[3.35rem] min-w-[12.8rem] rounded-[0.65rem] bg-[var(--color-primary)] px-[2rem] font-[var(--font-sans)] text-[1rem] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
               >
-                Save Settings
+                {saveMutation.isPending ? "Saving..." : "Save Settings"}
               </button>
               <button
                 type="button"
                 onClick={handleReset}
-                className="h-[3.35rem] min-w-[13rem] rounded-[0.65rem] border border-[#E4544A] bg-transparent px-[2rem] font-[var(--font-sans)] text-[1rem] font-medium text-[#F0635B] transition-colors hover:bg-[rgba(239,68,68,0.08)]"
+                className="h-[3.35rem] min-w-[13rem] rounded-[0.65rem] border border-[rgba(255,255,255,0.12)] bg-transparent px-[2rem] font-[var(--font-sans)] text-[1rem] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.04)]"
               >
-                Reset All Data
+                Reset
               </button>
+              {saveMutation.isSuccess && (
+                <span className="font-[var(--font-sans)] text-[var(--text-sm)] text-[#22C55E]">
+                  Saved!
+                </span>
+              )}
             </div>
           </div>
 
@@ -112,28 +148,28 @@ export default function AdminSettingsPage() {
               Current Defaults
             </h3>
             <p className="mt-[0.45rem] max-w-[18rem] font-[var(--font-sans)] text-[1rem] leading-[1.5rem] text-[rgba(255,255,255,0.56)]">
-              Update your event identity, brand name, and payout defaults.
+              Current saved values from the database.
             </p>
 
             <div className="mt-[2.25rem] flex flex-col gap-[2.35rem]">
               <div>
                 <p className={LABEL_CLASS}>Event Name</p>
                 <p className="mt-[0.7rem] font-[var(--font-sans)] text-[1.05rem] leading-[1.55rem] text-[var(--color-text-primary)]">
-                  {saved.eventName}
+                  {settings?.eventName ?? "—"}
                 </p>
               </div>
 
               <div>
                 <p className={LABEL_CLASS}>Organization Name</p>
                 <p className="mt-[0.7rem] font-[var(--font-sans)] text-[1.05rem] leading-[1.55rem] text-[var(--color-text-primary)]">
-                  {saved.orgName}
+                  {settings?.orgName ?? "—"}
                 </p>
               </div>
 
               <div>
                 <p className={LABEL_CLASS}>Commission Rate</p>
                 <p className="mt-[0.7rem] font-[var(--font-sans)] text-[1.05rem] leading-[1.55rem] text-[var(--color-text-primary)]">
-                  {saved.commissionRate}
+                  {settings?.commissionRate ?? 0}%
                 </p>
               </div>
             </div>

@@ -1,0 +1,1 @@
+{"version":3,"file":"pagination.d.ts","sourceRoot":"","sources":["../../src/lib/pagination.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,OAAO,EAAE,MAAM,SAAS,CAAC;AAEvC,MAAM,MAAM,gBAAgB,GAAG;IAC7B,IAAI,EAAE,MAAM,CAAC;IACb,QAAQ,EAAE,MAAM,CAAC;CAClB,CAAC;AAKF;;;GAGG;AACH,wBAAgB,eAAe,CAAC,GAAG,EAAE,OAAO,GAAG,gBAAgB,CAkB9D;AAED,qBAAa,eAAgB,SAAQ,KAAK;gBAC5B,OAAO,EAAE,MAAM;CAI5B"}

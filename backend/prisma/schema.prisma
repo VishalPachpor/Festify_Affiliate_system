@@ -1,0 +1,556 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum EventStatus {
+  pending
+  processed
+  failed
+}
+
+enum CommissionEntryType {
+  earned
+  reversal
+}
+
+enum AttributionMethod {
+  referral_code
+}
+
+enum PayoutStatus {
+  pending
+  processing
+  paid
+  failed
+}
+
+enum ProviderConnectionStatus {
+  active
+  disabled
+}
+
+enum ApplicationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum AssetType {
+  banner
+  email
+  social
+  copy
+  guide
+}
+
+enum UserRole {
+  admin
+  affiliate
+}
+
+// ─── Tenant ──────────────────────────────────────────────────────────────────
+
+model Tenant {
+  id              String  @id @default(cuid())
+  /// Public slug used to resolve tenant from URL. Nullable to allow safe
+  /// migration on existing rows; the seed backfills demo data and any new
+  /// tenant should set this. Required at the *route* level for any path
+  /// that resolves a tenant by slug (e.g. public application landing).
+  slug            String? @unique
+  name            String
+  defaultCurrency String  @default("USD")
+
+  createdAt DateTime @default(now())
+
+  campaigns              Campaign[]
+  inboundEvents          InboundEvent[]
+  sales                  Sale[]
+  campaignAffiliates     CampaignAffiliate[]
+  attributionClaims      AttributionClaim[]
+  commissionLedgerEntries CommissionLedgerEntry[]
+  payouts                 Payout[]
+  dashboardStats          DashboardStats?
+  salesStats              SalesStats?
+  attributionStats        AttributionStats?
+  providerConnections     ProviderConnection[]
+  applications            Application[]
+  milestones              Milestone[]
+  affiliateProgress       AffiliateMilestoneProgress[]
+  notifications           Notification[]
+  assets                  Asset[]
+  users                   User[]
+}
+
+// ─── Campaign ────────────────────────────────────────────────────────────────
+
+model Campaign {
+  id       String  @id @default(cuid())
+  tenantId String
+  /// Public event slug used by /apply/[tenantSlug]/[eventSlug]. Nullable to
+  /// allow safe migration on existing rows; the seed backfills the demo campaign.
+  /// Unique per tenant — two different organizers can both have a "launch" campaign.
+  slug     String?
+  name     String
+
+  /// Commission rate in basis points. 1000 = 10%, 500 = 5%.
+  commissionRateBps Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant       Tenant              @relation(fields: [tenantId], references: [id])
+  affiliates   CampaignAffiliate[]
+  sales        Sale[]
+  applications Application[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+}
+
+// ─── Campaign Affiliate ──────────────────────────────────────────────────────
+
+model CampaignAffiliate {
+  id           String @id @default(cuid())
+  tenantId     String
+  campaignId   String
+  affiliateId  String
+  referralCode String
+
+  createdAt DateTime @default(now())
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+
+  @@unique([tenantId, referralCode])
+  @@index([campaignId])
+  @@index([affiliateId])
+  @@index([tenantId])
+}
+
+// ─── Provider Connection ─────────────────────────────────────────────────────
+// Maps a (provider, connectionId) pair to a tenant.
+// Created when an admin connects an integration; webhooks resolve tenant via this.
+
+model ProviderConnection {
+  id           String                   @id @default(cuid())
+  tenantId     String
+  provider     String
+  connectionId String
+  status       ProviderConnectionStatus @default(active)
+
+  createdAt    DateTime  @default(now())
+  lastEventAt  DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([provider, connectionId])
+  @@index([tenantId])
+}
+
+// ─── Inbound Event ───────────────────────────────────────────────────────────
+
+model InboundEvent {
+  id                   String @id @default(cuid())
+  tenantId             String
+  provider             String
+  providerConnectionId String
+  externalEventId      String?
+  replayKey            String @unique
+
+  payload Json
+
+  status EventStatus @default(pending)
+  lastError String?
+
+  createdAt    DateTime  @default(now())
+  processedAt  DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([tenantId, status])
+  @@index([tenantId, provider, externalEventId])
+}
+
+// ─── Sale ────────────────────────────────────────────────────────────────────
+
+model Sale {
+  id              String @id @default(cuid())
+  tenantId        String
+  campaignId      String
+  externalOrderId String
+
+  /// Monetary amount in minor units (cents). $100.00 = 10000.
+  amountMinor Int
+  currency    String
+
+  referralCode String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+
+  attributionClaim        AttributionClaim?
+  commissionLedgerEntries CommissionLedgerEntry[]
+
+  @@unique([tenantId, externalOrderId])
+  @@index([tenantId])
+  @@index([campaignId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, campaignId])
+  @@index([tenantId, referralCode])
+}
+
+// ─── Attribution Claim ───────────────────────────────────────────────────────
+
+model AttributionClaim {
+  id          String @id @default(cuid())
+  tenantId    String
+  saleId      String @unique
+  affiliateId String
+
+  /// How attribution was resolved.
+  method AttributionMethod
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  sale   Sale   @relation(fields: [saleId], references: [id])
+
+  @@index([affiliateId])
+  @@index([tenantId])
+}
+
+// ─── Commission Ledger Entry ─────────────────────────────────────────────────
+
+model CommissionLedgerEntry {
+  id          String @id @default(cuid())
+  tenantId    String
+  saleId      String
+  affiliateId String
+
+  /// Amount in minor units (cents).
+  amountMinor Int
+  currency    String
+
+  /// Entry type. "earned" for commissions, "reversal" for refund clawbacks.
+  type CommissionEntryType
+
+  /// Links to the payout that claimed this commission. Null = unpaid.
+  payoutId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id])
+  sale   Sale    @relation(fields: [saleId], references: [id])
+  payout Payout? @relation(fields: [payoutId], references: [id])
+
+  @@index([affiliateId])
+  @@index([saleId])
+  @@index([tenantId])
+  @@index([payoutId])
+}
+
+// ─── Payout ──────────────────────────────────────────────────────────────────
+
+model Payout {
+  id          String @id @default(cuid())
+  tenantId    String
+  affiliateId String
+
+  /// Amount in minor units (cents).
+  amountMinor Int
+  currency    String
+
+  status PayoutStatus @default(pending)
+
+  /// External payment reference (e.g. Stripe transfer ID).
+  externalReference String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  processedAt DateTime?
+
+  tenant              Tenant                  @relation(fields: [tenantId], references: [id])
+  commissionEntries   CommissionLedgerEntry[]
+
+  @@index([tenantId])
+  @@index([affiliateId])
+  @@index([tenantId, status])
+}
+
+// ─── Payout Idempotency Key ──────────────────────────────────────────────────
+// DB-enforced idempotency for POST /payouts/create. Same key = same payout.
+
+model PayoutIdempotencyKey {
+  id       String @id @default(cuid())
+  tenantId String
+  key      String
+  payoutId String
+
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
+}
+
+// ─── Processed Event (idempotency for event handlers) ────────────────────────
+// Every event handler writes here atomically with the aggregate update.
+// If the eventId already exists, the handler skips — no duplicate increments.
+
+model ProcessedEvent {
+  id        String   @id @default(cuid())
+  eventId   String   @unique
+  type      String
+  tenantId  String
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([createdAt])
+}
+
+// ─── Aggregate: Dashboard Stats ──────────────────────────────────────────────
+// Precomputed. Updated by event handlers, read by API endpoints.
+
+model DashboardStats {
+  id              String @id @default(cuid())
+  tenantId        String @unique
+
+  totalRevenue    Int    @default(0)
+  totalSales      Int    @default(0)
+  totalCommission Int    @default(0)
+  totalAffiliates Int    @default(0)
+  attributedSales Int    @default(0)
+  totalPaidOut    Int    @default(0)
+  currency        String @default("USD")
+
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+// ─── Aggregate: Sales Stats ──────────────────────────────────────────────────
+
+model SalesStats {
+  id           String @id @default(cuid())
+  tenantId     String @unique
+
+  totalSales   Int    @default(0)
+  totalRevenue Int    @default(0)
+  confirmedCount Int  @default(0)
+  pendingCount   Int  @default(0)
+  totalCommission Int @default(0)
+  currency     String @default("USD")
+
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+// ─── Aggregate: Attribution Stats ────────────────────────────────────────────
+
+model AttributionStats {
+  id               String @id @default(cuid())
+  tenantId         String @unique
+
+  attributedSales  Int    @default(0)
+  unattributedSales Int   @default(0)
+
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+// ─── Application ─────────────────────────────────────────────────────────────
+// Public, event-scoped affiliate applications. Created by /api/public/applications,
+// reviewed by organizers via /api/applications. On approve, a CampaignAffiliate
+// row is created and a Notification is logged.
+
+model Application {
+  id             String @id @default(cuid())
+  tenantId       String
+  campaignId     String
+
+  firstName      String
+  email          String
+  socialProfiles String?
+  audienceSize   String?
+  experience     String?
+  fitReason      String
+
+  status         ApplicationStatus @default(pending)
+  reviewedAt     DateTime?
+  /// Set when status transitions to approved — links to the created CampaignAffiliate.
+  affiliateId    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+
+  @@unique([tenantId, campaignId, email])
+  @@index([tenantId, status])
+  @@index([campaignId])
+}
+
+// ─── Milestone ───────────────────────────────────────────────────────────────
+// Per-tenant tier definitions. Each tier represents a commission threshold
+// (in minor units) that, once crossed by an affiliate, unlocks a reward.
+
+model Milestone {
+  id          String @id @default(cuid())
+  tenantId    String
+  key         String
+  name        String
+  letter      String
+  color       String
+  description String
+  /// Threshold in minor units (cents) of *commission earned* by an affiliate.
+  targetMinor Int
+  sortOrder   Int    @default(0)
+
+  createdAt DateTime @default(now())
+
+  tenant   Tenant                       @relation(fields: [tenantId], references: [id])
+  progress AffiliateMilestoneProgress[]
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
+}
+
+// ─── Affiliate Milestone Progress ────────────────────────────────────────────
+// Per-affiliate progress against each milestone tier.
+
+model AffiliateMilestoneProgress {
+  id           String   @id @default(cuid())
+  tenantId     String
+  affiliateId  String
+  milestoneId  String
+  currentMinor Int      @default(0)
+  unlockedAt   DateTime?
+
+  updatedAt DateTime @updatedAt
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  milestone Milestone @relation(fields: [milestoneId], references: [id])
+
+  @@unique([tenantId, affiliateId, milestoneId])
+  @@index([tenantId, affiliateId])
+}
+
+// ─── Notification ────────────────────────────────────────────────────────────
+// Lightweight notification log. Drives the affiliate notifications UI and
+// stands in for an email/SMS provider in dev. Producers: application approval,
+// milestone unlock, payout status change.
+
+// ─── User ────────────────────────────────────────────────────────────────────
+// Real authenticatable users — created by /api/auth/signup or /api/auth/google,
+// authenticated by /api/auth/login. Superseded the env-only "logged in as
+// affiliate_alex" demo hack. Tenant + affiliateId stored as JWT claims so
+// downstream queries don't need a separate lookup.
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  /// Bcrypt hash. Null for OAuth-only users (Google sign-in created the row).
+  passwordHash  String?
+  fullName      String
+  /// Google "sub" claim. Unique across all users (Google enforces global uniqueness).
+  googleSub     String?   @unique
+  /// Profile picture URL — populated from Google OAuth, editable by user.
+  pictureUrl    String?
+  role          UserRole  @default(affiliate)
+  /// Nullable so a user can sign up before being attached to a tenant.
+  /// Demo signup auto-attaches to the first tenant.
+  tenantId      String?
+  /// Optional link to a CampaignAffiliate row for the affiliate side. Stored
+  /// as a string (not FK) because CampaignAffiliate.affiliateId is itself a
+  /// string identifier, not a UUID.
+  affiliateId   String?
+  emailVerifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant            Tenant?              @relation(fields: [tenantId], references: [id])
+  emailVerifications EmailVerification[]
+
+  @@index([tenantId])
+}
+
+// ─── Email Verification ──────────────────────────────────────────────────────
+// Short-lived 6-digit codes used by the signup → verify-email loop. In dev
+// the code is logged to the backend console; production wires SMTP.
+
+model EmailVerification {
+  id        String    @id @default(cuid())
+  userId    String
+  code      String
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([code])
+}
+
+// ─── Asset (Marketing Material) ──────────────────────────────────────────────
+// Files uploaded by organizers and shown to affiliates on the materials page.
+// Files live on local disk under backend/uploads/<tenantId>/<id>.<ext> and
+// are served via app.use("/uploads", express.static("uploads")).
+
+model Asset {
+  id        String    @id @default(cuid())
+  tenantId  String
+  type      AssetType
+  title     String
+  /// Public URL the affiliate can hit to download the file. Built from
+  /// PUBLIC_API_URL + the on-disk relative path so the URL works regardless
+  /// of where the backend is hosted.
+  fileUrl   String
+  /// Bytes — for the UI's "3.2 MB" rendering and the 5 MB upload guard.
+  sizeBytes Int
+  mimeType  String
+  visible   Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, type])
+  @@index([tenantId, visible])
+}
+
+model Notification {
+  id          String @id @default(cuid())
+  tenantId    String
+  /// Recipient — affiliate id, organizer user id, or "*" for tenant-wide.
+  recipientId String
+  type        String
+  title       String
+  body        String
+
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, recipientId, createdAt])
+}

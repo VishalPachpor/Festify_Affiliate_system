@@ -1,0 +1,13 @@
+# Environment files (contain secrets)
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+
+# Node
+node_modules/
+
+# Uploads (local dev only — production uses cloud storage)
+backend/uploads/

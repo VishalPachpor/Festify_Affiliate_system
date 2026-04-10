@@ -99,14 +99,17 @@ function AssetCard({ asset }: { asset: Asset }) {
           </span>
         </div>
 
-        <button
-          type="button"
+        <a
+          href={asset.fileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          download
           className="mt-[0.85rem] flex h-[3rem] w-full items-center justify-center gap-[0.55rem] rounded-[0.65rem] border border-[rgba(59,102,208,0.95)] bg-transparent font-[var(--font-sans)] text-[1.05rem] font-medium text-[var(--color-text-primary)] transition-colors duration-[var(--duration-normal)] hover:bg-[rgba(59,102,208,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
           aria-label={`Download ${asset.title}`}
         >
           <IconDownload />
           Download
-        </button>
+        </a>
 
         <div className="mt-[0.9rem] flex items-center gap-[0.4rem] text-[rgba(255,255,255,0.74)]">
           <IconCalendar />
@@ -139,6 +142,7 @@ export default function MaterialsPage() {
   const { data, isLoading } = useAssets(
     tenant?.id,
     activeFilter === "all" ? undefined : activeFilter,
+    { visibleOnly: true }, // affiliates only see what the organizer flagged visible
   );
 
   const assets = (data?.assets ?? []).slice(0, 6);

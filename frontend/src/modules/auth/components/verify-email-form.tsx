@@ -30,14 +30,14 @@ export function VerifyEmailForm({ email }: { email: string }) {
       }
 
       try {
-        await verifyMutation.mutateAsync(result.data.code);
+        await verifyMutation.mutateAsync({ email, code: result.data.code });
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Verification failed",
         );
       }
     },
-    [code, verifyMutation],
+    [code, email, verifyMutation],
   );
 
   const handleResend = useCallback(async () => {

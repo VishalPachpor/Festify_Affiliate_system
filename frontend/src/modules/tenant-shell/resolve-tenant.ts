@@ -23,8 +23,19 @@ export async function resolveTenant(
     };
   }
 
-  // Dev override
+  // Dev override — uses a real tenant id seeded in the backend so writes
+  // (e.g. ProviderConnection.create) don't fail with FK violations.
+  const devTenantId = process.env.NEXT_PUBLIC_TENANT_ID;
   const devSlug = process.env.NEXT_PUBLIC_TENANT_SLUG;
+  if (devTenantId) {
+    const slug = devSlug ?? "demo";
+    return {
+      id: devTenantId,
+      slug,
+      name: slug.charAt(0).toUpperCase() + slug.slice(1),
+      branding: {},
+    };
+  }
   if (devSlug) {
     return {
       id: `dev-${devSlug}`,

@@ -13,7 +13,7 @@ export function useAffiliatesList(
   return useQuery({
     queryKey: affiliatesKeys.list(tenantId ?? "", campaignId, filters),
     queryFn: () =>
-      getAffiliatesList({ tenantId: tenantId!, campaignId, filters }),
+      getAffiliatesList({ campaignId, filters }),
     enabled: !!tenantId,
     placeholderData: keepPreviousData,
   });
