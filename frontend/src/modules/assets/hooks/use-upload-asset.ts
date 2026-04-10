@@ -12,8 +12,8 @@ export function useUploadAsset() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (params: Omit<UploadAssetParams, "tenantId">) =>
-      uploadAsset({ ...params, tenantId: tenant!.id }),
+    mutationFn: (params: UploadAssetParams) =>
+      uploadAsset(params),
     onSuccess: () => {
       // Invalidate by prefix so every variant of the assets query refetches —
       // both the admin (all) and affiliate (visible-only) views update.

@@ -20,7 +20,7 @@ const router = Router();
 // ─────────────────────────────────────────────────────────────────────────────
 
 const UPLOAD_ROOT = path.resolve(process.cwd(), "uploads");
-const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_FILE_BYTES = 25 * 1024 * 1024; // 25 MB
 
 const storage = multer.diskStorage({
   destination: (req, _file, cb) => {

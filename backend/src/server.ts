@@ -74,7 +74,7 @@ app.use((req, res, next) => {
 // the original bytes in (req as any).rawBody so adapters can HMAC the wire bytes.
 app.use(
   express.json({
-    limit: "1mb",
+    limit: "30mb",
     verify: (req, _res, buf) => {
       (req as unknown as Record<string, unknown>).rawBody = buf;
     },

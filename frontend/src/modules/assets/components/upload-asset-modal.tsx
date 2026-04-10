@@ -12,7 +12,7 @@ const TYPE_OPTIONS: { label: string; value: AssetType }[] = [
   { label: "Guide", value: "guide" },
 ];
 
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = 25 * 1024 * 1024;
 
 type Props = {
   open: boolean;
@@ -54,7 +54,7 @@ export function UploadAssetModal({ open, onClose }: Props) {
     const f = e.target.files?.[0] ?? null;
     setLocalError(null);
     if (f && f.size > MAX_BYTES) {
-      setLocalError(`File is too large (${(f.size / 1024 / 1024).toFixed(1)} MB). Max 5 MB.`);
+      setLocalError(`File is too large (${(f.size / 1024 / 1024).toFixed(1)} MB). Max 25 MB.`);
       setFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
@@ -164,7 +164,7 @@ export function UploadAssetModal({ open, onClose }: Props) {
               htmlFor="asset-file"
               className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] font-semibold text-[rgba(255,255,255,0.50)]"
             >
-              File <span className="normal-case tracking-normal text-[rgba(255,255,255,0.40)]">(image, PDF or text — max 5 MB)</span>
+              File <span className="normal-case tracking-normal text-[rgba(255,255,255,0.40)]">(image, PDF or text — max 25 MB)</span>
             </label>
             <input
               ref={fileInputRef}

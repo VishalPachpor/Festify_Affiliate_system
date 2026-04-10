@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from "@/services/api/client";
+import { getAuthToken } from "@/modules/auth/token-store";
 import { assetSchema, type Asset, type AssetType } from "../types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -8,7 +9,6 @@ import { assetSchema, type Asset, type AssetType } from "../types";
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type UploadAssetParams = {
-  tenantId: string;
   title: string;
   type: AssetType;
   file: File;
@@ -20,13 +20,13 @@ export async function uploadAsset(params: UploadAssetParams): Promise<Asset> {
   formData.append("type", params.type);
   formData.append("file", params.file);
 
+  const headers: Record<string, string> = {};
+  const token = getAuthToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
   const response = await fetch(`${getApiBaseUrl()}/assets`, {
     method: "POST",
-    headers: {
-      // Intentionally NOT setting Content-Type — fetch sets the multipart
-      // boundary automatically when body is FormData.
-      "x-tenant-id": params.tenantId,
-    },
+    headers,
     body: formData,
     credentials: "include",
   });
