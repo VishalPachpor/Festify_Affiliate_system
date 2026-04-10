@@ -22,6 +22,7 @@ import { startWorker as startInboundProcessor } from "./processors/worker";
 const app = express();
 const PORT = process.env.PORT ?? 3001;
 const LOCALHOST_ORIGIN = /^http:\/\/localhost:\d+$/;
+const VERCEL_ORIGIN = /^https:\/\/[a-z0-9-]+(?:-[a-z0-9-]+)*\.vercel\.app$/i;
 
 function getAllowedOrigins(): Set<string> {
   const configuredOrigins = [
@@ -37,11 +38,15 @@ function getAllowedOrigins(): Set<string> {
   return new Set(configuredOrigins);
 }
 
+function isAllowedOrigin(origin: string, allowedOrigins: Set<string>): boolean {
+  return LOCALHOST_ORIGIN.test(origin) || VERCEL_ORIGIN.test(origin) || allowedOrigins.has(origin);
+}
+
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   const allowedOrigins = getAllowedOrigins();
 
-  if (origin && (LOCALHOST_ORIGIN.test(origin) || allowedOrigins.has(origin))) {
+  if (origin && isAllowedOrigin(origin, allowedOrigins)) {
     res.header("Access-Control-Allow-Origin", origin);
     res.header("Vary", "Origin");
     res.header("Access-Control-Allow-Credentials", "true");
