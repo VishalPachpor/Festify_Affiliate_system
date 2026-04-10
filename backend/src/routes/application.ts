@@ -63,6 +63,7 @@ type SubmitBody = {
   audienceSize?: unknown;
   experience?: unknown;
   fitReason?: unknown;
+  requestedCode?: unknown;
 };
 
 function asNonEmptyString(v: unknown): string | null {
@@ -109,6 +110,11 @@ router.post("/api/application/submit", async (req: Request, res: Response) => {
       return;
     }
 
+    const rawCode = asNonEmptyString(body.requestedCode);
+    const requestedCode = rawCode
+      ? rawCode.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 20) || null
+      : null;
+
     const application = await prisma.application.create({
       data: {
         tenantId,
@@ -119,6 +125,7 @@ router.post("/api/application/submit", async (req: Request, res: Response) => {
         audienceSize: asNonEmptyString(body.audienceSize),
         experience: asNonEmptyString(body.experience),
         fitReason,
+        requestedCode,
         status: "pending",
       },
     });

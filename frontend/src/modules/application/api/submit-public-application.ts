@@ -8,6 +8,7 @@ export type PublicApplicationPayload = {
   audienceSize?: string;
   experience?: string;
   fitReason: string;
+  requestedCode?: string;
 };
 
 export type PublicApplicationResponse = {

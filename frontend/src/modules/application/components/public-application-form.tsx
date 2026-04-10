@@ -47,6 +47,7 @@ export function PublicApplicationForm({ eventSlug, eventName, organizerName, com
       audienceSize: String(fd.get("audienceSize") ?? "").trim() || undefined,
       experience: String(fd.get("experience") ?? "").trim() || undefined,
       fitReason: String(fd.get("fitReason") ?? "").trim(),
+      requestedCode: String(fd.get("requestedCode") ?? "").trim().toUpperCase() || undefined,
     });
   }
 
@@ -149,6 +150,21 @@ export function PublicApplicationForm({ eventSlug, eventName, organizerName, com
             />
           )}
         </FormField>
+
+        <FormField label="Preferred Referral Code">
+          {(a11y) => (
+            <TextInput
+              {...a11y}
+              name="requestedCode"
+              placeholder="e.g. VISHAL20"
+              autoComplete="off"
+              maxLength={20}
+            />
+          )}
+        </FormField>
+        <p className="-mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-xs)] text-[var(--color-text-muted)]">
+          Alphanumeric, 4-20 characters. This is a request — the final code may be modified by the organizer.
+        </p>
 
         <FormField label="Why Are You A Good Fit?" required>
           {(a11y) => (

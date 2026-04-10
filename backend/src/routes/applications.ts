@@ -39,6 +39,7 @@ router.get("/api/applications", async (req: Request, res: Response) => {
         audienceSize: a.audienceSize,
         experience: a.experience,
         fitReason: a.fitReason,
+        requestedCode: a.requestedCode,
         status: a.status,
         affiliateId: a.affiliateId,
         campaignId: a.campaignId,
@@ -101,7 +102,14 @@ router.patch("/api/applications/:id/status", async (req: Request, res: Response)
     }
 
     // ── Approval path ──────────────────────────────────────────────────
-    const referralCode = buildReferralCode(application.firstName);
+    // Admin can override the code; fall back to applicant's requested code,
+    // then auto-generate if neither exists.
+    const adminCode = typeof req.body?.referralCode === "string" && req.body.referralCode.trim()
+      ? req.body.referralCode.trim().toUpperCase()
+      : null;
+    const referralCode = adminCode
+      ?? application.requestedCode
+      ?? buildReferralCode(application.firstName);
     const affiliateId = `affiliate_${randomBytes(6).toString("hex")}`;
 
     const result = await prisma.$transaction(async (tx) => {
@@ -111,6 +119,7 @@ router.patch("/api/applications/:id/status", async (req: Request, res: Response)
           campaignId: application.campaignId,
           affiliateId,
           referralCode,
+          codeStatus: "unverified",
         },
       });
 
@@ -179,5 +188,42 @@ function buildReferralCode(firstName: string): string {
   const suffix = randomBytes(2).toString("hex").toUpperCase();
   return `${prefix.toUpperCase()}-${suffix}`;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PATCH /api/affiliates/:affiliateId/verify-code
+//
+// Admin confirms the coupon code has been created in Luma.
+// Transitions codeStatus from unverified → verified.
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.patch("/api/affiliates/:affiliateId/verify-code", async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantId(req);
+    if (req.userRole !== "admin") {
+      res.status(403).json({ error: "Admin access required" });
+      return;
+    }
+
+    const affiliateId = String(req.params.affiliateId);
+
+    const affiliate = await prisma.campaignAffiliate.findFirst({
+      where: { tenantId, affiliateId },
+    });
+    if (!affiliate) {
+      res.status(404).json({ error: "Affiliate not found" });
+      return;
+    }
+
+    await prisma.campaignAffiliate.update({
+      where: { id: affiliate.id },
+      data: { codeStatus: "verified" },
+    });
+
+    res.status(200).json({ success: true, affiliateId, codeStatus: "verified" });
+  } catch (err) {
+    console.error("[affiliates] verify-code failed:", err);
+    res.status(500).json({ error: "Failed to verify code" });
+  }
+});
 
 export { router as applicationsRouter };

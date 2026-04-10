@@ -116,12 +116,22 @@ model Campaign {
 
 // ─── Campaign Affiliate ──────────────────────────────────────────────────────
 
+enum CodeStatus {
+  pending
+  unverified
+  verified
+}
+
 model CampaignAffiliate {
-  id           String @id @default(cuid())
+  id           String     @id @default(cuid())
   tenantId     String
   campaignId   String
   affiliateId  String
   referralCode String
+  /// Tracks whether the coupon code has been created in Luma.
+  /// pending = awaiting approval, unverified = approved but not confirmed in Luma,
+  /// verified = admin confirmed coupon exists in Luma.
+  codeStatus   CodeStatus @default(pending)
 
   createdAt DateTime @default(now())
 
@@ -389,6 +399,8 @@ model Application {
   audienceSize   String?
   experience     String?
   fitReason      String
+  /// Affiliate's preferred referral/coupon code. Admin may modify on approval.
+  requestedCode  String?
 
   status         ApplicationStatus @default(pending)
   reviewedAt     DateTime?
