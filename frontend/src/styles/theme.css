@@ -85,8 +85,8 @@
                    0px 1px 2px 0px rgba(0, 0, 0, 0.1);
 
   /* ── Typography — Font families ─────────────── */
-  --font-display: 'Oswald', sans-serif;
-  --font-sans:    'Open Sauce Sans', sans-serif;
+  --font-display: 'DM Sans', sans-serif;
+  --font-sans:    'Inter', sans-serif;
   --font-mono:    var(--font-geist-mono), monospace;
 
   /* ── Typography — Scale (rem) ───────────────── */
