@@ -13,6 +13,8 @@ import type { Tenant } from "./types";
 export async function resolveTenant(
   hostname: string,
 ): Promise<Tenant | null> {
+  const normalizedHostname = hostname.toLowerCase();
+
   // Mock mode — always return a tenant so queries fire
   if (process.env.NEXT_PUBLIC_USE_MOCK === "true") {
     return {
@@ -45,8 +47,18 @@ export async function resolveTenant(
     };
   }
 
+  // Deployment hostnames should not be treated as tenant subdomains.
+  if (
+    normalizedHostname === "localhost" ||
+    normalizedHostname.endsWith(".localhost") ||
+    normalizedHostname.endsWith(".vercel.app") ||
+    normalizedHostname.endsWith(".onrender.com")
+  ) {
+    return null;
+  }
+
   // Extract subdomain from hostname
-  const parts = hostname.split(".");
+  const parts = normalizedHostname.split(".");
   if (parts.length < 3) {
     return null; // No subdomain — public/auth context
   }
