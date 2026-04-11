@@ -142,7 +142,7 @@ function TierBadge({ tier }: { tier: string }) {
   if (!style) return <span className="text-[rgba(255,255,255,0.3)]">--</span>;
   return (
     <span
-      className="inline-block rounded-[0.25rem] px-[0.5rem] py-[0.1rem] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
+      className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
       style={{ background: style.bg, color: style.text }}
     >
       {tier}
@@ -153,7 +153,7 @@ function TierBadge({ tier }: { tier: string }) {
 function ReferralCodeBadge({ code }: { code: string }) {
   return (
     <span
-      className="inline-block rounded-[0.25rem] px-[0.45rem] py-[0.1rem] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
+      className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
       style={{ background: REFERRAL_CODE_STYLE.bg, color: REFERRAL_CODE_STYLE.text }}
     >
       {code}
@@ -172,7 +172,7 @@ function StatusCell({ status }: { status: "active" | "pending" | "rejected" }) {
   if (status === "pending") {
     return (
       <span
-        className="inline-block rounded-[0.25rem] px-[0.5rem] py-[0.1rem] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
+        className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
         style={{ background: "rgba(234,179,8,0.14)", color: "#EAB308" }}
       >
         pending
@@ -181,7 +181,7 @@ function StatusCell({ status }: { status: "active" | "pending" | "rejected" }) {
   }
   return (
     <span
-      className="inline-block rounded-[0.25rem] px-[0.5rem] py-[0.1rem] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
+      className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
       style={{ background: "rgba(239,68,68,0.14)", color: "#EF4444" }}
     >
       rejected
@@ -300,7 +300,7 @@ export default function AdminAffiliatesPage() {
             <h2 className="font-[var(--font-display)] text-[1.75rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
               Affiliate Management
             </h2>
-            <p className="mt-[0.3rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
+            <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
               Manage and monitor all affiliates
             </p>
           </div>
@@ -320,7 +320,7 @@ export default function AdminAffiliatesPage() {
         {(isInviteOpen || inviteFeedback) && (
           <div className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.03)] p-[var(--space-4)]">
             <div className="flex flex-wrap items-end gap-[var(--space-3)]">
-              <label className="flex min-w-[18rem] flex-1 flex-col gap-[0.45rem]">
+              <label className="flex min-w-[18rem] flex-1 flex-col gap-[var(--space-2)]">
                 <span className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.55)]">
                   Affiliate email
                 </span>
@@ -408,7 +408,7 @@ export default function AdminAffiliatesPage() {
                   <tr key={aff.id} className="border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
                     {/* Name + email */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] whitespace-nowrap">
-                      <div className="flex items-center gap-[0.65rem]">
+                      <div className="flex items-center gap-[var(--space-3)]">
                         <Avatar initials={initials} />
                         <div>
                           <p className="font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)]">
@@ -607,7 +607,7 @@ export default function AdminAffiliatesPage() {
       {approveTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,0,0.60)]" onClick={() => setApproveTarget(null)}>
           <div className="w-full max-w-[26rem] rounded-[0.75rem] border border-[rgba(255,255,255,0.08)] bg-[#111525] px-[2rem] py-[1.75rem]" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-[var(--font-display)] text-[1.35rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
+            <h2 className="font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
               Approve {approveTarget.name}
             </h2>
             <p className="mt-[0.4rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.55)]">
@@ -637,7 +637,7 @@ export default function AdminAffiliatesPage() {
               <button
                 type="button"
                 onClick={() => setApproveTarget(null)}
-                className="flex-1 rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent py-[0.55rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
+                className="flex-1 rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
               >
                 Cancel
               </button>
@@ -645,7 +645,7 @@ export default function AdminAffiliatesPage() {
                 type="button"
                 disabled={!approveCode || approveCode.length < 3 || reviewMutation.isPending}
                 onClick={() => reviewMutation.mutate({ id: approveTarget.id, status: "approved", referralCode: approveCode })}
-                className="flex-1 rounded-[var(--radius)] bg-[#22C55E] py-[0.55rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-white transition-colors hover:bg-[#16A34A] disabled:opacity-50"
+                className="flex-1 rounded-[var(--radius)] bg-[#22C55E] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-white transition-colors hover:bg-[#16A34A] disabled:opacity-50"
               >
                 {reviewMutation.isPending ? "Approving..." : "Approve"}
               </button>
@@ -662,7 +662,7 @@ export default function AdminAffiliatesPage() {
               <span className="flex size-[1.5rem] items-center justify-center rounded-full bg-[rgba(34,197,94,0.15)]">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7l3 3 5-5" /></svg>
               </span>
-              <h2 className="font-[var(--font-display)] text-[1.35rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
+              <h2 className="font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
                 Affiliate Approved!
               </h2>
             </div>
@@ -672,7 +672,7 @@ export default function AdminAffiliatesPage() {
 
             {/* Code to copy */}
             <div className="mt-[1rem] flex items-center gap-[0.5rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[rgba(0,0,0,0.25)] px-[var(--space-4)] py-[0.6rem]">
-              <code className="flex-1 font-mono text-[1.1rem] font-bold text-[#22C55E]">{postApprovalCode}</code>
+              <code className="flex-1 font-mono text-[var(--text-lg)] font-bold text-[#22C55E]">{postApprovalCode}</code>
               <button
                 type="button"
                 onClick={() => { navigator.clipboard.writeText(postApprovalCode); setCodeCopied(true); setTimeout(() => setCodeCopied(false), 2000); }}
@@ -701,7 +701,7 @@ export default function AdminAffiliatesPage() {
               <button
                 type="button"
                 onClick={() => setPostApprovalCode(null)}
-                className="flex-1 rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent py-[0.55rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
+                className="flex-1 rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
               >
                 I'll do it later
               </button>
@@ -714,7 +714,7 @@ export default function AdminAffiliatesPage() {
                   else setPostApprovalCode(null);
                 }}
                 disabled={verifyCodeMutation.isPending}
-                className="flex-1 rounded-[var(--radius)] bg-[#22C55E] py-[0.55rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-white transition-colors hover:bg-[#16A34A] disabled:opacity-50"
+                className="flex-1 rounded-[var(--radius)] bg-[#22C55E] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-white transition-colors hover:bg-[#16A34A] disabled:opacity-50"
               >
                 {verifyCodeMutation.isPending ? "Confirming..." : "Confirm — Created in Luma"}
               </button>

@@ -75,7 +75,7 @@ export function NotificationBell({ recipient }: Props) {
         {unreadCount > 0 && (
           <span
             aria-hidden="true"
-            className="absolute -right-[0.25rem] -top-[0.2rem] flex h-[0.95rem] min-w-[0.95rem] items-center justify-center rounded-full bg-[var(--color-error)] px-[0.25rem] font-[var(--font-sans)] text-[0.6rem] font-semibold leading-none text-white"
+            className="absolute -right-[var(--space-1)] -top-[var(--space-1)] flex h-[var(--space-4)] min-w-[var(--space-4)] items-center justify-center rounded-full bg-[var(--color-error)] px-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-semibold leading-none text-white"
           >
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
@@ -86,10 +86,10 @@ export function NotificationBell({ recipient }: Props) {
         <div
           role="dialog"
           aria-label="Notifications"
-          className="absolute right-0 top-[calc(100%+0.6rem)] z-50 w-[22rem] overflow-hidden rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[#0E0F11] shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
+          className="absolute right-0 top-[calc(100%+var(--space-2))] z-50 w-[22rem] overflow-hidden rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[#0E0F11] shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
         >
           <header className="flex items-center justify-between border-b border-[rgba(255,255,255,0.08)] px-[var(--space-4)] py-[var(--space-3)]">
-            <h2 className="font-[var(--font-display)] text-[0.95rem] font-semibold tracking-[-0.01em] text-[var(--color-text-primary)]">
+            <h2 className="font-[var(--font-display)] text-[var(--text-base)] font-semibold tracking-[-0.01em] text-[var(--color-text-primary)]">
               Notifications
             </h2>
             <span className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.50)]">
@@ -116,21 +116,21 @@ export function NotificationBell({ recipient }: Props) {
                   key={n.id}
                   className="border-b border-[rgba(255,255,255,0.05)] px-[var(--space-4)] py-[var(--space-3)] last:border-b-0"
                 >
-                  <div className="flex items-start gap-[0.6rem]">
+                  <div className="flex items-start gap-[var(--space-2)]">
                     {n.readAt === null && (
                       <span
                         aria-hidden="true"
-                        className="mt-[0.45rem] size-[0.4rem] shrink-0 rounded-full bg-[#5B8DEF]"
+                        className="mt-[var(--space-2)] size-[var(--space-2)] shrink-0 rounded-full bg-[#5B8DEF]"
                       />
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)]">
                         {n.title}
                       </p>
-                      <p className="mt-[0.15rem] font-[var(--font-sans)] text-[var(--text-xs)] leading-[1.1rem] text-[rgba(255,255,255,0.65)]">
+                      <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--space-4)] text-[rgba(255,255,255,0.65)]">
                         {n.body}
                       </p>
-                      <p className="mt-[0.3rem] font-[var(--font-sans)] text-[0.65rem] uppercase tracking-[0.06em] text-[rgba(255,255,255,0.40)]">
+                      <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.06em] text-[rgba(255,255,255,0.40)]">
                         {timeAgo(n.createdAt)}
                       </p>
                     </div>

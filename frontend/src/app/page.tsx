@@ -72,25 +72,25 @@ export default function HomePage() {
         <p className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.12em] text-[var(--color-primary)]">
           Revenue Automation for Events
         </p>
-        <h1 className="mt-[var(--space-3)] font-[var(--font-display)] text-[3.2rem] font-bold leading-[1.05] tracking-[-0.04em] text-[var(--color-text-primary)]">
+        <h1 className="mt-[var(--space-3)] font-[var(--font-display)] text-[var(--text-2xl)] font-bold leading-[1.05] tracking-[-0.04em] text-[var(--color-text-primary)]">
           Festify Affiliates
         </h1>
-        <p className="mt-[var(--space-4)] mx-auto max-w-[32rem] font-[var(--font-sans)] text-[1.1rem] leading-[1.6] text-[var(--color-text-secondary)]">
+        <p className="mt-[var(--space-4)] mx-auto max-w-[32rem] font-[var(--font-sans)] text-[var(--text-lg)] leading-[1.6] text-[var(--color-text-secondary)]">
           Recruit affiliates, equip them with materials, track every sale, and reward commissions — all in one platform.
         </p>
 
         {/* CTAs */}
-        <div className="mt-[var(--space-7)] flex flex-col items-center gap-[var(--space-3)] sm:flex-row sm:justify-center">
+        <div className="mt-[var(--space-8)] flex flex-col items-center gap-[var(--space-3)] sm:flex-row sm:justify-center">
           <Link
             href="/signup/organizer"
-            className="flex items-center gap-[0.5rem] rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-6)] py-[0.7rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
+            className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-6)] py-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
           >
             Start as Organizer
             <IconArrowRight />
           </Link>
           <Link
             href="/sign-up"
-            className="flex items-center gap-[0.5rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.18)] px-[var(--space-6)] py-[0.7rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.32)] hover:bg-[rgba(255,255,255,0.04)]"
+            className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] border border-[rgba(255,255,255,0.18)] px-[var(--space-6)] py-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.32)] hover:bg-[rgba(255,255,255,0.04)]"
           >
             Apply as Affiliate
           </Link>
@@ -109,7 +109,7 @@ export default function HomePage() {
         <div className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.03)] px-[var(--space-6)] py-[var(--space-6)]">
           <div className="flex items-center gap-[var(--space-3)] text-[var(--color-primary)]">
             <IconShield />
-            <h2 className="font-[var(--font-display)] text-[1.15rem] font-bold tracking-[-0.02em] text-[var(--color-text-primary)]">
+            <h2 className="font-[var(--font-display)] text-[var(--text-lg)] font-bold tracking-[-0.02em] text-[var(--color-text-primary)]">
               Event Organizers
             </h2>
           </div>
@@ -122,7 +122,7 @@ export default function HomePage() {
           </ul>
           <Link
             href="/signup/organizer"
-            className="mt-[var(--space-5)] inline-flex items-center gap-[0.4rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary)] transition-colors hover:underline"
+            className="mt-[var(--space-5)] inline-flex items-center gap-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary)] transition-colors hover:underline"
           >
             Start as Organizer
             <IconArrowRight />
@@ -133,7 +133,7 @@ export default function HomePage() {
         <div className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.03)] px-[var(--space-6)] py-[var(--space-6)]">
           <div className="flex items-center gap-[var(--space-3)] text-[#22C55E]">
             <IconUsers />
-            <h2 className="font-[var(--font-display)] text-[1.15rem] font-bold tracking-[-0.02em] text-[var(--color-text-primary)]">
+            <h2 className="font-[var(--font-display)] text-[var(--text-lg)] font-bold tracking-[-0.02em] text-[var(--color-text-primary)]">
               Affiliates
             </h2>
           </div>
@@ -146,7 +146,7 @@ export default function HomePage() {
           </ul>
           <Link
             href="/sign-up"
-            className="mt-[var(--space-5)] inline-flex items-center gap-[0.4rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[#22C55E] transition-colors hover:underline"
+            className="mt-[var(--space-5)] inline-flex items-center gap-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[#22C55E] transition-colors hover:underline"
           >
             Apply as Affiliate
             <IconArrowRight />
@@ -158,7 +158,7 @@ export default function HomePage() {
       <div className="mx-auto mt-[var(--space-10)] max-w-[44rem] text-center">
         <div className="flex items-center justify-center gap-[var(--space-3)] text-[var(--color-text-secondary)]">
           <IconChart />
-          <h2 className="font-[var(--font-display)] text-[1.15rem] font-bold tracking-[-0.02em] text-[var(--color-text-primary)]">
+          <h2 className="font-[var(--font-display)] text-[var(--text-lg)] font-bold tracking-[-0.02em] text-[var(--color-text-primary)]">
             How It Works
           </h2>
         </div>

@@ -69,10 +69,10 @@ export default function AffiliateApplicationPage() {
                 </svg>
               </span>
             </div>
-            <h2 className="mt-[var(--space-8)] font-[var(--font-display)] text-[3rem] font-bold leading-[1.08] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
+            <h2 className="mt-[var(--space-8)] font-[var(--font-display)] text-[var(--text-2xl)] font-bold leading-[1.08] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
               Application Approved
             </h2>
-            <p className="mx-auto mt-[var(--space-6)] max-w-[39rem] font-[var(--font-sans)] text-[1.15rem] leading-[1.7] text-[var(--color-text-primary)]/85">
+            <p className="mx-auto mt-[var(--space-6)] max-w-[39rem] font-[var(--font-sans)] text-[var(--text-lg)] leading-[1.7] text-[var(--color-text-primary)]/85">
               Your affiliate application has been approved. Head to the dashboard to start tracking your performance.
             </p>
           </section>

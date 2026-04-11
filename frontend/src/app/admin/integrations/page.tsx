@@ -86,18 +86,18 @@ function CopyField({ label, value }: { label: string; value: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-[0.4rem]">
+    <div className="flex flex-col gap-[var(--space-2)]">
       <label className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] font-semibold text-[rgba(255,255,255,0.50)]">
         {label}
       </label>
-      <div className="flex items-center gap-[0.5rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[rgba(0,0,0,0.25)] px-[var(--space-3)] py-[0.55rem]">
+      <div className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[rgba(0,0,0,0.25)] px-[var(--space-3)] py-[var(--space-2)]">
         <code className="flex-1 truncate font-mono text-[var(--text-sm)] text-[var(--color-text-primary)]">
           {value}
         </code>
         <button
           type="button"
           onClick={handleCopy}
-          className={`flex shrink-0 items-center gap-[0.3rem] rounded-[var(--radius)] border px-[0.6rem] py-[0.25rem] font-[var(--font-sans)] text-[var(--text-xs)] transition-colors ${
+          className={`flex shrink-0 items-center gap-[var(--space-1)] rounded-[var(--radius)] border px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] transition-colors ${
             copied
               ? "border-[rgba(34,197,94,0.40)] text-[#22C55E]"
               : "border-[rgba(255,255,255,0.12)] text-[var(--color-text-primary)] hover:border-[rgba(255,255,255,0.20)]"
@@ -185,16 +185,16 @@ function LumaIntegrationCard() {
   else if (isConnected && !hasEvents) statusState = "waiting";
 
   return (
-    <div className="rounded-[0.75rem] border border-[rgba(255,255,255,0.10)] bg-transparent">
+    <div className="rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.10)] bg-transparent">
       {/* Header */}
-      <div className="flex items-start justify-between gap-[var(--space-4)] px-[1.5rem] pt-[1.5rem] pb-[1.25rem]">
-        <div className="flex items-center gap-[1rem]">
+      <div className="flex items-start justify-between gap-[var(--space-4)] px-[var(--space-6)] pt-[var(--space-6)] pb-[var(--space-5)]">
+        <div className="flex items-center gap-[var(--space-4)]">
           <IconLuma />
           <div>
-            <h3 className="font-[var(--font-display)] text-[1.35rem] font-bold leading-none tracking-[-0.02em] text-[var(--color-text-primary)]">
+            <h3 className="font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-none tracking-[-0.02em] text-[var(--color-text-primary)]">
               Luma Integration
             </h3>
-            <p className="mt-[0.3rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.55)]">
+            <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.55)]">
               Sync ticket sales from your Luma events automatically
             </p>
           </div>
@@ -202,23 +202,23 @@ function LumaIntegrationCard() {
 
         {/* Status badge */}
         {statusState === "loading" ? (
-          <div className="h-[1.6rem] w-[7rem] animate-pulse rounded-full bg-[rgba(255,255,255,0.08)]" />
+          <div className="h-[var(--space-6)] w-[7rem] animate-pulse rounded-full bg-[rgba(255,255,255,0.08)]" />
         ) : statusState === "connected" ? (
-          <span className="inline-flex items-center gap-[0.35rem] rounded-full border border-[rgba(34,197,94,0.30)] bg-[rgba(34,197,94,0.10)] px-[0.75rem] py-[0.25rem] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[#22C55E]">
-            <span className="relative flex size-[0.45rem]">
+          <span className="inline-flex items-center gap-[var(--space-2)] rounded-full border border-[rgba(34,197,94,0.30)] bg-[rgba(34,197,94,0.10)] px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[#22C55E]">
+            <span className="relative flex size-[var(--space-2)]">
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#22C55E] opacity-75" />
               <span className="relative inline-flex size-full rounded-full bg-[#22C55E]" />
             </span>
             Connected
           </span>
         ) : statusState === "waiting" ? (
-          <span className="inline-flex items-center gap-[0.35rem] rounded-full border border-[rgba(234,179,8,0.30)] bg-[rgba(234,179,8,0.10)] px-[0.75rem] py-[0.25rem] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[#EAB308]">
-            <span className="size-[0.45rem] animate-pulse rounded-full bg-[#EAB308]" />
+          <span className="inline-flex items-center gap-[var(--space-2)] rounded-full border border-[rgba(234,179,8,0.30)] bg-[rgba(234,179,8,0.10)] px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[#EAB308]">
+            <span className="size-[var(--space-2)] animate-pulse rounded-full bg-[#EAB308]" />
             Waiting for webhook...
           </span>
         ) : (
-          <span className="inline-flex items-center gap-[0.35rem] rounded-full border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-[0.75rem] py-[0.25rem] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[rgba(255,255,255,0.50)]">
-            <span className="size-[0.45rem] rounded-full bg-[rgba(255,255,255,0.30)]" />
+          <span className="inline-flex items-center gap-[var(--space-2)] rounded-full border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[rgba(255,255,255,0.50)]">
+            <span className="size-[var(--space-2)] rounded-full bg-[rgba(255,255,255,0.30)]" />
             Not Connected
           </span>
         )}
@@ -226,16 +226,16 @@ function LumaIntegrationCard() {
 
       {/* Connect button (when not connected) */}
       {!isConnected && !connectMutation.isSuccess && (
-        <div className="border-t border-[rgba(255,255,255,0.06)] px-[1.5rem] py-[1.25rem]">
+        <div className="border-t border-[rgba(255,255,255,0.06)] px-[var(--space-6)] py-[var(--space-5)]">
           <button
             type="button"
             onClick={() => connectMutation.mutate()}
             disabled={connectMutation.isPending}
-            className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-6)] py-[0.6rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+            className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-6)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
           >
             {connectMutation.isPending ? "Setting up..." : "Connect Luma"}
           </button>
-          <p className="mt-[0.5rem] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.40)]">
+          <p className="mt-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.40)]">
             Generates a webhook URL and connection ID for your Luma account.
           </p>
         </div>
@@ -243,25 +243,25 @@ function LumaIntegrationCard() {
 
       {/* Error */}
       {connectMutation.isError && (
-        <div className="mx-[1.5rem] mb-[1rem] rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-4)] py-[0.6rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[#FCA5A5]">
+        <div className="mx-[var(--space-6)] mb-[var(--space-4)] rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[#FCA5A5]">
           Failed to connect. Please try again.
         </div>
       )}
 
       {/* Webhook setup section (shown when connected or just connected) */}
       {(isConnected || connectMutation.isSuccess) && (
-        <div ref={instructionsRef} className="border-t border-[rgba(255,255,255,0.06)] px-[1.5rem] py-[1.25rem]">
+        <div ref={instructionsRef} className="border-t border-[rgba(255,255,255,0.06)] px-[var(--space-6)] py-[var(--space-5)]">
           {/* Setup instructions */}
-          <h4 className="font-[var(--font-display)] text-[1.1rem] font-bold leading-none tracking-[-0.02em] text-[var(--color-text-primary)]">
+          <h4 className="font-[var(--font-display)] text-[var(--text-lg)] font-bold leading-none tracking-[-0.02em] text-[var(--color-text-primary)]">
             Connect your Luma account
           </h4>
-          <ol className="mt-[var(--space-4)] flex flex-col gap-[0.65rem]">
+          <ol className="mt-[var(--space-4)] flex flex-col gap-[var(--space-3)]">
             {SETUP_STEPS.map((step, i) => (
-              <li key={i} className="flex items-start gap-[0.65rem]">
-                <span className="flex size-[1.5rem] shrink-0 items-center justify-center rounded-full bg-[rgba(91,141,239,0.15)] font-[var(--font-sans)] text-[var(--text-xs)] font-semibold text-[#5B8DEF]">
+              <li key={i} className="flex items-start gap-[var(--space-3)]">
+                <span className="flex size-[var(--space-6)] shrink-0 items-center justify-center rounded-full bg-[rgba(91,141,239,0.15)] font-[var(--font-sans)] text-[var(--text-xs)] font-semibold text-[#5B8DEF]">
                   {i + 1}
                 </span>
-                <span className="font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.5rem] text-[rgba(255,255,255,0.70)]">
+                <span className="font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-6)] text-[rgba(255,255,255,0.70)]">
                   <StepText text={step} />
                 </span>
               </li>
@@ -271,11 +271,11 @@ function LumaIntegrationCard() {
           {/* Copy blocks */}
           <div className="mt-[var(--space-5)] flex flex-col gap-[var(--space-4)]">
             <CopyField label="Webhook URL" value={webhookUrl} />
-            <div className="flex flex-col gap-[0.4rem]">
+            <div className="flex flex-col gap-[var(--space-2)]">
               <label className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] font-semibold text-[rgba(255,255,255,0.50)]">
                 Custom Header
               </label>
-              <div className="grid grid-cols-2 gap-[0.5rem]">
+              <div className="grid grid-cols-2 gap-[var(--space-2)]">
                 <CopyField label="Key" value="x-provider-connection-id" />
                 <CopyField label="Value" value={connectionId} />
               </div>
@@ -286,8 +286,8 @@ function LumaIntegrationCard() {
 
       {/* Live status section */}
       {isConnected && (
-        <div className="border-t border-[rgba(255,255,255,0.06)] px-[1.5rem] py-[1.25rem]">
-          <h4 className="font-[var(--font-display)] text-[1.1rem] font-bold leading-none tracking-[-0.02em] text-[var(--color-text-primary)]">
+        <div className="border-t border-[rgba(255,255,255,0.06)] px-[var(--space-6)] py-[var(--space-5)]">
+          <h4 className="font-[var(--font-display)] text-[var(--text-lg)] font-bold leading-none tracking-[-0.02em] text-[var(--color-text-primary)]">
             Live Status
           </h4>
           <div className="mt-[var(--space-4)] grid grid-cols-3 gap-[var(--space-4)]">
@@ -295,7 +295,7 @@ function LumaIntegrationCard() {
               <p className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.50)]">
                 Last webhook received
               </p>
-              <p className="mt-[0.3rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)]">
+              <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)]">
                 {timeAgo(status?.lastEventAt ?? null)}
               </p>
             </div>
@@ -303,7 +303,7 @@ function LumaIntegrationCard() {
               <p className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.50)]">
                 Total events received
               </p>
-              <p className="mt-[0.3rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)]">
+              <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)]">
                 {status?.eventCount ?? 0}
               </p>
             </div>
@@ -311,7 +311,7 @@ function LumaIntegrationCard() {
               <p className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.50)]">
                 Last event type
               </p>
-              <p className="mt-[0.3rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)]">
+              <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)]">
                 {status?.lastEventType ?? "—"}
               </p>
             </div>
@@ -319,7 +319,7 @@ function LumaIntegrationCard() {
 
           {/* Warning if connected but no events */}
           {!hasEvents && (
-            <div className="mt-[var(--space-4)] rounded-[var(--radius)] border border-[rgba(234,179,8,0.25)] bg-[rgba(234,179,8,0.06)] px-[var(--space-4)] py-[0.6rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[#EAB308]">
+            <div className="mt-[var(--space-4)] rounded-[var(--radius)] border border-[rgba(234,179,8,0.25)] bg-[rgba(234,179,8,0.06)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[#EAB308]">
               No webhook events received yet. Send a test event from Luma to verify.
             </div>
           )}
@@ -332,7 +332,7 @@ function LumaIntegrationCard() {
           <button
             type="button"
             onClick={() => setShowTroubleshooting(!showTroubleshooting)}
-            className="flex w-full items-center justify-between px-[1.5rem] py-[1rem] text-left transition-colors hover:bg-[rgba(255,255,255,0.02)]"
+            className="flex w-full items-center justify-between px-[var(--space-6)] py-[var(--space-4)] text-left transition-colors hover:bg-[rgba(255,255,255,0.02)]"
           >
             <span className="font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[rgba(255,255,255,0.60)]">
               Having trouble?
@@ -340,8 +340,8 @@ function LumaIntegrationCard() {
             <IconChevron open={showTroubleshooting} />
           </button>
           {showTroubleshooting && (
-            <div className="px-[1.5rem] pb-[1.25rem]">
-              <ul className="flex flex-col gap-[0.5rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.60)]">
+            <div className="px-[var(--space-6)] pb-[var(--space-5)]">
+              <ul className="flex flex-col gap-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.60)]">
                 <li>Make sure the webhook URL is copied exactly (no extra spaces)</li>
                 <li>Ensure <strong className="text-[var(--color-text-primary)]">ticket.registered</strong> is selected as an event type</li>
                 <li>Verify the <strong className="text-[var(--color-text-primary)]">x-provider-connection-id</strong> header is added with the correct value</li>
@@ -366,7 +366,7 @@ export default function IntegrationsPage() {
           <h2 className="font-[var(--font-display)] text-[1.75rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
             Integrations
           </h2>
-          <p className="mt-[0.3rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
+          <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
             Connect your ticketing platform to automatically sync sales and attribution.
           </p>
         </div>

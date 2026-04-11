@@ -8,10 +8,10 @@ import { apiClient } from "@/services/api/client";
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const LABEL_CLASS =
-  "font-[var(--font-sans)] text-[0.86rem] leading-[1rem] tracking-[0.32rem] uppercase text-[rgba(255,255,255,0.88)] font-semibold";
+  "font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-4)] tracking-[var(--tracking-label)] uppercase text-[rgba(255,255,255,0.88)] font-semibold";
 
 const INPUT_CLASS =
-  "h-[3.35rem] w-full rounded-[0.6rem] border border-[rgba(255,255,255,0.10)] bg-[rgba(17,21,34,0.96)] px-[1.1rem] font-[var(--font-sans)] text-[1.05rem] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.30)] focus:border-[var(--color-ring)] focus:outline-none transition-colors";
+  "h-[var(--space-12)] w-full rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.10)] bg-[rgba(17,21,34,0.96)] px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-base)] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.30)] focus:border-[var(--color-ring)] focus:outline-none transition-colors";
 
 type Settings = { eventName: string; orgName: string; commissionRate: number };
 
@@ -63,30 +63,30 @@ export default function AdminSettingsPage() {
 
   return (
     <DashboardStageCanvas>
-      <div className="flex min-h-[calc(100vh-var(--header-h))] flex-col px-[2.25rem] py-[2.1rem]">
+      <div className="flex min-h-[calc(100vh-var(--header-h))] flex-col px-[var(--space-8)] py-[var(--space-8)]">
         {/* Page header */}
         <div>
-          <h2 className="font-[var(--font-display)] text-[2.25rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
+          <h2 className="font-[var(--font-display)] text-[var(--text-2xl)] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
             Campaign Settings
           </h2>
-          <p className="mt-[0.55rem] font-[var(--font-sans)] text-[1rem] leading-[1.5rem] text-[rgba(255,255,255,0.56)]">
+          <p className="mt-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-base)] leading-[var(--space-6)] text-[rgba(255,255,255,0.56)]">
             Configure event identity and the default commission rate.
           </p>
         </div>
 
         {/* Two-column layout */}
-        <div className="mt-[2.35rem] grid flex-1 grid-cols-1 gap-[3.6rem] xl:grid-cols-[minmax(0,1fr)_20.5rem]">
+        <div className="mt-[var(--space-8)] grid flex-1 grid-cols-1 gap-[var(--space-16)] xl:grid-cols-[minmax(0,1fr)_20.5rem]">
           {/* Left: Campaign Details form */}
           <div className="flex min-h-full max-w-none flex-col">
-            <h3 className="font-[var(--font-display)] text-[2rem] font-bold leading-none tracking-[-0.02em] text-[var(--color-text-primary)]">
+            <h3 className="font-[var(--font-display)] text-[var(--text-2xl)] font-bold leading-none tracking-[-0.02em] text-[var(--color-text-primary)]">
               Campaign Details
             </h3>
-            <p className="mt-[0.45rem] font-[var(--font-sans)] text-[1rem] leading-[1.5rem] text-[rgba(255,255,255,0.56)]">
+            <p className="mt-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-base)] leading-[var(--space-6)] text-[rgba(255,255,255,0.56)]">
               Update your event identity, brand name, and payout defaults.
             </p>
 
-            <div className="mt-[1.75rem] flex flex-col gap-[2rem]">
-              <div className="flex flex-col gap-[0.72rem]">
+            <div className="mt-[var(--space-6)] flex flex-col gap-[var(--space-8)]">
+              <div className="flex flex-col gap-[var(--space-3)]">
                 <label className={LABEL_CLASS}>Event Name</label>
                 <input
                   type="text"
@@ -96,7 +96,7 @@ export default function AdminSettingsPage() {
                 />
               </div>
 
-              <div className="flex flex-col gap-[0.72rem]">
+              <div className="flex flex-col gap-[var(--space-3)]">
                 <label className={LABEL_CLASS}>Organization Name (White-Label)</label>
                 <input
                   type="text"
@@ -106,7 +106,7 @@ export default function AdminSettingsPage() {
                 />
               </div>
 
-              <div className="flex flex-col gap-[0.72rem]">
+              <div className="flex flex-col gap-[var(--space-3)]">
                 <label className={LABEL_CLASS}>Default Commission Rate (%)</label>
                 <input
                   type="text"
@@ -118,19 +118,19 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* Buttons */}
-            <div className="mt-auto flex items-center gap-[1.5rem] pt-[3.2rem]">
+            <div className="mt-auto flex items-center gap-[var(--space-6)] pt-[var(--space-12)]">
               <button
                 type="button"
                 onClick={() => saveMutation.mutate()}
                 disabled={saveMutation.isPending}
-                className="h-[3.35rem] min-w-[12.8rem] rounded-[0.65rem] bg-[var(--color-primary)] px-[2rem] font-[var(--font-sans)] text-[1rem] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+                className="h-[var(--space-12)] min-w-[12rem] rounded-[var(--radius-md)] bg-[var(--color-primary)] px-[var(--space-8)] font-[var(--font-sans)] text-[var(--text-base)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
               >
                 {saveMutation.isPending ? "Saving..." : "Save Settings"}
               </button>
               <button
                 type="button"
                 onClick={handleReset}
-                className="h-[3.35rem] min-w-[13rem] rounded-[0.65rem] border border-[rgba(255,255,255,0.12)] bg-transparent px-[2rem] font-[var(--font-sans)] text-[1rem] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.04)]"
+                className="h-[var(--space-12)] min-w-[12rem] rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-8)] font-[var(--font-sans)] text-[var(--text-base)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.04)]"
               >
                 Reset
               </button>
@@ -143,32 +143,32 @@ export default function AdminSettingsPage() {
           </div>
 
           {/* Right: Current Defaults */}
-          <div className="flex min-h-full flex-col pt-[3.85rem]">
-            <h3 className="font-[var(--font-display)] text-[2rem] font-bold leading-none tracking-[-0.02em] text-[var(--color-text-primary)]">
+          <div className="flex min-h-full flex-col pt-[var(--space-16)]">
+            <h3 className="font-[var(--font-display)] text-[var(--text-2xl)] font-bold leading-none tracking-[-0.02em] text-[var(--color-text-primary)]">
               Current Defaults
             </h3>
-            <p className="mt-[0.45rem] max-w-[18rem] font-[var(--font-sans)] text-[1rem] leading-[1.5rem] text-[rgba(255,255,255,0.56)]">
+            <p className="mt-[var(--space-2)] max-w-[18rem] font-[var(--font-sans)] text-[var(--text-base)] leading-[var(--space-6)] text-[rgba(255,255,255,0.56)]">
               Current saved values from the database.
             </p>
 
-            <div className="mt-[2.25rem] flex flex-col gap-[2.35rem]">
+            <div className="mt-[var(--space-8)] flex flex-col gap-[var(--space-8)]">
               <div>
                 <p className={LABEL_CLASS}>Event Name</p>
-                <p className="mt-[0.7rem] font-[var(--font-sans)] text-[1.05rem] leading-[1.55rem] text-[var(--color-text-primary)]">
+                <p className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-base)] leading-[var(--space-6)] text-[var(--color-text-primary)]">
                   {settings?.eventName ?? "—"}
                 </p>
               </div>
 
               <div>
                 <p className={LABEL_CLASS}>Organization Name</p>
-                <p className="mt-[0.7rem] font-[var(--font-sans)] text-[1.05rem] leading-[1.55rem] text-[var(--color-text-primary)]">
+                <p className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-base)] leading-[var(--space-6)] text-[var(--color-text-primary)]">
                   {settings?.orgName ?? "—"}
                 </p>
               </div>
 
               <div>
                 <p className={LABEL_CLASS}>Commission Rate</p>
-                <p className="mt-[0.7rem] font-[var(--font-sans)] text-[1.05rem] leading-[1.55rem] text-[var(--color-text-primary)]">
+                <p className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-base)] leading-[var(--space-6)] text-[var(--color-text-primary)]">
                   {settings?.commissionRate ?? 0}%
                 </p>
               </div>

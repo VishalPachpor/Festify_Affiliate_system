@@ -55,19 +55,19 @@ export function MilestoneProgress() {
         <h2 className="font-[var(--font-display)] text-[2rem] font-bold leading-none tracking-[-0.04em] text-[var(--color-text-primary)]">
           Next Milestone: {tierName}
         </h2>
-        <p className="font-[var(--font-sans)] text-[0.92rem] leading-[1.2rem] text-[var(--color-text-secondary)]">
+        <p className="font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-5)] text-[var(--color-text-secondary)]">
           {formatCurrency(target, currency)} target
         </p>
       </div>
 
-      <div className="mt-[0.95rem] flex items-baseline justify-between">
-        <p className="font-[var(--font-sans)] font-semibold text-[0.96rem] leading-[1.25rem] text-[var(--color-text-primary)]">
+      <div className="mt-[var(--space-4)] flex items-baseline justify-between">
+        <p className="font-[var(--font-sans)] font-semibold text-[var(--text-base)] leading-[var(--space-5)] text-[var(--color-text-primary)]">
           {formatCurrency(current, currency)}{" "}
-          <span className="font-normal text-[0.96rem] text-[var(--color-text-muted)]">
+          <span className="font-normal text-[var(--text-base)] text-[var(--color-text-muted)]">
             / {formatCurrency(target, currency)}
           </span>
         </p>
-        <p className="font-[var(--font-sans)] text-[0.92rem] font-semibold leading-[1.2rem] text-[var(--color-text-secondary)]">
+        <p className="font-[var(--font-sans)] text-[var(--text-sm)] font-semibold leading-[var(--space-5)] text-[var(--color-text-secondary)]">
           {((current / target) * 100).toFixed(1)}%
         </p>
       </div>
@@ -79,12 +79,12 @@ export function MilestoneProgress() {
         aria-valuemax={100}
         aria-label={`${pct}% toward ${tierName} milestone`}
         style={{ "--progress": `${pct}%` } as React.CSSProperties}
-        className="mt-[0.7rem] h-[0.6rem] w-full overflow-hidden rounded-full bg-[var(--color-progress-track)]"
+        className="mt-[var(--space-3)] h-[var(--space-2)] w-full overflow-hidden rounded-full bg-[var(--color-progress-track)]"
       >
         <div className="progress-fill h-full rounded-full bg-[var(--color-primary)]" />
       </div>
 
-      <p className="mt-[0.7rem] font-[var(--font-sans)] text-[0.9rem] leading-[1.2rem] text-[var(--color-text-secondary)]">
+      <p className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-5)] text-[var(--color-text-secondary)]">
         Only {formatCurrency(remaining, currency)} more to unlock{" "}
         <span className="font-semibold text-[var(--color-text-primary)]">
           {tierName}

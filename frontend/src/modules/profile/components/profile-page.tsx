@@ -20,20 +20,20 @@ function SectionCard({
   fields: Field[];
 }) {
   return (
-    <section className="rounded-[0.7rem] border border-[rgba(255,255,255,0.08)] bg-[rgba(24,29,48,0.52)] px-[1.4rem] py-[1.35rem]">
-      <h3 className="font-[var(--font-display)] text-[1.55rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
+    <section className="rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.08)] bg-[rgba(24,29,48,0.52)] px-[var(--space-5)] py-[var(--space-5)]">
+      <h3 className="font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
         {title}
       </h3>
-      <p className="mt-[0.35rem] font-[var(--font-sans)] text-[0.95rem] leading-[1.45rem] text-[rgba(255,255,255,0.58)]">
+      <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-base)] leading-[var(--space-6)] text-[rgba(255,255,255,0.58)]">
         {description}
       </p>
-      <div className="mt-[1.35rem] grid grid-cols-1 gap-[1rem] md:grid-cols-2">
+      <div className="mt-[var(--space-5)] grid grid-cols-1 gap-[var(--space-4)] md:grid-cols-2">
         {fields.map((field) => (
-          <div key={field.label} className="rounded-[0.6rem] border border-[rgba(255,255,255,0.08)] bg-[rgba(17,21,34,0.96)] px-[1rem] py-[0.9rem]">
-            <p className="font-[var(--font-sans)] text-[0.76rem] font-semibold uppercase tracking-[0.2rem] text-[rgba(255,255,255,0.82)]">
+          <div key={field.label} className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-[rgba(17,21,34,0.96)] px-[var(--space-4)] py-[var(--space-4)]">
+            <p className="font-[var(--font-sans)] text-[var(--text-xs)] font-semibold uppercase tracking-[0.2rem] text-[rgba(255,255,255,0.82)]">
               {field.label}
             </p>
-            <p className="mt-[0.45rem] font-[var(--font-sans)] text-[1rem] leading-[1.4rem] text-[var(--color-text-primary)]">
+            <p className="mt-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-base)] leading-[var(--space-6)] text-[var(--color-text-primary)]">
               {field.value}
             </p>
           </div>
@@ -100,15 +100,15 @@ export function ProfilePage({ variant }: { variant: ProfileVariant }) {
   ];
 
   return (
-    <div className="px-[2rem] py-[1.8rem]">
-      <div className="grid gap-[1.5rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="space-y-[1.5rem]">
+    <div className="px-[var(--space-8)] py-[var(--space-8)]">
+      <div className="grid gap-[var(--space-6)] xl:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="space-y-[var(--space-6)]">
           {/* Header card */}
-          <section className="rounded-[0.8rem] border border-[rgba(255,255,255,0.08)] bg-[rgba(24,29,48,0.52)] px-[1.5rem] py-[1.45rem]">
-            <div className="flex flex-col gap-[1rem] md:flex-row md:items-center md:justify-between">
-              <div className="flex items-center gap-[1rem]">
-                <div className="flex size-[4.25rem] items-center justify-center rounded-full bg-[var(--color-primary)]">
-                  <span className="font-[var(--font-sans)] text-[1.1rem] font-semibold text-[var(--color-primary-foreground)]">
+          <section className="rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.08)] bg-[rgba(24,29,48,0.52)] px-[var(--space-6)] py-[var(--space-6)]">
+            <div className="flex flex-col gap-[var(--space-4)] md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-[var(--space-4)]">
+                <div className="flex size-[var(--space-16)] items-center justify-center rounded-full bg-[var(--color-primary)]">
+                  <span className="font-[var(--font-sans)] text-[var(--text-lg)] font-semibold text-[var(--color-primary-foreground)]">
                     {initials}
                   </span>
                 </div>
@@ -116,14 +116,14 @@ export function ProfilePage({ variant }: { variant: ProfileVariant }) {
                   <h2 className="font-[var(--font-display)] text-[2rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
                     {fullName}
                   </h2>
-                  <p className="mt-[0.35rem] font-[var(--font-sans)] text-[1rem] leading-[1.5rem] text-[rgba(255,255,255,0.62)]">
+                  <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-base)] leading-[var(--space-6)] text-[rgba(255,255,255,0.62)]">
                     {roleName}
                   </p>
                 </div>
               </div>
             </div>
 
-            <p className="mt-[1rem] max-w-[42rem] font-[var(--font-sans)] text-[1rem] leading-[1.55rem] text-[rgba(255,255,255,0.58)]">
+            <p className="mt-[var(--space-4)] max-w-[42rem] font-[var(--font-sans)] text-[var(--text-base)] leading-[var(--space-6)] text-[rgba(255,255,255,0.58)]">
               {variant === "admin"
                 ? "Manage your account identity, contact information, and notification preferences."
                 : "Manage your public profile, payout contact details, and notification settings."}
@@ -147,16 +147,16 @@ export function ProfilePage({ variant }: { variant: ProfileVariant }) {
           />
         </div>
 
-        <div className="space-y-[1.5rem]">
-          <section className="rounded-[0.7rem] border border-[rgba(255,255,255,0.08)] bg-[rgba(24,29,48,0.52)] px-[1.4rem] py-[1.35rem]">
-            <h3 className="font-[var(--font-display)] text-[1.55rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
+        <div className="space-y-[var(--space-6)]">
+          <section className="rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.08)] bg-[rgba(24,29,48,0.52)] px-[var(--space-5)] py-[var(--space-5)]">
+            <h3 className="font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
               {variant === "admin" ? "Account Summary" : "Affiliate Summary"}
             </h3>
-            <div className="mt-[1.15rem] space-y-[0.8rem]">
+            <div className="mt-[var(--space-5)] space-y-[var(--space-3)]">
               {summaryLines.map((line) => (
                 <div
                   key={line}
-                  className="rounded-[0.6rem] border border-[rgba(255,255,255,0.08)] bg-[rgba(17,21,34,0.96)] px-[1rem] py-[0.85rem] font-[var(--font-sans)] text-[0.95rem] text-[var(--color-text-primary)]"
+                  className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-[rgba(17,21,34,0.96)] px-[var(--space-4)] py-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-base)] text-[var(--color-text-primary)]"
                 >
                   {line}
                 </div>

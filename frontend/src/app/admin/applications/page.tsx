@@ -59,23 +59,23 @@ export default function ApplicationsReviewPage() {
   const reviewError = reviewMutation.error instanceof Error ? reviewMutation.error.message : null;
 
   return (
-    <div className="px-[var(--space-7)] py-[var(--space-7)]">
+    <div className="px-[var(--space-8)] py-[var(--space-8)]">
       <header className="flex items-center justify-between gap-[var(--space-4)]">
         <div>
           <h1 className="font-[var(--font-display)] text-[1.75rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
             Applications
           </h1>
-          <p className="mt-[0.3rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
+          <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
             Review and approve incoming affiliate applications.
           </p>
         </div>
-        <div className="flex items-center gap-[0.5rem]">
+        <div className="flex items-center gap-[var(--space-2)]">
           {(["pending", "approved", "rejected", "all"] as const).map((f) => (
             <button
               key={f}
               type="button"
               onClick={() => setFilter(f)}
-              className={`rounded-[var(--radius)] px-[var(--space-3)] py-[0.4rem] font-[var(--font-sans)] text-[var(--text-xs)] capitalize transition-colors ${
+              className={`rounded-[var(--radius)] px-[var(--space-3)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-xs)] capitalize transition-colors ${
                 filter === f
                   ? "bg-[var(--color-primary)] text-[var(--color-primary-foreground)]"
                   : "border border-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.70)] hover:border-[rgba(255,255,255,0.24)]"
@@ -88,12 +88,12 @@ export default function ApplicationsReviewPage() {
       </header>
 
       {reviewError && (
-        <div className="mt-[var(--space-5)] rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-4)] py-[0.6rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[#FCA5A5]">
+        <div className="mt-[var(--space-5)] rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[#FCA5A5]">
           Review failed: {reviewError}
         </div>
       )}
       {errorMessage && (
-        <div className="mt-[var(--space-5)] rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-4)] py-[0.6rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[#FCA5A5]">
+        <div className="mt-[var(--space-5)] rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[#FCA5A5]">
           {errorMessage}
         </div>
       )}
@@ -118,10 +118,10 @@ export default function ApplicationsReviewPage() {
           >
             <header className="flex items-start justify-between gap-[var(--space-4)]">
               <div>
-                <h2 className="font-[var(--font-display)] text-[1.15rem] font-bold leading-none tracking-[-0.02em] text-[var(--color-text-primary)]">
+                <h2 className="font-[var(--font-display)] text-[var(--text-lg)] font-bold leading-none tracking-[-0.02em] text-[var(--color-text-primary)]">
                   {app.firstName}
                 </h2>
-                <p className="mt-[0.25rem] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
+                <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
                   {app.email} · {app.campaignName} · applied {new Date(app.createdAt).toLocaleDateString()}
                 </p>
               </div>
@@ -135,7 +135,7 @@ export default function ApplicationsReviewPage() {
                   <dt className="text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.45)]">
                     Socials
                   </dt>
-                  <dd className="mt-[0.15rem]">{app.socialProfiles}</dd>
+                  <dd className="mt-[var(--space-1)]">{app.socialProfiles}</dd>
                 </div>
               )}
               {app.audienceSize && (
@@ -143,7 +143,7 @@ export default function ApplicationsReviewPage() {
                   <dt className="text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.45)]">
                     Audience
                   </dt>
-                  <dd className="mt-[0.15rem]">{app.audienceSize}</dd>
+                  <dd className="mt-[var(--space-1)]">{app.audienceSize}</dd>
                 </div>
               )}
               {app.experience && (
@@ -151,14 +151,14 @@ export default function ApplicationsReviewPage() {
                   <dt className="text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.45)]">
                     Experience
                   </dt>
-                  <dd className="mt-[0.15rem]">{app.experience}</dd>
+                  <dd className="mt-[var(--space-1)]">{app.experience}</dd>
                 </div>
               )}
               <div className="lg:col-span-2">
                 <dt className="text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.45)]">
                   Why they're a fit
                 </dt>
-                <dd className="mt-[0.15rem] whitespace-pre-line">{app.fitReason}</dd>
+                <dd className="mt-[var(--space-1)] whitespace-pre-line">{app.fitReason}</dd>
               </div>
             </dl>
 
@@ -168,7 +168,7 @@ export default function ApplicationsReviewPage() {
                   type="button"
                   onClick={() => reviewMutation.mutate({ id: app.id, status: "approved" })}
                   disabled={reviewMutation.isPending}
-                  className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[0.5rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+                  className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
                 >
                   Approve
                 </button>
@@ -176,7 +176,7 @@ export default function ApplicationsReviewPage() {
                   type="button"
                   onClick={() => reviewMutation.mutate({ id: app.id, status: "rejected" })}
                   disabled={reviewMutation.isPending}
-                  className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.18)] px-[var(--space-4)] py-[0.5rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.32)] disabled:opacity-50"
+                  className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.18)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.32)] disabled:opacity-50"
                 >
                   Reject
                 </button>
@@ -203,7 +203,7 @@ function StatusBadge({ status }: { status: "pending" | "approved" | "rejected" }
   } as const;
   return (
     <span
-      className={`inline-flex items-center gap-[0.3rem] rounded-full border px-[0.7rem] py-[0.2rem] font-[var(--font-sans)] text-[var(--text-xs)] font-medium capitalize ${styles[status]}`}
+      className={`inline-flex items-center gap-[var(--space-1)] rounded-full border px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium capitalize ${styles[status]}`}
     >
       {status}
     </span>

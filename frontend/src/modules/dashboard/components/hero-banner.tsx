@@ -13,7 +13,7 @@ export function HeroBanner() {
 
   return (
     <section
-      className="bg-hero-gradient relative flex min-h-[6.5rem] flex-col justify-center overflow-hidden rounded-[0.875rem] border border-[var(--color-border-ghost)] px-[2rem] py-[1.35rem]"
+      className="bg-hero-gradient relative flex min-h-[6.5rem] flex-col justify-center overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-border-ghost)] px-[var(--space-8)] py-[var(--space-5)]"
       aria-label="Welcome banner"
     >
       <div
@@ -24,12 +24,12 @@ export function HeroBanner() {
             "radial-gradient(circle at 40% 40%, rgba(255,255,255,0.18), transparent 68%)",
         }}
       />
-      <h1 className="font-[var(--font-display)] text-[2.55rem] font-bold leading-none tracking-[-0.04em] text-[var(--color-text-primary)]">
+      <h1 className="font-[var(--font-display)] text-[var(--text-2xl)] font-bold leading-none tracking-[-0.04em] text-[var(--color-text-primary)]">
         Welcome Back, {firstName}!
       </h1>
       <p
         aria-live="polite"
-        className="mt-[0.2rem] max-w-[46rem] font-[var(--font-sans)] text-[1.125rem] leading-[1.35] text-[rgba(255,255,255,0.9)]"
+        className="mt-[var(--space-1)] max-w-[46rem] font-[var(--font-sans)] text-[var(--text-lg)] leading-[1.35] text-[rgba(255,255,255,0.9)]"
       >
         Track your performance and grow your earnings with {eventName}
       </p>

@@ -90,7 +90,7 @@ function StatusCell({ status }: { status: Sale["status"] }) {
   if (status === "pending") {
     return (
       <span
-        className="inline-block rounded-[0.25rem] px-[0.5rem] py-[0.125rem] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--leading-snug)]"
+        className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[0.125rem] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--leading-snug)]"
         style={{
           background: SALES_COLORS.pendingBg,
           color: SALES_COLORS.pendingText,
@@ -103,7 +103,7 @@ function StatusCell({ status }: { status: Sale["status"] }) {
   // rejected
   return (
     <span
-      className="inline-block rounded-[0.25rem] px-[0.5rem] py-[0.125rem] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--leading-snug)]"
+      className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[0.125rem] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--leading-snug)]"
       style={{
         background: SALES_COLORS.rejectedBg,
         color: SALES_COLORS.rejectedText,
@@ -151,7 +151,7 @@ function SummaryCard({
         {value}
       </dd>
       {change && (
-        <p className="flex items-center gap-[0.25rem] font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] text-[#22C55E]">
+        <p className="flex items-center gap-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] text-[#22C55E]">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
             <path d="M2 8.5C4 6 6 4.5 10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>

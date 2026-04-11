@@ -64,7 +64,7 @@ function TierBadge({ tier }: { tier: string }) {
   const colors = TIER_COLORS[tier] ?? TIER_COLORS.bronze;
   return (
     <span
-      className="inline-block rounded-[0.25rem] px-[0.5rem] py-[0.1rem] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
+      className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
       style={{ background: colors.bg, color: colors.text }}
     >
       {tier}
@@ -133,7 +133,7 @@ function AdminHeroBanner() {
 
   return (
     <section
-      className="relative flex min-h-[6.5rem] flex-col justify-center overflow-hidden rounded-[0.875rem] border border-[var(--color-border-ghost)] px-[2rem] py-[1.35rem]"
+      className="relative flex min-h-[6.5rem] flex-col justify-center overflow-hidden rounded-[var(--radius-xl)] border border-[var(--color-border-ghost)] px-[var(--space-8)] py-[var(--space-5)]"
       style={{
         background: `linear-gradient(90deg,
           rgba(23,29,50,1.00) 0%,
@@ -149,10 +149,10 @@ function AdminHeroBanner() {
       }}
       aria-label="Welcome banner"
     >
-      <h2 className="relative z-10 font-[var(--font-display)] text-[2.55rem] font-bold leading-none tracking-[-0.04em] text-[var(--color-text-primary)]">
+      <h2 className="relative z-10 font-[var(--font-display)] text-[var(--text-2xl)] font-bold leading-none tracking-[-0.04em] text-[var(--color-text-primary)]">
         Welcome Back, {firstName}!
       </h2>
-      <p className="relative z-10 mt-[0.2rem] max-w-[46rem] font-[var(--font-sans)] text-[1.125rem] leading-[1.35] text-[rgba(255,255,255,0.9)]">
+      <p className="relative z-10 mt-[var(--space-1)] max-w-[46rem] font-[var(--font-sans)] text-[var(--text-lg)] leading-[var(--leading-normal)] text-[rgba(255,255,255,0.9)]">
         Monitor and manage the {eventName} Affiliate Program
       </p>
     </section>
@@ -223,21 +223,21 @@ export default function AdminDashboardPage() {
           <div className="mt-[var(--space-4)] flex flex-wrap gap-[var(--space-3)]">
             <Link
               href="/admin/affiliates?status=pending"
-              className="flex items-center gap-[0.5rem] rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
+              className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
             >
               <IconApprove />
               Approve Pending
             </Link>
             <Link
               href="/admin/materials"
-              className="flex items-center gap-[0.5rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.04)]"
+              className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.04)]"
             >
               <IconCreateAsset />
               Create Asset
             </Link>
             <Link
               href="/admin/milestones"
-              className="flex items-center gap-[0.5rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.04)]"
+              className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.04)]"
             >
               <IconSetMilestone />
               Set Milestone
@@ -323,7 +323,7 @@ export default function AdminDashboardPage() {
               {activityItems.slice(0, 5).map((item) => (
                 <div key={item.id} className="flex items-start gap-[var(--space-3)]">
                   <span
-                    className="mt-[0.35rem] size-[0.5rem] shrink-0 rounded-full"
+                    className="mt-[var(--space-1)] size-[var(--space-2)] shrink-0 rounded-full"
                     style={{ background: "#F5A623" }}
                     aria-hidden="true"
                   />

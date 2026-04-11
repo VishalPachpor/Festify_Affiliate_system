@@ -28,8 +28,8 @@ export default function ApplyPage({ params }: Props) {
       )}
 
       {error && (
-        <div className="mx-auto max-w-[44rem] rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface-card)] px-[var(--space-7)] py-[var(--space-7)] text-center">
-          <h1 className="font-[var(--font-display)] text-[2rem] font-bold leading-[1.1] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
+        <div className="mx-auto max-w-[44rem] rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface-card)] px-[var(--space-8)] py-[var(--space-8)] text-center">
+          <h1 className="font-[var(--font-display)] text-[var(--text-2xl)] font-bold leading-[1.1] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
             Event not found
           </h1>
           <p className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-secondary)]">

@@ -71,7 +71,7 @@ export function AdminHeader() {
   }, [isSearchable, pathname, router, searchParams, searchValue, startTransition]);
 
   return (
-    <header className="flex h-[3.6rem] shrink-0 items-center justify-between border-b border-[var(--color-border)] px-[1.25rem]">
+    <header className="flex h-[var(--space-16)] shrink-0 items-center justify-between border-b border-[var(--color-border)] px-[var(--space-5)]">
       <h1 className="font-[var(--font-display)] text-[2rem] font-bold leading-none tracking-[-0.04em] text-[var(--color-text-primary)]">
         {title}
       </h1>
@@ -88,7 +88,7 @@ export function AdminHeader() {
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             disabled={!isSearchable}
-            className="h-[2.1rem] w-[9.5rem] rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-input)] pl-[1.9rem] pr-[0.75rem] font-[var(--font-sans)] text-[0.78rem] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-ring)] transition-colors duration-[var(--duration-normal)] md:w-[11rem] xl:w-[12.5rem]"
+            className="h-[var(--space-8)] w-[9.5rem] rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-input)] pl-[var(--space-8)] pr-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-ring)] transition-colors duration-[var(--duration-normal)] md:w-[11rem] xl:w-[12.5rem]"
           />
         </div>
 

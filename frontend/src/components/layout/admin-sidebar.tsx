@@ -120,25 +120,25 @@ export function AdminSidebar() {
       aria-label="Admin navigation"
     >
       {/* Brand */}
-      <div className="px-[1.35rem] pt-[1.45rem] pb-[0.95rem]">
+      <div className="px-[var(--space-5)] pt-[var(--space-6)] pb-[var(--space-4)]">
         <Image
           src="/token.png"
           alt="TOKEN2049"
           width={188}
           height={24}
-          className="h-[1.55rem] w-auto"
+          className="h-[var(--space-6)] w-auto"
           priority
         />
-        <p className="mt-[0.3rem] font-[var(--font-sans)] text-[0.68rem] leading-[0.92rem] text-[var(--color-text-secondary)]">
+        <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--space-4)] text-[var(--color-text-secondary)]">
           {brandSubtitle}
         </p>
       </div>
 
-      <div className="mx-[1.5rem] h-px bg-[var(--color-border)]" />
+      <div className="mx-[var(--space-6)] h-px bg-[var(--color-border)]" />
 
       {/* Nav */}
-      <nav className="flex-1 px-[0.75rem] py-[0.95rem]" aria-label="Admin sections">
-        <ul className="flex flex-col gap-[0.28rem]">
+      <nav className="flex-1 px-[var(--space-3)] py-[var(--space-4)]" aria-label="Admin sections">
+        <ul className="flex flex-col gap-[var(--space-1)]">
           {NAV_ITEMS.map(({ href, label, Icon }) => {
             const active = isNavActive(href, pathname);
             return (
@@ -146,8 +146,8 @@ export function AdminSidebar() {
                 <Link
                   href={href}
                   className={cn(
-                    "flex items-center gap-[0.7rem] rounded-[var(--radius)] px-[0.9rem] py-[0.72rem]",
-                    "font-[var(--font-sans)] text-[0.86rem] leading-[1.1rem]",
+                    "flex items-center gap-[var(--space-3)] rounded-[var(--radius)] px-[var(--space-4)] py-[var(--space-3)]",
+                    "font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-4)]",
                     "transition-colors duration-[var(--duration-normal)]",
                     active
                       ? "bg-[var(--color-nav-active-bg)] text-[var(--color-nav-active-text)] font-medium"
@@ -165,13 +165,13 @@ export function AdminSidebar() {
       </nav>
 
       {/* User footer */}
-      <div className="mx-[1.5rem] h-px bg-[var(--color-border)]" />
+      <div className="mx-[var(--space-6)] h-px bg-[var(--color-border)]" />
       <Link
         href="/admin/settings"
-        className="flex items-center gap-[var(--space-3)] px-[1.15rem] py-[1.05rem] transition-colors duration-[var(--duration-normal)] hover:bg-[var(--color-surface-ghost-hover)]"
+        className="flex items-center gap-[var(--space-3)] px-[var(--space-5)] py-[var(--space-4)] transition-colors duration-[var(--duration-normal)] hover:bg-[var(--color-surface-ghost-hover)]"
       >
         <div
-          className="flex size-[2.35rem] shrink-0 items-center justify-center rounded-full bg-[var(--color-avatar-bg)]"
+          className="flex size-[var(--space-10)] shrink-0 items-center justify-center rounded-full bg-[var(--color-avatar-bg)]"
           aria-hidden="true"
         >
           <span className="font-[var(--font-sans)] font-semibold text-[var(--text-xs)] text-[var(--color-primary-foreground)]">
@@ -179,10 +179,10 @@ export function AdminSidebar() {
           </span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="truncate font-[var(--font-sans)] font-medium text-[0.84rem] leading-[1.05rem] text-[var(--color-text-primary)]">
+          <p className="truncate font-[var(--font-sans)] font-medium text-[var(--text-sm)] leading-[var(--space-4)] text-[var(--color-text-primary)]">
             {user?.fullName ?? "User"}
           </p>
-          <p className="truncate font-[var(--font-sans)] text-[0.7rem] leading-[0.9rem] text-[var(--color-text-secondary)]">
+          <p className="truncate font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--space-4)] text-[var(--color-text-secondary)]">
             {user?.role === "admin" ? "Organizer Admin" : "Affiliate"}
           </p>
         </div>

@@ -80,7 +80,7 @@ export function PublicApplicationForm({ eventSlug, eventName, organizerName, com
         <h1 className="mt-[var(--space-2)] font-[var(--font-display)] text-[3rem] font-bold leading-[1.08] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
           Become an Affiliate for {eventName}
         </h1>
-        <p className="mt-[var(--space-3)] max-w-[44rem] font-[var(--font-sans)] text-[1.15rem] leading-[1.6] text-[var(--color-text-secondary)]">
+        <p className="mt-[var(--space-3)] max-w-[44rem] font-[var(--font-sans)] text-[var(--text-lg)] leading-[1.6] text-[var(--color-text-secondary)]">
           Earn {commissionPct}% commission on every ticket sold through your referral link.
           Apply below — you'll hear back by email.
         </p>

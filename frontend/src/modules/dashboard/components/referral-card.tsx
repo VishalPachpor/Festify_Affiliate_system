@@ -41,12 +41,12 @@ export function ReferralCard() {
         Your Referral Link
       </h2>
 
-      <div className="mt-[0.9rem] flex items-center gap-[0.75rem]">
+      <div className="mt-[var(--space-4)] flex items-center gap-[var(--space-3)]">
         <TextInput
           readOnly
           value={isLoading ? "Loading…" : referralUrl}
           aria-label="Referral URL"
-          className="h-[2.2rem] flex-1 cursor-text select-all text-[0.92rem] text-[var(--color-text-secondary)] hover:border-[var(--color-border)] focus-visible:ring-0 focus-visible:border-[var(--color-border)]"
+          className="h-[var(--space-8)] flex-1 cursor-text select-all text-[var(--text-sm)] text-[var(--color-text-secondary)] hover:border-[var(--color-border)] focus-visible:ring-0 focus-visible:border-[var(--color-border)]"
         />
         <Button
           variant="primary"
@@ -54,25 +54,25 @@ export function ReferralCard() {
           disabled={!referralUrl}
           aria-label={copied ? "Link copied to clipboard" : "Copy referral link"}
           aria-live="polite"
-          className="h-[2.2rem] shrink-0 gap-[0.5rem] px-[1rem] text-[0.92rem]"
+          className="h-[var(--space-8)] shrink-0 gap-[var(--space-2)] px-[var(--space-4)] text-[var(--text-sm)]"
         >
           <IconCopy />
           {copied ? "Copied!" : "Copy"}
         </Button>
       </div>
 
-      <div className="mt-[0.6rem] flex flex-col gap-[0.2rem]">
-        <p className="font-[var(--font-sans)] text-[0.82rem] leading-[1.1rem] text-[var(--color-text-secondary)]">
+      <div className="mt-[var(--space-2)] flex flex-col gap-[var(--space-1)]">
+        <p className="font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-4)] text-[var(--color-text-secondary)]">
           Share your unique link to earn commissions
         </p>
         {error ? (
-          <p className="font-[var(--font-sans)] text-[0.82rem] leading-[1.1rem] text-[#FCA5A5]">
+          <p className="font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-4)] text-[#FCA5A5]">
             Could not load referral code: {error instanceof Error ? error.message : "unknown error"}
           </p>
         ) : (
-          <p className="font-[var(--font-sans)] text-[0.82rem] leading-[1.1rem] text-[var(--color-text-secondary)]">
+          <p className="font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-4)] text-[var(--color-text-secondary)]">
             Referral Code:{" "}
-            <span className="font-medium text-[0.82rem] text-[var(--color-success)]">
+            <span className="font-medium text-[var(--text-sm)] text-[var(--color-success)]">
               {referralCode || "—"}
             </span>
           </p>

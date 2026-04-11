@@ -67,7 +67,7 @@ function StatusCell({ status }: { status: CommissionStatus }) {
   }
   return (
     <span
-      className="inline-block rounded-[0.25rem] px-[0.5rem] py-[0.1rem] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
+      className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
       style={{ background: "rgba(234,179,8,0.14)", color: "#EAB308" }}
     >
       pending
@@ -82,7 +82,7 @@ function ActionButton({ label, variant }: { label: string; variant: "primary" | 
     return (
       <button
         type="button"
-        className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[0.35rem] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
+        className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
       >
         {label}
       </button>
@@ -91,7 +91,7 @@ function ActionButton({ label, variant }: { label: string; variant: "primary" | 
   return (
     <button
       type="button"
-      className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-4)] py-[0.35rem] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
+      className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-4)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
     >
       {label}
     </button>
@@ -140,7 +140,7 @@ export default function AdminCommissionsPage() {
 
   return (
     <DashboardStageCanvas>
-      <div className="flex flex-col gap-[1.5rem] px-[2rem] py-[2rem]">
+      <div className="flex flex-col gap-[var(--space-6)] px-[var(--space-8)] py-[var(--space-8)]">
         {/* KPI Summary */}
         <dl className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-3">
           <KpiCard
@@ -176,21 +176,21 @@ export default function AdminCommissionsPage() {
           </div>
           <button
             type="button"
-            className="flex items-center gap-[0.4rem] rounded-[var(--radius)] bg-[rgba(255,255,255,0.06)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.10)]"
+            className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] bg-[rgba(255,255,255,0.06)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.10)]"
           >
             dd-mm-yyyy
             <IconChevronDown />
           </button>
           <button
             type="button"
-            className="flex items-center gap-[0.4rem] rounded-[var(--radius)] bg-[rgba(255,255,255,0.06)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.10)]"
+            className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] bg-[rgba(255,255,255,0.06)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.10)]"
           >
             All status
             <IconChevronDown />
           </button>
           <button
             type="button"
-            className="flex items-center gap-[0.5rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
+            className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
           >
             <IconDownload />
             Export CSV

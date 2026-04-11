@@ -112,7 +112,7 @@ export function VerifyEmailForm({ email }: { email: string }) {
         )}
       </div>
 
-      <p className="text-center font-[var(--font-sans)] text-[1.05rem] text-[var(--color-text-link)]">
+      <p className="text-center font-[var(--font-sans)] text-[var(--text-base)] text-[var(--color-text-link)]">
         Didn&apos;t receive code?{" "}
         <button
           type="button"
@@ -139,7 +139,7 @@ export function VerifyEmailForm({ email }: { email: string }) {
 
       <Link
         href={email ? `/sign-up?email=${encodeURIComponent(email)}` : "/sign-up"}
-        className="text-center font-[var(--font-sans)] text-[1.05rem] text-[var(--color-text-link)] underline transition-colors hover:text-[var(--color-text-link-hover)]"
+        className="text-center font-[var(--font-sans)] text-[var(--text-base)] text-[var(--color-text-link)] underline transition-colors hover:text-[var(--color-text-link-hover)]"
       >
         Change email address
       </Link>

@@ -54,7 +54,7 @@ const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
       ref={ref}
       data-slot="card-header"
       className={cn(
-        "flex items-center justify-between gap-[var(--space-md)]",
+        "flex items-center justify-between gap-[var(--space-4)]",
         className,
       )}
       {...props}
@@ -115,7 +115,7 @@ const CardContent = forwardRef<HTMLDivElement, CardContentProps>(
     <div
       ref={ref}
       data-slot="card-content"
-      className={cn("pt-[var(--space-md)]", className)}
+      className={cn("pt-[var(--space-4)]", className)}
       {...props}
     />
   ),
@@ -133,7 +133,7 @@ const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
       ref={ref}
       data-slot="card-footer"
       className={cn(
-        "flex items-center gap-[var(--space-sm)] pt-[var(--space-md)]",
+        "flex items-center gap-[var(--space-2)] pt-[var(--space-4)]",
         className,
       )}
       {...props}

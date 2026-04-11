@@ -99,7 +99,7 @@ export function OtpInput({
 
   return (
     <div
-      style={{ display: "flex", justifyContent: "center", gap: "0.75rem" }}
+      style={{ display: "flex", justifyContent: "center", gap: "var(--space-3)" }}
       role="group"
       aria-label="Verification code"
     >
@@ -120,19 +120,19 @@ export function OtpInput({
           onPaste={index === 0 ? handlePaste : undefined}
           onFocus={(e) => e.target.select()}
           style={{
-            width: "3.5rem",
-            height: "3.5rem",
+            width: "3rem",
+            height: "3rem",
             flexShrink: 0,
-            borderRadius: "0.5rem",
-            border: `1px solid ${error ? "#ef4444" : "rgba(255, 255, 255, 0.20)"}`,
-            background: "#121626",
+            borderRadius: "var(--radius-md)",
+            border: `1px solid ${error ? "var(--color-error)" : "var(--color-border)"}`,
+            background: "var(--color-input)",
             fontFamily: "var(--font-sans)",
-            fontSize: "1.4rem",
+            fontSize: "var(--text-lg)",
             fontWeight: 600,
             textAlign: "center" as const,
-            color: "#F0F0F0",
+            color: "var(--color-text-primary)",
             outline: "none",
-            transition: "border-color 200ms",
+            transition: `border-color var(--duration-normal)`,
           }}
           {...(index === 0 ? { id, ...ariaProps } : {})}
         />

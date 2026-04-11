@@ -62,7 +62,7 @@ export function ApplicationStatusCard({ variant }: { variant: StatusVariant }) {
         {copy.title}
       </h2>
 
-      <p className="mx-auto mt-[var(--space-6)] max-w-[39rem] font-[var(--font-sans)] text-[1.15rem] leading-[1.7] text-[var(--color-text-primary)]/85">
+      <p className="mx-auto mt-[var(--space-6)] max-w-[39rem] font-[var(--font-sans)] text-[var(--text-lg)] leading-[1.7] text-[var(--color-text-primary)]/85">
         {copy.body}
       </p>
 

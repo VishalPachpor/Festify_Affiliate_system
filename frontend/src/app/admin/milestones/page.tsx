@@ -110,7 +110,7 @@ function TierTile({
 }) {
   return (
     <div
-      className="flex size-[3.5rem] shrink-0 items-center justify-center rounded-[0.55rem] border font-[var(--font-sans)] text-[1.4rem] font-semibold"
+      className="flex size-[var(--space-12)] shrink-0 items-center justify-center rounded-[var(--radius-md)] border font-[var(--font-sans)] text-[var(--text-xl)] font-semibold"
       style={{ borderColor: tileBorder, color: tileText, background: tileBg }}
       aria-hidden="true"
     >
@@ -124,13 +124,13 @@ function TierTile({
 function UnlockBadge({ type }: { type: UnlockType }) {
   if (type === "Auto-unlock") {
     return (
-      <span className="inline-block rounded-[0.25rem] bg-[rgba(34,197,94,0.14)] px-[0.5rem] py-[0.15rem] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[#22C55E]">
+      <span className="inline-block rounded-[var(--space-1)] bg-[rgba(34,197,94,0.14)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[#22C55E]">
         Auto-unlock
       </span>
     );
   }
   return (
-    <span className="inline-block rounded-[0.25rem] bg-[rgba(239,68,68,0.14)] px-[0.5rem] py-[0.15rem] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[#EF4444]">
+    <span className="inline-block rounded-[var(--space-1)] bg-[rgba(239,68,68,0.14)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[#EF4444]">
       Locked
     </span>
   );
@@ -166,7 +166,7 @@ function AddMilestoneModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,0,0.60)]">
-      <div className="w-full max-w-[28rem] rounded-[0.75rem] border border-[rgba(255,255,255,0.08)] bg-[#111525] px-[2rem] py-[1.75rem]">
+      <div className="w-full max-w-[28rem] rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.08)] bg-[#111525] px-[var(--space-8)] py-[var(--space-6)]">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="font-[var(--font-display)] text-[1.5rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
@@ -182,9 +182,9 @@ function AddMilestoneModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-[1.5rem] flex flex-col gap-[1.25rem]">
+        <form onSubmit={handleSubmit} className="mt-[var(--space-6)] flex flex-col gap-[var(--space-5)]">
           {/* Tier Name */}
-          <div className="flex flex-col gap-[0.4rem]">
+          <div className="flex flex-col gap-[var(--space-2)]">
             <label className={LABEL_CLASS}>Tier Name</label>
             <input
               type="text"
@@ -196,7 +196,7 @@ function AddMilestoneModal({
           </div>
 
           {/* Target Sales */}
-          <div className="flex flex-col gap-[0.4rem]">
+          <div className="flex flex-col gap-[var(--space-2)]">
             <label className={LABEL_CLASS}>Target Sales ($)</label>
             <input
               type="number"
@@ -208,7 +208,7 @@ function AddMilestoneModal({
           </div>
 
           {/* Reward */}
-          <div className="flex flex-col gap-[0.4rem]">
+          <div className="flex flex-col gap-[var(--space-2)]">
             <label className={LABEL_CLASS}>Reward</label>
             <input
               type="text"
@@ -220,7 +220,7 @@ function AddMilestoneModal({
           </div>
 
           {/* Unlock Type */}
-          <div className="flex flex-col gap-[0.4rem]">
+          <div className="flex flex-col gap-[var(--space-2)]">
             <label className={LABEL_CLASS}>Unlock Type</label>
             <div className="relative">
               <select
@@ -238,17 +238,17 @@ function AddMilestoneModal({
           </div>
 
           {/* Buttons */}
-          <div className="mt-[0.5rem] flex gap-[var(--space-3)]">
+          <div className="mt-[var(--space-2)] flex gap-[var(--space-3)]">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent py-[0.6rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
+              className="flex-1 rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 rounded-[var(--radius)] bg-[var(--color-primary)] py-[0.6rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
+              className="flex-1 rounded-[var(--radius)] bg-[var(--color-primary)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
             >
               Add Milestone
             </button>
@@ -380,14 +380,14 @@ export default function AdminMilestonesPage() {
             <h2 className="font-[var(--font-display)] text-[1.75rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
               Milestones: Rewards & Incentives
             </h2>
-            <p className="mt-[0.3rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
+            <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
               Configure sales thresholds and rewards for affiliates.
             </p>
           </div>
           <button
             type="button"
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-[0.5rem] rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
+            className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
           >
             <IconMilestone />
             Add Milestone +
@@ -402,12 +402,12 @@ export default function AdminMilestonesPage() {
             return (
             <article
               key={m.id}
-              className="cursor-pointer rounded-[0.45rem] border border-[rgba(255,255,255,0.08)] bg-transparent px-[1.5rem] py-[1.3rem] transition-colors hover:border-[rgba(255,255,255,0.16)]"
+              className="cursor-pointer rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.08)] bg-transparent px-[var(--space-6)] py-[var(--space-5)] transition-colors hover:border-[rgba(255,255,255,0.16)]"
               onClick={() => { if (!isEditing) setEditingId(m.id); }}
             >
               <div className="flex items-start justify-between">
                 {/* Left: tile + info */}
-                <div className="flex items-start gap-[1rem]">
+                <div className="flex items-start gap-[var(--space-4)]">
                   <TierTile
                     letter={m.letter}
                     tileText={m.tileText}
@@ -417,7 +417,7 @@ export default function AdminMilestonesPage() {
                   <div onClick={isEditing ? (e) => e.stopPropagation() : undefined}>
                     {isEditing ? (
                       <>
-                        <div className="flex flex-col gap-[0.4rem]">
+                        <div className="flex flex-col gap-[var(--space-2)]">
                           <label className={LABEL_CLASS}>Tier Name</label>
                           <input
                             type="text"
@@ -426,7 +426,7 @@ export default function AdminMilestonesPage() {
                             className={`max-w-[20rem] ${INPUT_CLASS}`}
                           />
                         </div>
-                        <div className="mt-[0.6rem] flex flex-col gap-[0.4rem]">
+                        <div className="mt-[var(--space-3)] flex flex-col gap-[var(--space-2)]">
                           <label className={LABEL_CLASS}>Reward Description</label>
                           <input
                             type="text"
@@ -435,7 +435,7 @@ export default function AdminMilestonesPage() {
                             className={`max-w-[20rem] ${INPUT_CLASS}`}
                           />
                         </div>
-                        <div className="mt-[0.6rem] flex flex-col gap-[0.4rem]">
+                        <div className="mt-[var(--space-3)] flex flex-col gap-[var(--space-2)]">
                           <label className={LABEL_CLASS}>Revenue Threshold ($)</label>
                           <input
                             type="text"
@@ -444,19 +444,19 @@ export default function AdminMilestonesPage() {
                             className={`max-w-[16rem] ${INPUT_CLASS}`}
                           />
                         </div>
-                        <div className="mt-[0.75rem] flex gap-[var(--space-3)]">
+                        <div className="mt-[var(--space-3)] flex gap-[var(--space-3)]">
                           <button
                             type="button"
                             onClick={() => handleSave(m)}
                             disabled={updateMutation.isPending}
-                            className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-5)] py-[0.4rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+                            className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
                           >
                             {updateMutation.isPending ? "Saving..." : "Save"}
                           </button>
                           <button
                             type="button"
                             onClick={() => handleCancel(m)}
-                            className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-5)] py-[0.4rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
+                            className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
                           >
                             Cancel
                           </button>
@@ -464,13 +464,13 @@ export default function AdminMilestonesPage() {
                       </>
                     ) : (
                       <>
-                        <h3 className="font-[var(--font-display)] text-[1.35rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
+                        <h3 className="font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
                           {m.name}
                         </h3>
-                        <p className="mt-[0.25rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
+                        <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
                           {m.description}
                         </p>
-                        <p className="mt-[0.5rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">
+                        <p className="mt-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">
                           Threshold: {formatCurrency(m.threshold)}
                         </p>
                         <button
@@ -479,7 +479,7 @@ export default function AdminMilestonesPage() {
                             e.stopPropagation();
                             setEditingId(m.id);
                           }}
-                          className="mt-[0.3rem] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)] underline decoration-[rgba(255,255,255,0.22)] underline-offset-[0.15rem] transition-colors hover:text-[var(--color-text-primary)]"
+                          className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)] underline decoration-[rgba(255,255,255,0.22)] underline-offset-2 transition-colors hover:text-[var(--color-text-primary)]"
                         >
                           Click to edit
                         </button>

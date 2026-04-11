@@ -100,7 +100,7 @@ export function UploadAssetModal({ open, onClose }: Props) {
         <header className="flex items-center justify-between border-b border-[rgba(255,255,255,0.08)] px-[var(--space-5)] py-[var(--space-4)]">
           <h2
             id="upload-asset-title"
-            className="font-[var(--font-display)] text-[1.15rem] font-bold tracking-[-0.02em] text-[var(--color-text-primary)]"
+            className="font-[var(--font-display)] text-[var(--text-lg)] font-bold tracking-[-0.02em] text-[var(--color-text-primary)]"
           >
             Upload Asset
           </h2>
@@ -118,7 +118,7 @@ export function UploadAssetModal({ open, onClose }: Props) {
         </header>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-[var(--space-4)] px-[var(--space-5)] py-[var(--space-5)]">
-          <div className="flex flex-col gap-[0.4rem]">
+          <div className="flex flex-col gap-[var(--space-2)]">
             <label
               htmlFor="asset-title"
               className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] font-semibold text-[rgba(255,255,255,0.50)]"
@@ -133,11 +133,11 @@ export function UploadAssetModal({ open, onClose }: Props) {
               placeholder="e.g. TOKEN2049 launch banner"
               required
               disabled={uploadMutation.isPending}
-              className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-[var(--space-3)] py-[0.55rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.30)] focus:border-[rgba(91,141,239,0.50)] focus:outline-none disabled:opacity-50"
+              className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-[var(--space-3)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.30)] focus:border-[rgba(91,141,239,0.50)] focus:outline-none disabled:opacity-50"
             />
           </div>
 
-          <div className="flex flex-col gap-[0.4rem]">
+          <div className="flex flex-col gap-[var(--space-2)]">
             <label
               htmlFor="asset-type"
               className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] font-semibold text-[rgba(255,255,255,0.50)]"
@@ -149,7 +149,7 @@ export function UploadAssetModal({ open, onClose }: Props) {
               value={type}
               onChange={(e) => setType(e.target.value as AssetType)}
               disabled={uploadMutation.isPending}
-              className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-[var(--space-3)] py-[0.55rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] focus:border-[rgba(91,141,239,0.50)] focus:outline-none disabled:opacity-50"
+              className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-[var(--space-3)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] focus:border-[rgba(91,141,239,0.50)] focus:outline-none disabled:opacity-50"
             >
               {TYPE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value} className="bg-[#0E0F11]">
@@ -159,7 +159,7 @@ export function UploadAssetModal({ open, onClose }: Props) {
             </select>
           </div>
 
-          <div className="flex flex-col gap-[0.4rem]">
+          <div className="flex flex-col gap-[var(--space-2)]">
             <label
               htmlFor="asset-file"
               className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] font-semibold text-[rgba(255,255,255,0.50)]"
@@ -174,7 +174,7 @@ export function UploadAssetModal({ open, onClose }: Props) {
               onChange={handleFileChange}
               required
               disabled={uploadMutation.isPending}
-              className="block w-full font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.75)] file:mr-[var(--space-3)] file:rounded-[var(--radius)] file:border file:border-[rgba(255,255,255,0.12)] file:bg-[rgba(255,255,255,0.04)] file:px-[var(--space-3)] file:py-[0.4rem] file:font-[var(--font-sans)] file:text-[var(--text-sm)] file:text-[var(--color-text-primary)] file:hover:border-[rgba(255,255,255,0.20)] disabled:opacity-50"
+              className="block w-full font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.75)] file:mr-[var(--space-3)] file:rounded-[var(--radius)] file:border file:border-[rgba(255,255,255,0.12)] file:bg-[rgba(255,255,255,0.04)] file:px-[var(--space-3)] file:py-[var(--space-2)] file:font-[var(--font-sans)] file:text-[var(--text-sm)] file:text-[var(--color-text-primary)] file:hover:border-[rgba(255,255,255,0.20)] disabled:opacity-50"
             />
             {file && (
               <p className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.50)]">
@@ -184,7 +184,7 @@ export function UploadAssetModal({ open, onClose }: Props) {
           </div>
 
           {(localError || serverError) && (
-            <div className="rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-3)] py-[0.55rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[#FCA5A5]">
+            <div className="rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-3)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[#FCA5A5]">
               {localError ?? serverError}
             </div>
           )}
@@ -194,14 +194,14 @@ export function UploadAssetModal({ open, onClose }: Props) {
               type="button"
               onClick={onClose}
               disabled={uploadMutation.isPending}
-              className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.18)] px-[var(--space-4)] py-[0.5rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.32)] disabled:opacity-50"
+              className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.18)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.32)] disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={uploadMutation.isPending}
-              className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[0.5rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+              className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
             >
               {uploadMutation.isPending ? "Uploading…" : "Upload"}
             </button>

@@ -23,7 +23,7 @@ function VerifyEmailContent() {
     <div className="mx-auto w-[min(35rem,92vw)] rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-input)] px-[var(--space-8)] py-[var(--space-8)] shadow-[var(--shadow-card)]">
       <Link
         href="/sign-in"
-        className="inline-flex items-center gap-[var(--space-2)] font-[var(--font-sans)] text-[1.1rem] text-[var(--color-text-link)] transition-colors hover:text-[var(--color-text-link-hover)]"
+        className="inline-flex items-center gap-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-lg)] text-[var(--color-text-link)] transition-colors hover:text-[var(--color-text-link-hover)]"
       >
         <ArrowLeftIcon />
         Back to Login
@@ -38,10 +38,10 @@ function VerifyEmailContent() {
           className="h-[2rem] w-auto"
           priority
         />
-        <h2 className="mt-[var(--space-8)] font-[var(--font-display)] text-[3rem] font-bold leading-[1.08] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
+        <h2 className="mt-[var(--space-8)] font-[var(--font-display)] text-[var(--text-2xl)] font-bold leading-[1.08] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
           Verify Your Email
         </h2>
-        <p className="mt-[var(--space-3)] max-w-[24rem] font-[var(--font-sans)] text-[1.05rem] leading-[1.55] text-[var(--color-text-secondary)]">
+        <p className="mt-[var(--space-3)] max-w-[24rem] font-[var(--font-sans)] text-[var(--text-base)] leading-[1.55] text-[var(--color-text-secondary)]">
           {email
             ? `Enter the 6-digit code sent to ${email}`
             : "Enter the 6-digit code sent to your email"}

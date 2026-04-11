@@ -25,7 +25,7 @@ export function AffiliateApplicationForm() {
         <h2 className="font-[var(--font-display)] text-[3rem] font-bold leading-[1.08] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
           Become an Affiliate
         </h2>
-        <p className="mt-[var(--space-3)] max-w-[44rem] font-[var(--font-sans)] text-[1.15rem] leading-[1.6] text-[var(--color-text-secondary)]">
+        <p className="mt-[var(--space-3)] max-w-[44rem] font-[var(--font-sans)] text-[var(--text-lg)] leading-[1.6] text-[var(--color-text-secondary)]">
           Join the affiliate program and earn 10% commission on every ticket sold.
         </p>
         <p className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[var(--tracking-caption)] text-[var(--color-text-secondary)]">

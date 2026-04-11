@@ -109,7 +109,7 @@ export function UserMenu() {
         <div
           role="menu"
           aria-label="Account menu"
-          className="absolute right-0 top-[calc(100%+0.55rem)] z-50 w-[16rem] overflow-hidden rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[#0E0F11] shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
+          className="absolute right-0 top-[calc(100%+var(--space-2))] z-50 w-[16rem] overflow-hidden rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[#0E0F11] shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
         >
           {isAuthenticated ? (
             <>
@@ -117,10 +117,10 @@ export function UserMenu() {
                 <p className="font-[var(--font-sans)] text-[var(--text-sm)] font-semibold text-[var(--color-text-primary)]">
                   {user.fullName || "Affiliate"}
                 </p>
-                <p className="mt-[0.1rem] truncate font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
+                <p className="mt-[var(--space-1)] truncate font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
                   {user.email}
                 </p>
-                <p className="mt-[0.3rem] inline-block rounded-[0.25rem] bg-[rgba(255,255,255,0.06)] px-[0.4rem] py-[0.05rem] font-[var(--font-sans)] text-[0.62rem] uppercase tracking-[0.06em] text-[rgba(255,255,255,0.55)]">
+                <p className="mt-[var(--space-1)] inline-block rounded-[var(--radius-sm)] bg-[rgba(255,255,255,0.06)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.06em] text-[rgba(255,255,255,0.55)]">
                   {user.role}
                 </p>
               </div>
@@ -132,7 +132,7 @@ export function UserMenu() {
                   setOpen(false);
                   logout();
                 }}
-                className="flex w-full items-center gap-[0.5rem] px-[var(--space-4)] py-[var(--space-3)] text-left font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+                className="flex w-full items-center gap-[var(--space-2)] px-[var(--space-4)] py-[var(--space-3)] text-left font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
               >
                 <IconLogout />
                 Log out
@@ -144,7 +144,7 @@ export function UserMenu() {
                 <p className="font-[var(--font-sans)] text-[var(--text-sm)] font-semibold text-[var(--color-text-primary)]">
                   Not signed in
                 </p>
-                <p className="mt-[0.1rem] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
+                <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
                   Sign in to access your account.
                 </p>
               </div>
@@ -153,7 +153,7 @@ export function UserMenu() {
                 href="/sign-in"
                 role="menuitem"
                 onClick={() => setOpen(false)}
-                className="flex w-full items-center gap-[0.5rem] px-[var(--space-4)] py-[var(--space-3)] text-left font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
+                className="flex w-full items-center gap-[var(--space-2)] px-[var(--space-4)] py-[var(--space-3)] text-left font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.04)]"
               >
                 <IconLogin />
                 Sign in
@@ -163,7 +163,7 @@ export function UserMenu() {
                 href="/sign-up"
                 role="menuitem"
                 onClick={() => setOpen(false)}
-                className="flex w-full items-center gap-[0.5rem] border-t border-[rgba(255,255,255,0.06)] px-[var(--space-4)] py-[var(--space-3)] text-left font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.75)] transition-colors hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--color-text-primary)]"
+                className="flex w-full items-center gap-[var(--space-2)] border-t border-[rgba(255,255,255,0.06)] px-[var(--space-4)] py-[var(--space-3)] text-left font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.75)] transition-colors hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--color-text-primary)]"
               >
                 <IconUser />
                 Create an account

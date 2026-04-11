@@ -27,14 +27,14 @@ export function RecentMaterials() {
         Recent Materials
       </h2>
 
-      <div className="mt-[0.9rem] divide-y divide-[var(--color-border)]">
+      <div className="mt-[var(--space-4)] divide-y divide-[var(--color-border)]">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-[0.95rem] py-[0.95rem]">
-              <div className="size-[2.35rem] shrink-0 animate-pulse rounded-[calc(var(--radius)+0.125rem)] bg-[var(--color-border)]" />
-              <div className="flex-1 space-y-[0.3rem]">
+            <div key={i} className="flex items-center gap-[var(--space-4)] py-[var(--space-4)]">
+              <div className="size-[var(--space-10)] shrink-0 animate-pulse rounded-[var(--radius-lg)] bg-[var(--color-border)]" />
+              <div className="flex-1 space-y-[var(--space-1)]">
                 <div className="h-[1rem] w-3/4 animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
-                <div className="h-[0.84rem] w-1/2 animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
+                <div className="h-[var(--text-sm)] w-1/2 animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
               </div>
             </div>
           ))
@@ -46,16 +46,16 @@ export function RecentMaterials() {
           assets.map((item) => (
             <div
               key={item.id}
-              className="flex items-center gap-[0.95rem] py-[0.95rem]"
+              className="flex items-center gap-[var(--space-4)] py-[var(--space-4)]"
             >
-              <div className="flex size-[2.35rem] shrink-0 items-center justify-center rounded-[calc(var(--radius)+0.125rem)] bg-[rgba(var(--color-primary-rgb),0.22)] text-[var(--color-text-white)]">
+              <div className="flex size-[var(--space-10)] shrink-0 items-center justify-center rounded-[var(--radius-lg)] bg-[rgba(var(--color-primary-rgb),0.22)] text-[var(--color-text-white)]">
                 <IconFile />
               </div>
               <div className="min-w-0">
-                <p className="truncate font-[var(--font-sans)] text-[1rem] leading-[1.25rem] text-[var(--color-text-primary)]">
+                <p className="truncate font-[var(--font-sans)] text-[var(--text-base)] leading-[var(--space-5)] text-[var(--color-text-primary)]">
                   {item.title}
                 </p>
-                <p className="mt-[0.05rem] font-[var(--font-sans)] text-[0.84rem] leading-[1.05rem] text-[var(--color-text-secondary)]">
+                <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-4)] text-[var(--color-text-secondary)]">
                   {item.type} · {item.sizeLabel}
                 </p>
               </div>

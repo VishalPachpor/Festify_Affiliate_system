@@ -65,7 +65,7 @@ function TierTile({
   return (
     <div className="relative">
       <div
-        className="flex size-[4rem] shrink-0 items-center justify-center rounded-[0.55rem] border-[1.5px] font-[var(--font-display)] text-[1.65rem] font-bold leading-none"
+        className="flex size-[4rem] shrink-0 items-center justify-center rounded-[var(--radius-md)] border-[1.5px] font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-none"
         style={{
           borderColor: tileBorder,
           color: tileText,
@@ -86,20 +86,20 @@ function TierTile({
 
 function MilestoneCardSkeleton() {
   return (
-    <article className="rounded-[0.45rem] border border-[rgba(255,255,255,0.08)] bg-transparent px-[1rem] py-[0.9rem]">
-      <div className="flex items-center justify-between gap-[1rem]">
-        <div className="flex items-center gap-[0.85rem]">
-          <div className="size-[2.15rem] animate-pulse rounded-[0.35rem] bg-[rgba(255,255,255,0.08)]" />
-          <div className="space-y-[0.35rem]">
-            <div className="h-[1rem] w-[7rem] animate-pulse rounded-[0.2rem] bg-[rgba(255,255,255,0.08)]" />
-            <div className="h-[0.8rem] w-[8rem] animate-pulse rounded-[0.2rem] bg-[rgba(255,255,255,0.08)]" />
+    <article className="rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.08)] bg-transparent px-[var(--space-4)] py-[var(--space-4)]">
+      <div className="flex items-center justify-between gap-[var(--space-4)]">
+        <div className="flex items-center gap-[var(--space-3)]">
+          <div className="size-[var(--space-8)] animate-pulse rounded-[var(--radius-sm)] bg-[rgba(255,255,255,0.08)]" />
+          <div className="space-y-[var(--space-1)]">
+            <div className="h-[var(--space-4)] w-[7rem] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
+            <div className="h-[var(--space-3)] w-[8rem] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
           </div>
         </div>
-        <div className="h-[0.8rem] w-[4rem] animate-pulse rounded-[0.2rem] bg-[rgba(255,255,255,0.08)]" />
+        <div className="h-[var(--space-3)] w-[4rem] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
       </div>
-      <div className="mt-[0.6rem] h-[0.28rem] w-full animate-pulse rounded-full bg-[rgba(255,255,255,0.08)]" />
-      <div className="mt-[0.35rem] h-[0.72rem] w-[42%] animate-pulse rounded-[0.2rem] bg-[rgba(255,255,255,0.08)]" />
-      <div className="mt-[0.55rem] h-[0.8rem] w-[72%] animate-pulse rounded-[0.2rem] bg-[rgba(255,255,255,0.08)]" />
+      <div className="mt-[var(--space-2)] h-[var(--space-1)] w-full animate-pulse rounded-full bg-[rgba(255,255,255,0.08)]" />
+      <div className="mt-[var(--space-1)] h-[var(--space-3)] w-[42%] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
+      <div className="mt-[var(--space-2)] h-[var(--space-3)] w-[72%] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
     </article>
   );
 }
@@ -129,8 +129,8 @@ function MilestoneCard({
   const fillColor = styles.progress;
 
   return (
-    <article className="overflow-hidden rounded-[0.52rem] border border-[rgba(255,255,255,0.1)] bg-[#181d30] px-[1.45rem] py-[1.12rem]">
-      <div className="flex items-start gap-[1rem]">
+    <article className="overflow-hidden rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.1)] bg-[#181d30] px-[var(--space-6)] py-[var(--space-4)]">
+      <div className="flex items-start gap-[var(--space-4)]">
         <TierTile
           letter={letter}
           tileText={styles.tileText}
@@ -139,25 +139,25 @@ function MilestoneCard({
           unlocked={unlocked}
         />
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-[0.82rem]">
-            <h2 className="font-[var(--font-display)] text-[1.5rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
+          <div className="flex items-center gap-[var(--space-3)]">
+            <h2 className="font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
               {name}
             </h2>
-            <span className="inline-block h-[1px] w-[2.65rem] bg-[rgba(255,255,255,0.42)]" />
-            <p className="font-[var(--font-sans)] text-[1.12rem] font-semibold leading-none text-[var(--color-text-primary)]">
+            <span className="inline-block h-[1px] w-[var(--space-10)] bg-[rgba(255,255,255,0.42)]" />
+            <p className="font-[var(--font-sans)] text-[var(--text-lg)] font-semibold leading-none text-[var(--color-text-primary)]">
               {formatCurrency(targetAmount, currency)}
             </p>
           </div>
 
-          <p className="mt-[0.62rem] font-[var(--font-sans)] text-[0.9rem] leading-[1.22rem] text-[rgba(255,255,255,0.56)]">
+          <p className="mt-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-5)] text-[rgba(255,255,255,0.56)]">
             {description}
           </p>
 
-          <div className="mt-[0.78rem] flex items-center justify-between gap-[1rem]">
-            <p className="font-[var(--font-sans)] text-[0.9rem] leading-none text-[rgba(255,255,255,0.62)]">
+          <div className="mt-[var(--space-3)] flex items-center justify-between gap-[var(--space-4)]">
+            <p className="font-[var(--font-sans)] text-[var(--text-sm)] leading-none text-[rgba(255,255,255,0.62)]">
               {formatCurrency(effectiveCurrent, currency)} / {formatCurrency(targetAmount, currency)} ({Math.round(pct)}%)
             </p>
-            <span className={`font-[var(--font-sans)] text-[0.86rem] leading-none ${unlocked ? "text-[var(--color-success)]" : "text-[rgba(255,255,255,0.68)]"}`}>
+            <span className={`font-[var(--font-sans)] text-[var(--text-sm)] leading-none ${unlocked ? "text-[var(--color-success)]" : "text-[rgba(255,255,255,0.68)]"}`}>
               {unlocked ? "Unlocked!" : "Locked"}
             </span>
           </div>
@@ -168,7 +168,7 @@ function MilestoneCard({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-label={`${name} milestone progress`}
-            className="mt-[0.72rem] h-[0.34rem] w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.12)]"
+            className="mt-[var(--space-3)] h-[var(--space-1)] w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.12)]"
           >
             <div
               className="h-full rounded-full"
@@ -191,7 +191,7 @@ export default function MilestonesPage() {
     <DashboardStageCanvas>
       <DashboardContainer>
         <section className="w-full">
-          <div className="space-y-[0.72rem]">
+          <div className="space-y-[var(--space-3)]">
             {isLoading
               ? Array.from({ length: 4 }).map((_, index) => <MilestoneCardSkeleton key={index} />)
               : tiers.map((tier) => <MilestoneCard key={tier.id} {...tier} />)}

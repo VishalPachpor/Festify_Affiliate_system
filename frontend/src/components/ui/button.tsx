@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 /*
  * Button — 3 variants from Figma
  *
- * primary (node 117:179): h=45px, px=32, bg=#1c4aa6, text=#f0f0f0, semibold
- * ghost   (auth):         h=38px, px=auto, bg=transparent, border=white/10, text=#dadada, medium
+ * primary (node 117:179): h=40px, px=32, bg=#1c4aa6, text=#f0f0f0, semibold
+ * ghost   (auth):         h=40px, px=auto, bg=transparent, border=white/10, text=#dadada, medium
  * social  (node 117:156): h=auto (py=12), px=24, gap=16, bg=white, border=#d1d5dc, text=#1c1c1c, semibold, shadow
  */
 

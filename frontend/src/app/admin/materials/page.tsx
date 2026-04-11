@@ -226,14 +226,14 @@ export default function AdminMaterialsPage() {
             <h2 className="font-[var(--font-display)] text-[1.75rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
               Marketing Materials Management
             </h2>
-            <p className="mt-[0.3rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
+            <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
               Upload and manage marketing materials for affiliates
             </p>
           </div>
           <button
             type="button"
             onClick={() => setUploadOpen(true)}
-            className="flex items-center gap-[0.5rem] rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
+            className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
           >
             <IconUpload />
             Upload Asset
@@ -304,9 +304,9 @@ export default function AdminMaterialsPage() {
                   </h3>
 
                   {/* Type badge + size */}
-                  <div className="mt-[0.35rem] flex items-center gap-[var(--space-2)]">
+                  <div className="mt-[var(--space-1)] flex items-center gap-[var(--space-2)]">
                     <span
-                      className="inline-block rounded-[0.25rem] px-[0.45rem] py-[0.1rem] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
+                      className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
                       style={{ background: TYPE_BADGE_STYLE.bg, color: TYPE_BADGE_STYLE.text }}
                     >
                       {mat.type}
@@ -317,7 +317,7 @@ export default function AdminMaterialsPage() {
                   </div>
 
                   {/* Visible toggle */}
-                  <div className="mt-[0.6rem] flex items-center gap-[var(--space-2)]">
+                  <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)]">
                     <span className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.50)]">
                       Visible to affiliates:
                     </span>
@@ -328,11 +328,11 @@ export default function AdminMaterialsPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="mt-[0.7rem] flex items-center gap-[var(--space-2)]">
+                  <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)]">
                     <button
                       type="button"
                       onClick={() => handleDownload(mat.fileUrl)}
-                      className="flex flex-1 items-center justify-center gap-[0.4rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-3)] py-[0.4rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)] hover:bg-[rgba(255,255,255,0.04)]"
+                      className="flex flex-1 items-center justify-center gap-[var(--space-2)] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-3)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)] hover:bg-[rgba(255,255,255,0.04)]"
                     >
                       <IconDownload />
                       Download
@@ -341,7 +341,7 @@ export default function AdminMaterialsPage() {
                       type="button"
                       onClick={() => handleDownload(mat.fileUrl)}
                       aria-label="Preview"
-                      className="flex items-center justify-center rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] p-[0.4rem] text-[rgba(255,255,255,0.40)] transition-colors hover:text-[rgba(255,255,255,0.80)] hover:border-[rgba(255,255,255,0.20)]"
+                      className="flex items-center justify-center rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] p-[var(--space-2)] text-[rgba(255,255,255,0.40)] transition-colors hover:text-[rgba(255,255,255,0.80)] hover:border-[rgba(255,255,255,0.20)]"
                     >
                       <IconEye />
                     </button>
@@ -350,14 +350,14 @@ export default function AdminMaterialsPage() {
                       onClick={() => handleDelete(mat.id)}
                       disabled={deleteMutation.isPending}
                       aria-label="Delete"
-                      className="flex items-center justify-center rounded-[var(--radius)] border border-[rgba(239,68,68,0.25)] p-[0.4rem] text-[#EF4444] transition-colors hover:bg-[rgba(239,68,68,0.10)] hover:border-[rgba(239,68,68,0.40)] disabled:opacity-40"
+                      className="flex items-center justify-center rounded-[var(--radius)] border border-[rgba(239,68,68,0.25)] p-[var(--space-2)] text-[#EF4444] transition-colors hover:bg-[rgba(239,68,68,0.10)] hover:border-[rgba(239,68,68,0.40)] disabled:opacity-40"
                     >
                       <IconTrash />
                     </button>
                   </div>
 
                   {/* Date */}
-                  <div className="mt-[0.6rem] flex items-center gap-[0.35rem]">
+                  <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-1)]">
                     <span className="text-[rgba(255,255,255,0.35)]">
                       <IconCalendar />
                     </span>
