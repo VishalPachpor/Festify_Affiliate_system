@@ -34,6 +34,7 @@ export function ApplicationForm() {
       audienceSize: (fd.get("audienceSize") as string) || undefined,
       experience: (fd.get("experience") as string) || undefined,
       fitReason: (fd.get("fitReason") as string) ?? "",
+      requestedCode: ((fd.get("requestedCode") as string) ?? "").trim().toUpperCase() || undefined,
     });
   }
 
@@ -113,6 +114,21 @@ export function ApplicationForm() {
             />
           )}
         </FormField>
+
+        <FormField label="Preferred Referral Code">
+          {(a11y) => (
+            <TextInput
+              {...a11y}
+              name="requestedCode"
+              placeholder="e.g. VISHAL20"
+              autoComplete="off"
+              maxLength={20}
+            />
+          )}
+        </FormField>
+        <p className="-mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-xs)] text-[var(--color-text-muted)]">
+          Alphanumeric, 4-20 characters. This is a request — the final code may be modified by the organizer.
+        </p>
 
         <FormField label="Why Are You A Good Fit?" required>
           {(a11y) => (

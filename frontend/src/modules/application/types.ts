@@ -22,6 +22,7 @@ export const applicationSubmissionSchema = z.object({
   audienceSize: z.string().optional(),
   experience: z.string().optional(),
   fitReason: z.string().min(1),
+  requestedCode: z.string().optional(),
 });
 
 export type ApplicationSubmission = z.infer<typeof applicationSubmissionSchema>;
