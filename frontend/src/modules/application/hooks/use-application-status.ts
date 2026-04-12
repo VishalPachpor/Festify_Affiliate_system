@@ -18,6 +18,6 @@ export function useApplicationStatus(tenantId: string | undefined) {
   return useQuery({
     queryKey: applicationKeys.status(affiliateId, email),
     queryFn: () => getApplicationStatus(email),
-    enabled: !!tenantId,
+    enabled: !!email,
   });
 }
