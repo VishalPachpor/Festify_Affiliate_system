@@ -18,6 +18,7 @@ export const affiliateSchema = z.object({
   joinedAt: z.string(),
   referralCode: z.string().nullable().optional(),
   tier: z.string().nullable().optional(),
+  requestedCode: z.string().nullable().optional(),
 });
 
 export type Affiliate = z.infer<typeof affiliateSchema>;

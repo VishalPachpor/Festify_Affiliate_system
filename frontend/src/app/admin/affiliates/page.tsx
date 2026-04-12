@@ -461,8 +461,8 @@ export default function AdminAffiliatesPage() {
                             <ActionButton
                               label="Approve"
                               onClick={() => {
-                                setApproveTarget({ id: aff.id, name: aff.name, requestedCode: (aff as Record<string, unknown>).requestedCode as string ?? "" });
-                                setApproveCode((aff as Record<string, unknown>).requestedCode as string ?? "");
+                                setApproveTarget({ id: aff.id, name: aff.name, requestedCode: aff.requestedCode ?? "" });
+                                setApproveCode(aff.requestedCode ?? "");
                               }}
                             >
                               <IconApprove />

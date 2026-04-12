@@ -137,6 +137,7 @@ router.get("/api/affiliates", async (req: Request, res: Response) => {
       joinedAt: string;
       referralCode: string | null;
       tier: string | null;
+      requestedCode?: string | null;
     };
 
     const rows: AffiliateRow[] = [];
@@ -264,6 +265,7 @@ router.get("/api/affiliates", async (req: Request, res: Response) => {
           joinedAt: app.createdAt.toISOString(),
           referralCode: null,
           tier: null,
+          requestedCode: app.requestedCode,
         });
       }
     }
