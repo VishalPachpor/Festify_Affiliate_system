@@ -2,17 +2,34 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useTenant } from "@/modules/tenant-shell";
 import { apiClient } from "@/services/api/client";
 
 type Application = {
   id: string;
+  applyingAs: "individual" | "company";
   firstName: string;
   email: string;
+  individualFullName: string | null;
+  telegramUsername: string | null;
+  companyName: string | null;
+  contactPersonName: string | null;
+  contactPersonEmail: string | null;
+  signatoryName: string | null;
+  signatoryEmail: string | null;
+  contactPersonTelegramUsername: string | null;
+  communicationChannels: string[];
+  emailDatabaseSize: string | null;
+  telegramGroupLink: string | null;
+  xProfileLink: string | null;
+  redditProfileLink: string | null;
+  linkedInProfileLink: string | null;
+  instagramAccountLink: string | null;
+  discordServerLink: string | null;
   socialProfiles: string | null;
   audienceSize: string | null;
   experience: string | null;
-  fitReason: string;
+  fitReason: string | null;
+  requestedCode: string | null;
   status: "pending" | "approved" | "rejected";
   affiliateId: string | null;
   campaignId: string;
@@ -27,25 +44,21 @@ type ApplicationsListResponse = {
 };
 
 export default function ApplicationsReviewPage() {
-  const { tenant } = useTenant();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<"pending" | "approved" | "rejected" | "all">("pending");
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["applications", tenant?.id, filter],
+    queryKey: ["applications", filter],
     queryFn: () =>
       apiClient<ApplicationsListResponse>("/applications", {
-        headers: { "x-tenant-id": tenant!.id },
         searchParams: filter === "all" ? undefined : { status: filter },
       }),
-    enabled: !!tenant?.id,
   });
 
   const reviewMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: "approved" | "rejected" }) =>
       apiClient<{ id: string; status: string }>(`/applications/${id}/status`, {
         method: "PATCH",
-        headers: { "x-tenant-id": tenant!.id },
         body: { status },
       }),
     onSuccess: () => {
@@ -130,20 +143,58 @@ export default function ApplicationsReviewPage() {
             </header>
 
             <dl className="mt-[var(--space-4)] grid gap-[var(--space-3)] text-[var(--text-sm)] text-[rgba(255,255,255,0.78)] lg:grid-cols-2">
-              {app.socialProfiles && (
+              <div>
+                <dt className="text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.45)]">
+                  Applying as
+                </dt>
+                <dd className="mt-[var(--space-1)] capitalize">{app.applyingAs}</dd>
+              </div>
+              {app.communicationChannels.length > 0 && (
                 <div>
                   <dt className="text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.45)]">
-                    Socials
+                    Channels
                   </dt>
-                  <dd className="mt-[var(--space-1)]">{app.socialProfiles}</dd>
+                  <dd className="mt-[var(--space-1)] capitalize">
+                    {app.communicationChannels.join(", ").replaceAll("_", " ")}
+                  </dd>
                 </div>
               )}
-              {app.audienceSize && (
+              {app.applyingAs === "individual" && app.telegramUsername && (
                 <div>
                   <dt className="text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.45)]">
-                    Audience
+                    Telegram
                   </dt>
-                  <dd className="mt-[var(--space-1)]">{app.audienceSize}</dd>
+                  <dd className="mt-[var(--space-1)]">{app.telegramUsername}</dd>
+                </div>
+              )}
+              {app.applyingAs === "company" && app.contactPersonName && (
+                <div>
+                  <dt className="text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.45)]">
+                    Contact Person
+                  </dt>
+                  <dd className="mt-[var(--space-1)]">
+                    {app.contactPersonName}
+                    {app.contactPersonEmail ? ` · ${app.contactPersonEmail}` : ""}
+                  </dd>
+                </div>
+              )}
+              {app.applyingAs === "company" && app.signatoryName && (
+                <div>
+                  <dt className="text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.45)]">
+                    Signatory
+                  </dt>
+                  <dd className="mt-[var(--space-1)]">
+                    {app.signatoryName}
+                    {app.signatoryEmail ? ` · ${app.signatoryEmail}` : ""}
+                  </dd>
+                </div>
+              )}
+              {app.emailDatabaseSize && (
+                <div>
+                  <dt className="text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.45)]">
+                    Email Database Size
+                  </dt>
+                  <dd className="mt-[var(--space-1)]">{app.emailDatabaseSize}</dd>
                 </div>
               )}
               {app.experience && (
@@ -154,12 +205,14 @@ export default function ApplicationsReviewPage() {
                   <dd className="mt-[var(--space-1)]">{app.experience}</dd>
                 </div>
               )}
-              <div className="lg:col-span-2">
-                <dt className="text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.45)]">
-                  Why they're a fit
-                </dt>
-                <dd className="mt-[var(--space-1)] whitespace-pre-line">{app.fitReason}</dd>
-              </div>
+              {app.requestedCode && (
+                <div>
+                  <dt className="text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.45)]">
+                    Preferred Referral Code
+                  </dt>
+                  <dd className="mt-[var(--space-1)]">{app.requestedCode}</dd>
+                </div>
+              )}
             </dl>
 
             {app.status === "pending" && (
