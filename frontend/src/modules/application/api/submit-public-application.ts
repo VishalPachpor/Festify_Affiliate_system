@@ -1,14 +1,8 @@
 import { apiClient } from "@/services/api/client";
+import type { ApplicationSubmission } from "../types";
 
-export type PublicApplicationPayload = {
+export type PublicApplicationPayload = ApplicationSubmission & {
   eventSlug: string;
-  firstName: string;
-  email: string;
-  socialProfiles?: string;
-  audienceSize?: string;
-  experience?: string;
-  fitReason: string;
-  requestedCode?: string;
 };
 
 export type PublicApplicationResponse = {

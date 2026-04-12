@@ -42,6 +42,11 @@ enum ApplicationStatus {
   rejected
 }
 
+enum ApplicationApplicantType {
+  individual
+  company
+}
+
 enum AssetType {
   banner
   email
@@ -393,12 +398,29 @@ model Application {
   tenantId       String
   campaignId     String
 
+  applyingAs     ApplicationApplicantType @default(individual)
   firstName      String
   email          String
+  individualFullName String?
+  telegramUsername String?
+  companyName String?
+  contactPersonName String?
+  contactPersonEmail String?
+  signatoryName String?
+  signatoryEmail String?
+  contactPersonTelegramUsername String?
+  communicationChannels String[]
+  emailDatabaseSize String?
+  telegramGroupLink String?
+  xProfileLink String?
+  redditProfileLink String?
+  linkedInProfileLink String?
+  instagramAccountLink String?
+  discordServerLink String?
   socialProfiles String?
   audienceSize   String?
   experience     String?
-  fitReason      String
+  fitReason      String?
   /// Affiliate's preferred referral/coupon code. Admin may modify on approval.
   requestedCode  String?
 
