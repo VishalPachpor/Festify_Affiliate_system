@@ -101,11 +101,20 @@ export function GoogleSignInButton({ mode = "login" }: { mode?: GoogleSignInMode
     popupRef.current = popup;
 
     // Watch for the popup being closed manually (user cancelled).
+    // The popup navigates cross-origin (Google), so accessing popup.closed
+    // may throw due to Cross-Origin-Opener-Policy. Silently catch — if the
+    // popup is truly closed, the postMessage handler won't fire and the
+    // loading state resets; if the user clicks again, it resets too.
     const timer = setInterval(() => {
-      if (popup.closed) {
+      try {
+        if (popup.closed) {
+          clearInterval(timer);
+          setLoading(false);
+          popupRef.current = null;
+        }
+      } catch {
+        // COOP blocks access — stop polling; postMessage handles success.
         clearInterval(timer);
-        setLoading(false);
-        popupRef.current = null;
       }
     }, 500);
   }, [mode]);

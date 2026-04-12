@@ -681,6 +681,7 @@ router.get("/api/auth/google/callback", async (req: Request, res: Response) => {
     // opener window (the sign-in page) and then closes itself.
     const json = JSON.stringify(payload).replace(/</g, "\\u003c");
     res.setHeader("Content-Type", "text/html");
+    res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
     res.send(`<!DOCTYPE html><html><body><script>
       window.opener && window.opener.postMessage(${json}, "*");
       window.close();
