@@ -8,6 +8,5 @@ export function useFailureReasons(tenantId: string | undefined) {
   return useQuery({
     queryKey: attributionInsightsKeys.failureReasons(tenantId ?? ""),
     queryFn: () => getFailureReasons(tenantId!),
-    enabled: !!tenantId,
   });
 }

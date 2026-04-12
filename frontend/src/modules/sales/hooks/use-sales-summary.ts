@@ -12,6 +12,5 @@ export function useSalesSummary(
     queryKey: salesKeys.summary(tenantId ?? "", campaignId),
     queryFn: () =>
       getSalesSummary({ tenantId: tenantId!, campaignId }),
-    enabled: !!tenantId,
   });
 }

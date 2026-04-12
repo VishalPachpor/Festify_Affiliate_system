@@ -16,7 +16,6 @@ export function useMilestoneProgress(tenantId: string | undefined) {
       affiliateId ?? "tenant",
     ],
     queryFn: () => getMilestoneProgress(),
-    enabled: !!tenantId,
     refetchInterval: 3000,
   });
 }

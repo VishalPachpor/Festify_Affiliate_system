@@ -9,6 +9,5 @@ export function useRecentActivity(tenantId: string | undefined) {
     queryKey: dashboardKeys.activity(tenantId ?? ""),
     queryFn: () =>
       getRecentActivity({ tenantId: tenantId! }),
-    enabled: !!tenantId,
   });
 }

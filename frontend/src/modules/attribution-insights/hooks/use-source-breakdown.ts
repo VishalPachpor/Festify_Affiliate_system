@@ -8,6 +8,5 @@ export function useSourceBreakdown(tenantId: string | undefined) {
   return useQuery({
     queryKey: attributionInsightsKeys.sourceBreakdown(tenantId ?? ""),
     queryFn: () => getSourceBreakdown(tenantId!),
-    enabled: !!tenantId,
   });
 }

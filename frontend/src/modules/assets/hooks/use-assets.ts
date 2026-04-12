@@ -19,6 +19,5 @@ export function useAssets(
       visibleOnly ? "visible" : "all",
     ],
     queryFn: () => getAssets({ tenantId: tenantId!, type, visibleOnly }),
-    enabled: !!tenantId,
   });
 }

@@ -8,6 +8,5 @@ export function usePayoutSummary(tenantId: string | undefined) {
   return useQuery({
     queryKey: payoutsKeys.summary(tenantId ?? ""),
     queryFn: () => getPayoutSummary({ tenantId: tenantId! }),
-    enabled: !!tenantId,
   });
 }

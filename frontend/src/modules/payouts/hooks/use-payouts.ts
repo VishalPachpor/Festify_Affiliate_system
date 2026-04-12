@@ -12,7 +12,6 @@ export function usePayouts(
   return useQuery({
     queryKey: payoutsKeys.list(tenantId ?? "", filters),
     queryFn: () => getPayouts({ tenantId: tenantId!, filters }),
-    enabled: !!tenantId,
     placeholderData: keepPreviousData,
   });
 }

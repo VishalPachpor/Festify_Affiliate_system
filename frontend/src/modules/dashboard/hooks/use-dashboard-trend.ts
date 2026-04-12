@@ -12,6 +12,5 @@ export function useDashboardTrend(
     queryKey: dashboardKeys.trend(tenantId ?? "", campaignId),
     queryFn: () =>
       getDashboardTrend({ tenantId: tenantId!, campaignId }),
-    enabled: !!tenantId,
   });
 }

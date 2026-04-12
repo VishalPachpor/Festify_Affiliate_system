@@ -11,6 +11,6 @@ export function useSaleDetails(
   return useQuery({
     queryKey: salesKeys.detail(tenantId ?? "", saleId ?? ""),
     queryFn: () => getSaleDetails({ tenantId: tenantId!, saleId: saleId! }),
-    enabled: !!tenantId && !!saleId,
+    enabled: !!saleId,
   });
 }

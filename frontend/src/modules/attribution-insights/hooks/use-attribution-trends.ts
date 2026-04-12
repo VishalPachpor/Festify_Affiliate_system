@@ -8,6 +8,5 @@ export function useAttributionTrends(tenantId: string | undefined) {
   return useQuery({
     queryKey: attributionInsightsKeys.trend(tenantId ?? ""),
     queryFn: () => getAttributionTrends(tenantId!),
-    enabled: !!tenantId,
   });
 }

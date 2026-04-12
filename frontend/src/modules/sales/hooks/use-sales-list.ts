@@ -14,7 +14,6 @@ export function useSalesList(
     queryKey: salesKeys.list(tenantId ?? "", campaignId, filters),
     queryFn: () =>
       getSalesList({ tenantId: tenantId!, campaignId, filters }),
-    enabled: !!tenantId,
     placeholderData: keepPreviousData,
   });
 }

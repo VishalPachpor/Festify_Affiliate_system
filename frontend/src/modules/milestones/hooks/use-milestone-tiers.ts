@@ -16,7 +16,6 @@ export function useMilestoneTiers(tenantId: string | undefined) {
   return useQuery({
     queryKey: [...milestoneKeys.list(tenantId ?? "", CAMPAIGN_PLACEHOLDER), affiliateId ?? "tenant"],
     queryFn: () => getMilestoneTiers(),
-    enabled: !!tenantId,
     refetchInterval: 3000, // demo: keep tier progress moving live
   });
 }

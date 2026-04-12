@@ -14,7 +14,6 @@ export function useAffiliatesList(
     queryKey: affiliatesKeys.list(tenantId ?? "", campaignId, filters),
     queryFn: () =>
       getAffiliatesList({ campaignId, filters }),
-    enabled: !!tenantId,
     placeholderData: keepPreviousData,
   });
 }

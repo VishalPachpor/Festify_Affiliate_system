@@ -8,6 +8,5 @@ export function useAttributionSummary(tenantId: string | undefined) {
   return useQuery({
     queryKey: attributionInsightsKeys.summary(tenantId ?? ""),
     queryFn: () => getAttributionSummary(tenantId!),
-    enabled: !!tenantId,
   });
 }

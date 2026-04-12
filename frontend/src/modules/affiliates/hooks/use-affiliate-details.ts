@@ -15,6 +15,6 @@ export function useAffiliateDetails(
         tenantId: tenantId!,
         affiliateId: affiliateId!,
       }),
-    enabled: !!tenantId && !!affiliateId,
+    enabled: !!affiliateId,
   });
 }
