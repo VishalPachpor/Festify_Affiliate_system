@@ -4,13 +4,13 @@ import { useTenant } from "@/modules/tenant-shell";
 import { useTopAffiliates } from "../hooks/use-top-affiliates";
 import type { TopAffiliate } from "../types";
 
-function formatCurrency(value: number, currency: string): string {
+function formatCurrency(minorUnits: number, currency: string): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(minorUnits / 100);
 }
 
 function SkeletonRow() {

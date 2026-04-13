@@ -2,13 +2,13 @@
 
 import { useDashboardSummary } from "../hooks/use-dashboard-summary";
 
-function formatCurrency(value: number, currency: string): string {
+function formatCurrency(minorUnits: number, currency: string): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(minorUnits / 100);
 }
 
 function formatPercent(value: number): string {

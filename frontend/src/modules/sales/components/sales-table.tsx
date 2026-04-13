@@ -4,12 +4,13 @@ import { useSalesList } from "../hooks/use-sales-list";
 import { useSalesFilters } from "../hooks/use-sales-filters";
 import type { Sale, SalesFilterState } from "../types";
 
-function formatCurrency(value: number, currency: string): string {
+function formatCurrency(minorUnits: number, currency: string): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
-  }).format(value);
+    maximumFractionDigits: 2,
+  }).format(minorUnits / 100);
 }
 
 function formatDate(dateStr: string): string {

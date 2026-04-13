@@ -5,13 +5,13 @@ import { useMilestoneTiers } from "@/modules/milestones";
 import { DashboardContainer } from "@/modules/dashboard/components/dashboard-layout";
 import { DashboardStageCanvas } from "@/modules/dashboard/components/dashboard-stage-canvas";
 
-function formatCurrency(value: number, currency: string): string {
+function formatCurrency(minorUnits: number, currency: string): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(minorUnits / 100);
 }
 
 function IconCheck() {

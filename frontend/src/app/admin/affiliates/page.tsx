@@ -15,13 +15,13 @@ const TIER_FILTERS = ["all", "bronze", "silver", "gold", "platinum", "none"] as 
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 
-function formatCurrency(value: number, currency = "USD"): string {
+function formatCurrency(minorUnits: number, currency = "USD"): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(minorUnits / 100);
 }
 
 // ── Colors ────────────────────────────────────────────────────────────────────

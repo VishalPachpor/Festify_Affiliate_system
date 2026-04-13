@@ -4,13 +4,13 @@ import { useAffiliatesList } from "../hooks/use-affiliates-list";
 import { useAffiliatesFilters } from "../hooks/use-affiliates-filters";
 import type { AffiliateStatus, AffiliatesFilterState } from "../types";
 
-function formatCurrency(value: number, currency: string): string {
+function formatCurrency(minorUnits: number, currency: string): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(minorUnits / 100);
 }
 
 function formatDate(dateStr: string): string {
