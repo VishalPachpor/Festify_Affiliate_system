@@ -533,14 +533,8 @@ router.post("/api/auth/google", async (req: Request, res: Response) => {
       (await prisma.user.findUnique({ where: { email } }));
 
     if (!user) {
-      if (intent !== "affiliate_signup") {
-        res.status(404).json({
-          error: "No account exists for this Google email. Sign up as an organizer or affiliate first.",
-          code: "ACCOUNT_NOT_FOUND",
-        });
-        return;
-      }
-
+      // Auto-create an affiliate account for any Google sign-in (login or signup).
+      // Users expect "Continue with Google" to just work regardless of which tab they're on.
       const tenantId = await pickDefaultTenantId();
       user = await prisma.user.create({
         data: {
@@ -762,14 +756,7 @@ router.get("/api/auth/google/callback", async (req: Request, res: Response) => {
       (await prisma.user.findUnique({ where: { email } }));
 
     if (!user) {
-      if (intent !== "affiliate_signup") {
-        sendCallbackHtml({
-          type: "google-auth-callback",
-          error: "No account exists for this Google email. Sign up as an organizer or affiliate first.",
-        });
-        return;
-      }
-
+      // Auto-create an affiliate account for any Google sign-in (login or signup).
       const tenantId = await pickDefaultTenantId();
       user = await prisma.user.create({
         data: {
