@@ -57,15 +57,33 @@ export const lumaAdapter: ProviderAdapter = {
     const orderId = String(data.order_id ?? data.api_id ?? data.id ?? "");
     if (!orderId) throw new Error("Luma payload missing order identifier");
 
-    // Luma sends amount in dollars — convert to minor units
-    const amountDollars = Number(data.amount ?? data.price ?? 0);
-    const amountMinor = Math.round(amountDollars * 100);
+    // ── Amount extraction ──────────────────────────────────────────────
+    // Luma nests ticket pricing under data.event_ticket.amount (in cents)
+    // and data.event_ticket_orders[].amount. Fall back to top-level fields.
+    const eventTicket = data.event_ticket as Record<string, unknown> | undefined;
+    const eventTicketOrders = data.event_ticket_orders as Array<Record<string, unknown>> | undefined;
+    const firstOrder = eventTicketOrders?.[0];
+
+    // Prefer order-level amount, then ticket-level, then top-level.
+    // Luma sends amounts in cents already (e.g. 450 = $4.50).
+    let amountMinor: number;
+    const orderAmount = firstOrder?.amount ?? eventTicket?.amount;
+    if (typeof orderAmount === "number" && orderAmount > 0) {
+      amountMinor = orderAmount;
+    } else {
+      // Legacy/fallback: top-level amount in dollars
+      const amountDollars = Number(data.amount ?? data.price ?? 0);
+      amountMinor = Math.round(amountDollars * 100);
+    }
 
     const type = eventType === "ticket.refunded" ? "ticket.refunded" as const : "ticket.purchased" as const;
 
-    // Luma coupon/discount code — check multiple possible field names.
-    // When a guest registers via ?coupon=XYZ, Luma includes it in the payload.
+    // ── Coupon/referral code extraction ─────────────────────────────────
+    // Luma nests coupon info under data.event_ticket_orders[].coupon_info.code.
+    // Fall back to top-level fields for simpler payload formats.
+    const couponInfo = firstOrder?.coupon_info as Record<string, unknown> | undefined;
     const referralCode =
+      (couponInfo?.code as string) ??
       (data.coupon_code as string) ??
       (data.coupon as string) ??
       (data.discount_code as string) ??
@@ -73,12 +91,17 @@ export const lumaAdapter: ProviderAdapter = {
       (data.promo_code as string) ??
       null;
 
+    // ── Currency ────────────────────────────────────────────────────────
+    const currency = String(
+      firstOrder?.currency ?? eventTicket?.currency ?? data.currency ?? "USD"
+    ).toUpperCase();
+
     return {
       externalEventId: this.extractEventId(body),
       externalOrderId: orderId,
       type,
       amountMinor,
-      currency: String(data.currency ?? "USD").toUpperCase(),
+      currency,
       referralCode,
       buyerEmail: (data.email as string) ?? (data.user_email as string) ?? null,
       campaignId: (data.campaign_id as string) ?? null,
