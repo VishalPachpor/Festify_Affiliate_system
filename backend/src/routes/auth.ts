@@ -861,7 +861,7 @@ router.post("/api/auth/forgot-password", async (req: Request, res: Response) => 
       },
     });
 
-    const frontendBase = process.env.PUBLIC_FRONTEND_URL ?? "http://localhost:3000";
+    const frontendBase = process.env.FRONTEND_APP_URL ?? process.env.PUBLIC_FRONTEND_URL ?? "http://localhost:3000";
     const resetUrl = `${frontendBase}/reset-password?token=${token}`;
 
     try {
