@@ -63,7 +63,7 @@ app.use((req, res, next) => {
 // express.json() stores the parsed object in req.body; the verify hook stashes
 // the original bytes in (req as any).rawBody so adapters can HMAC the wire bytes.
 app.use(express_1.default.json({
-    limit: "1mb",
+    limit: "30mb",
     verify: (req, _res, buf) => {
         req.rawBody = buf;
     },

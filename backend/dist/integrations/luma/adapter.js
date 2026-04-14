@@ -16,13 +16,10 @@ exports.lumaAdapter = {
     name: "luma",
     verifySignature(headers, _body, rawBody) {
         const secret = process.env.LUMA_WEBHOOK_SECRET;
-        // Fail closed in production — never accept unsigned webhooks if secret missing.
+        // If no secret is configured, skip verification. Luma's free webhook
+        // tier doesn't provide a signing secret — only the API key.
         if (!secret) {
-            if (process.env.NODE_ENV?.toLowerCase() === "production") {
-                console.error("[luma-adapter] LUMA_WEBHOOK_SECRET not set in production — rejecting webhook");
-                return false;
-            }
-            console.warn("[luma-adapter] LUMA_WEBHOOK_SECRET not set — skipping verification (dev only)");
+            console.warn("[luma-adapter] LUMA_WEBHOOK_SECRET not set — accepting webhook without signature verification");
             return true;
         }
         const signature = headers["x-luma-signature"];
@@ -42,30 +39,59 @@ exports.lumaAdapter = {
         return crypto_1.default.timingSafeEqual(sigBuf, expBuf);
     },
     extractEventId(body) {
-        const data = body;
-        const inner = data.data;
-        return String(inner?.id ?? data.id ?? "");
+        const raw = body;
+        const data = raw.data;
+        return String(data?.api_id ?? data?.id ?? raw.id ?? "");
     },
     normalize(body) {
         const raw = body;
-        const eventType = raw.event;
+        // Luma sends "type" (not "event") at the top level
+        const eventType = raw.type ?? raw.event ?? "";
         const data = raw.data;
         if (!data)
             throw new Error("Luma payload missing 'data' field");
-        const orderId = String(data.order_id ?? data.id ?? "");
+        const orderId = String(data.order_id ?? data.api_id ?? data.id ?? "");
         if (!orderId)
             throw new Error("Luma payload missing order identifier");
-        // Luma sends amount in dollars — convert to minor units
-        const amountDollars = Number(data.amount ?? data.price ?? 0);
-        const amountMinor = Math.round(amountDollars * 100);
+        // ── Amount extraction ──────────────────────────────────────────────
+        // Luma nests ticket pricing under data.event_ticket.amount (in cents)
+        // and data.event_ticket_orders[].amount. Fall back to top-level fields.
+        const eventTicket = data.event_ticket;
+        const eventTicketOrders = data.event_ticket_orders;
+        const firstOrder = eventTicketOrders?.[0];
+        // Prefer order-level amount, then ticket-level, then top-level.
+        // Luma sends amounts in cents already (e.g. 450 = $4.50).
+        let amountMinor;
+        const orderAmount = firstOrder?.amount ?? eventTicket?.amount;
+        if (typeof orderAmount === "number" && orderAmount > 0) {
+            amountMinor = orderAmount;
+        }
+        else {
+            // Legacy/fallback: top-level amount in dollars
+            const amountDollars = Number(data.amount ?? data.price ?? 0);
+            amountMinor = Math.round(amountDollars * 100);
+        }
         const type = eventType === "ticket.refunded" ? "ticket.refunded" : "ticket.purchased";
+        // ── Coupon/referral code extraction ─────────────────────────────────
+        // Luma nests coupon info under data.event_ticket_orders[].coupon_info.code.
+        // Fall back to top-level fields for simpler payload formats.
+        const couponInfo = firstOrder?.coupon_info;
+        const referralCode = couponInfo?.code ??
+            data.coupon_code ??
+            data.coupon ??
+            data.discount_code ??
+            data.referral_code ??
+            data.promo_code ??
+            null;
+        // ── Currency ────────────────────────────────────────────────────────
+        const currency = String(firstOrder?.currency ?? eventTicket?.currency ?? data.currency ?? "USD").toUpperCase();
         return {
             externalEventId: this.extractEventId(body),
             externalOrderId: orderId,
             type,
             amountMinor,
-            currency: String(data.currency ?? "USD").toUpperCase(),
-            referralCode: data.referral_code ?? data.discount_code ?? null,
+            currency,
+            referralCode,
             buyerEmail: data.email ?? data.user_email ?? null,
             campaignId: data.campaign_id ?? null,
             occurredAt: data.created_at ?? new Date().toISOString(),

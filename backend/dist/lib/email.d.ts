@@ -7,6 +7,12 @@ export declare function sendVerificationCodeEmail(args: {
     code: string;
     expiresInMinutes: number;
 }): Promise<void>;
+export declare function sendPasswordResetEmail(args: {
+    to: string;
+    fullName: string;
+    resetUrl: string;
+    expiresInMinutes: number;
+}): Promise<void>;
 export declare function sendAffiliateWelcomeEmail(args: {
     to: string;
     firstName: string;

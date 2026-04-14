@@ -1,19 +1,31 @@
 "use client";
 
+import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import { TextInput } from "@/components/ui/text-input";
 import { PasswordInput } from "@/components/ui/password-input";
+import { ApiError } from "@/services/api/client";
 import { useAuthForm } from "../hooks/use-auth-form";
 import { useSignupMutation } from "../hooks/use-signup";
 import { signUpSchema, type SignUpFormValues } from "../schemas";
 
 export function AuthSignUpForm() {
   const mutation = useSignupMutation();
+  const [googleAccountError, setGoogleAccountError] = useState(false);
 
   const { register, formRef, submitWithFocus, isSubmitting, errors } =
     useAuthForm(signUpSchema, async (data: SignUpFormValues) => {
-      await mutation.mutateAsync(data);
+      setGoogleAccountError(false);
+      try {
+        await mutation.mutateAsync(data);
+      } catch (err) {
+        if (err instanceof ApiError && err.code === "GOOGLE_ACCOUNT_EXISTS") {
+          setGoogleAccountError(true);
+        }
+        throw err;
+      }
     });
 
   return (
@@ -77,11 +89,26 @@ export function AuthSignUpForm() {
         )}
       </FormField>
 
-      {errors.root && (
+      {googleAccountError ? (
+        <div className="rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface-card)] px-[var(--space-4)] py-[var(--space-3)] text-center">
+          <p className="font-[var(--font-sans)] text-[var(--text-xs)] text-[var(--color-text-secondary)]">
+            This email is already registered with Google. Use the{" "}
+            <strong className="text-[var(--color-text-primary)]">Continue with Google</strong>{" "}
+            button above, or{" "}
+            <Link
+              href="/reset-password"
+              className="text-[var(--color-text-link)] underline hover:text-[var(--color-text-link-hover)]"
+            >
+              set a password
+            </Link>{" "}
+            to enable email login.
+          </p>
+        </div>
+      ) : errors.root ? (
         <p className="font-[var(--font-sans)] text-[var(--text-xs)] text-[var(--color-error)] text-center" role="alert">
           {errors.root.message}
         </p>
-      )}
+      ) : null}
 
       <Button
         type="submit"

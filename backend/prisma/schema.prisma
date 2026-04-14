@@ -60,6 +60,12 @@ enum UserRole {
   affiliate
 }
 
+enum AuthProvider {
+  email
+  google
+  both
+}
+
 // ─── Tenant ──────────────────────────────────────────────────────────────────
 
 model Tenant {
@@ -506,6 +512,8 @@ model User {
   googleSub     String?   @unique
   /// Profile picture URL — populated from Google OAuth, editable by user.
   pictureUrl    String?
+  /// Tracks which login methods the user has linked.
+  authProvider  AuthProvider @default(email)
   role          UserRole  @default(affiliate)
   /// Nullable so a user can sign up before being attached to a tenant.
   /// Demo signup auto-attaches to the first tenant.
@@ -519,8 +527,9 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tenant            Tenant?              @relation(fields: [tenantId], references: [id])
-  emailVerifications EmailVerification[]
+  tenant              Tenant?              @relation(fields: [tenantId], references: [id])
+  emailVerifications  EmailVerification[]
+  passwordResetTokens PasswordResetToken[]
 
   @@index([tenantId])
 }
@@ -542,6 +551,25 @@ model EmailVerification {
 
   @@index([userId])
   @@index([code])
+}
+
+// ─── Password Reset Token ────────────────────────────────────────────────────
+// Secure, single-use tokens for the forgot-password → reset-password flow.
+// Works for both email-only and Google-only users (allowing them to add a password).
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
 }
 
 // ─── Asset (Marketing Material) ──────────────────────────────────────────────

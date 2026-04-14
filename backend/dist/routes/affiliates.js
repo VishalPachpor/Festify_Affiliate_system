@@ -79,10 +79,9 @@ router.get("/api/affiliates/me", async (req, res) => {
         ]);
         const totalRevenueMinor = sales.reduce((acc, s) => acc + s.amountMinor, 0);
         const totalCommissionMinor = commissionAgg._sum.amountMinor ?? 0;
-        // Build a copy-friendly referral URL. The base host is configurable so
-        // organizers can point at their actual landing page in production.
+        // Build a copy-friendly referral URL. Uses ?coupon= for Luma compatibility.
         const referralBase = process.env.REFERRAL_LINK_BASE ?? "https://event.festify.io";
-        const referralUrl = `${referralBase}?ref=${encodeURIComponent(membership.referralCode)}`;
+        const referralUrl = `${referralBase}?coupon=${encodeURIComponent(membership.referralCode)}`;
         res.status(200).json({
             affiliateId: membership.affiliateId,
             name: membership.affiliateId,
@@ -222,6 +221,7 @@ router.get("/api/affiliates", async (req, res) => {
                     joinedAt: app.createdAt.toISOString(),
                     referralCode: null,
                     tier: null,
+                    requestedCode: app.requestedCode,
                 });
             }
         }

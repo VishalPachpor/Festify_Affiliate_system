@@ -119,6 +119,36 @@ export async function sendVerificationCodeEmail(args: {
   });
 }
 
+export async function sendPasswordResetEmail(args: {
+  to: string;
+  fullName: string;
+  resetUrl: string;
+  expiresInMinutes: number;
+}): Promise<void> {
+  const safeName = escapeHtml(args.fullName);
+  const safeUrl = escapeHtml(args.resetUrl);
+
+  await sendEmail({
+    to: args.to,
+    subject: `Reset your ${APP_NAME} password`,
+    text: `Hi ${args.fullName}, use the following link to reset your password: ${args.resetUrl}. It expires in ${args.expiresInMinutes} minutes. If you didn't request this, ignore this email.`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#111827">
+        <h1 style="margin:0 0 16px;font-size:24px;">Reset your ${escapeHtml(APP_NAME)} password</h1>
+        <p style="margin:0 0 16px;">Hi ${safeName},</p>
+        <p style="margin:0 0 16px;">We received a request to reset your password. Click the button below to set a new password:</p>
+        <p style="margin:0 0 24px;">
+          <a href="${safeUrl}" style="display:inline-block;padding:12px 24px;border-radius:10px;background:#3456B8;color:#ffffff;text-decoration:none;font-weight:600;font-size:16px;">
+            Reset Password
+          </a>
+        </p>
+        <p style="margin:0 0 8px;">This link expires in ${args.expiresInMinutes} minutes.</p>
+        <p style="margin:0;color:#6b7280;font-size:14px;">If you didn't request a password reset, you can safely ignore this email.</p>
+      </div>
+    `,
+  });
+}
+
 export async function sendAffiliateWelcomeEmail(args: {
   to: string;
   firstName: string;

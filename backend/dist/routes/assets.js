@@ -24,7 +24,7 @@ exports.assetsRouter = router;
 // ─────────────────────────────────────────────────────────────────────────────
 const UPLOAD_ROOT = path_1.default.resolve(process.cwd(), "uploads");
 exports.UPLOAD_ROOT = UPLOAD_ROOT;
-const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_FILE_BYTES = 25 * 1024 * 1024; // 25 MB
 const storage = multer_1.default.diskStorage({
     destination: (req, _file, cb) => {
         try {

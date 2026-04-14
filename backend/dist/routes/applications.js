@@ -31,12 +31,30 @@ router.get("/api/applications", async (req, res) => {
         res.status(200).json({
             applications: applications.map((a) => ({
                 id: a.id,
+                applyingAs: a.applyingAs,
                 firstName: a.firstName,
                 email: a.email,
+                individualFullName: a.individualFullName,
+                telegramUsername: a.telegramUsername,
+                companyName: a.companyName,
+                contactPersonName: a.contactPersonName,
+                contactPersonEmail: a.contactPersonEmail,
+                signatoryName: a.signatoryName,
+                signatoryEmail: a.signatoryEmail,
+                contactPersonTelegramUsername: a.contactPersonTelegramUsername,
+                communicationChannels: a.communicationChannels,
+                emailDatabaseSize: a.emailDatabaseSize,
+                telegramGroupLink: a.telegramGroupLink,
+                xProfileLink: a.xProfileLink,
+                redditProfileLink: a.redditProfileLink,
+                linkedInProfileLink: a.linkedInProfileLink,
+                instagramAccountLink: a.instagramAccountLink,
+                discordServerLink: a.discordServerLink,
                 socialProfiles: a.socialProfiles,
                 audienceSize: a.audienceSize,
                 experience: a.experience,
                 fitReason: a.fitReason,
+                requestedCode: a.requestedCode,
                 status: a.status,
                 affiliateId: a.affiliateId,
                 campaignId: a.campaignId,
@@ -94,7 +112,14 @@ router.patch("/api/applications/:id/status", async (req, res) => {
             return;
         }
         // ── Approval path ──────────────────────────────────────────────────
-        const referralCode = buildReferralCode(application.firstName);
+        // Admin can override the code; fall back to applicant's requested code,
+        // then auto-generate if neither exists.
+        const adminCode = typeof req.body?.referralCode === "string" && req.body.referralCode.trim()
+            ? req.body.referralCode.trim().toUpperCase()
+            : null;
+        const referralCode = adminCode
+            ?? application.requestedCode
+            ?? buildReferralCode(application.firstName);
         const affiliateId = `affiliate_${(0, crypto_1.randomBytes)(6).toString("hex")}`;
         const result = await prisma_1.prisma.$transaction(async (tx) => {
             await tx.campaignAffiliate.create({
@@ -103,6 +128,7 @@ router.patch("/api/applications/:id/status", async (req, res) => {
                     campaignId: application.campaignId,
                     affiliateId,
                     referralCode,
+                    codeStatus: "unverified",
                 },
             });
             const updated = await tx.application.update({
@@ -163,4 +189,36 @@ function buildReferralCode(firstName) {
     const suffix = (0, crypto_1.randomBytes)(2).toString("hex").toUpperCase();
     return `${prefix.toUpperCase()}-${suffix}`;
 }
+// ─────────────────────────────────────────────────────────────────────────────
+// PATCH /api/affiliates/:affiliateId/verify-code
+//
+// Admin confirms the coupon code has been created in Luma.
+// Transitions codeStatus from unverified → verified.
+// ─────────────────────────────────────────────────────────────────────────────
+router.patch("/api/affiliates/:affiliateId/verify-code", async (req, res) => {
+    try {
+        const tenantId = (0, auth_1.getTenantId)(req);
+        if (req.userRole !== "admin") {
+            res.status(403).json({ error: "Admin access required" });
+            return;
+        }
+        const affiliateId = String(req.params.affiliateId);
+        const affiliate = await prisma_1.prisma.campaignAffiliate.findFirst({
+            where: { tenantId, affiliateId },
+        });
+        if (!affiliate) {
+            res.status(404).json({ error: "Affiliate not found" });
+            return;
+        }
+        await prisma_1.prisma.campaignAffiliate.update({
+            where: { id: affiliate.id },
+            data: { codeStatus: "verified" },
+        });
+        res.status(200).json({ success: true, affiliateId, codeStatus: "verified" });
+    }
+    catch (err) {
+        console.error("[affiliates] verify-code failed:", err);
+        res.status(500).json({ error: "Failed to verify code" });
+    }
+});
 //# sourceMappingURL=applications.js.map

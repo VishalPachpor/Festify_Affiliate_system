@@ -36,6 +36,7 @@ const JWT_SECRET = (() => {
 const JWT_EXPIRY = "24h";
 const PASSWORD_MIN_LEN = 8;
 const VERIFY_CODE_TTL_MINUTES = 15;
+const RESET_TOKEN_TTL_MINUTES = 30;
 const googleClient = process.env.GOOGLE_CLIENT_ID
     ? new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID)
     : null;
@@ -100,7 +101,15 @@ router.post("/api/auth/signup", async (req, res) => {
         }
         const existing = await prisma_1.prisma.user.findUnique({ where: { email } });
         if (existing) {
-            res.status(409).json({ error: "An account with that email already exists" });
+            if (existing.googleSub && !existing.passwordHash) {
+                res.status(409).json({
+                    error: "This email is already registered with Google. Please sign in with Google or use \"Forgot password?\" to add an email password.",
+                    code: "GOOGLE_ACCOUNT_EXISTS",
+                });
+            }
+            else {
+                res.status(409).json({ error: "An account with that email already exists" });
+            }
             return;
         }
         const passwordHash = await bcryptjs_1.default.hash(password, 10);
@@ -380,9 +389,16 @@ router.post("/api/auth/login", async (req, res) => {
             return;
         }
         const user = await prisma_1.prisma.user.findUnique({ where: { email } });
-        // Vague error to avoid account-enumeration.
-        if (!user || !user.passwordHash) {
+        if (!user) {
             res.status(401).json({ error: "Invalid email or password" });
+            return;
+        }
+        if (!user.passwordHash) {
+            // Google-only account — guide user to sign in with Google or set a password.
+            res.status(400).json({
+                error: "This account was created using Google. Please sign in with Google or use \"Forgot password?\" to set an email password.",
+                code: "GOOGLE_ONLY_ACCOUNT",
+            });
             return;
         }
         const ok = await bcryptjs_1.default.compare(password, user.passwordHash);
@@ -451,13 +467,8 @@ router.post("/api/auth/google", async (req, res) => {
         let user = (await prisma_1.prisma.user.findUnique({ where: { googleSub } })) ??
             (await prisma_1.prisma.user.findUnique({ where: { email } }));
         if (!user) {
-            if (intent !== "affiliate_signup") {
-                res.status(404).json({
-                    error: "No account exists for this Google email. Sign up as an organizer or affiliate first.",
-                    code: "ACCOUNT_NOT_FOUND",
-                });
-                return;
-            }
+            // Auto-create an affiliate account for any Google sign-in (login or signup).
+            // Users expect "Continue with Google" to just work regardless of which tab they're on.
             const tenantId = await pickDefaultTenantId();
             user = await prisma_1.prisma.user.create({
                 data: {
@@ -465,6 +476,7 @@ router.post("/api/auth/google", async (req, res) => {
                     fullName,
                     googleSub,
                     pictureUrl,
+                    authProvider: "google",
                     role: "affiliate",
                     tenantId,
                     emailVerifiedAt: new Date(), // Google has already verified the email
@@ -479,6 +491,7 @@ router.post("/api/auth/google", async (req, res) => {
                 data: {
                     googleSub,
                     pictureUrl: pictureUrl ?? user.pictureUrl,
+                    authProvider: "both",
                     emailVerifiedAt: user.emailVerifiedAt ?? new Date(),
                 },
             });
@@ -586,6 +599,7 @@ router.get("/api/auth/google/callback", async (req, res) => {
         // opener window (the sign-in page) and then closes itself.
         const json = JSON.stringify(payload).replace(/</g, "\\u003c");
         res.setHeader("Content-Type", "text/html");
+        res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
         res.send(`<!DOCTYPE html><html><body><script>
       window.opener && window.opener.postMessage(${json}, "*");
       window.close();
@@ -658,19 +672,14 @@ router.get("/api/auth/google/callback", async (req, res) => {
         let user = (await prisma_1.prisma.user.findUnique({ where: { googleSub } })) ??
             (await prisma_1.prisma.user.findUnique({ where: { email } }));
         if (!user) {
-            if (intent !== "affiliate_signup") {
-                sendCallbackHtml({
-                    type: "google-auth-callback",
-                    error: "No account exists for this Google email. Sign up as an organizer or affiliate first.",
-                });
-                return;
-            }
+            // Auto-create an affiliate account for any Google sign-in (login or signup).
             const tenantId = await pickDefaultTenantId();
             user = await prisma_1.prisma.user.create({
                 data: {
                     email,
                     fullName,
                     googleSub,
+                    authProvider: "google",
                     role: "affiliate",
                     tenantId,
                     emailVerifiedAt: new Date(),
@@ -682,6 +691,7 @@ router.get("/api/auth/google/callback", async (req, res) => {
                 where: { id: user.id },
                 data: {
                     googleSub,
+                    authProvider: "both",
                     emailVerifiedAt: user.emailVerifiedAt ?? new Date(),
                 },
             });
@@ -703,6 +713,131 @@ router.get("/api/auth/google/callback", async (req, res) => {
     catch (err) {
         console.error("[auth] google callback failed:", err);
         sendCallbackHtml({ type: "google-auth-callback", error: "Google sign-in failed" });
+    }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/auth/forgot-password
+// Body: { email }
+// Generates a password reset token and sends a reset link via email.
+// Always returns success to avoid email enumeration.
+// Works for both email-only AND Google-only accounts (to enable account linking).
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+        const email = asNonEmptyString(req.body?.email)?.toLowerCase();
+        if (!email) {
+            res.status(400).json({ error: "email is required" });
+            return;
+        }
+        // Always return success to prevent email enumeration.
+        const successMsg = { message: "If an account exists, a password reset link has been sent." };
+        const user = await prisma_1.prisma.user.findUnique({ where: { email } });
+        if (!user) {
+            res.status(200).json(successMsg);
+            return;
+        }
+        // Invalidate any previous unused tokens for this user.
+        await prisma_1.prisma.passwordResetToken.updateMany({
+            where: { userId: user.id, usedAt: null },
+            data: { usedAt: new Date() },
+        });
+        // Generate a secure random token.
+        const token = (0, crypto_1.randomBytes)(32).toString("hex");
+        const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60_000);
+        await prisma_1.prisma.passwordResetToken.create({
+            data: {
+                userId: user.id,
+                token,
+                expiresAt,
+            },
+        });
+        const frontendBase = process.env.PUBLIC_FRONTEND_URL ?? "http://localhost:3000";
+        const resetUrl = `${frontendBase}/reset-password?token=${token}`;
+        try {
+            await (0, email_1.sendPasswordResetEmail)({
+                to: email,
+                fullName: user.fullName,
+                resetUrl,
+                expiresInMinutes: RESET_TOKEN_TTL_MINUTES,
+            });
+        }
+        catch (error) {
+            if (error instanceof email_1.EmailDeliveryError) {
+                console.error("[auth] forgot-password mail delivery failed:", error.message);
+                res.status(503).json({ error: "Failed to send reset email" });
+                return;
+            }
+            throw error;
+        }
+        res.status(200).json(successMsg);
+    }
+    catch (err) {
+        console.error("[auth] forgot-password failed:", err);
+        res.status(500).json({ error: "Failed to process password reset request" });
+    }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/auth/reset-password
+// Body: { token, password }
+// Validates the reset token and sets/updates the user's password.
+// For Google-only users this effectively "links" email auth to their account.
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/api/auth/reset-password", async (req, res) => {
+    try {
+        const token = asNonEmptyString(req.body?.token);
+        const password = typeof req.body?.password === "string" ? req.body.password : "";
+        if (!token) {
+            res.status(400).json({ error: "Reset token is required" });
+            return;
+        }
+        if (password.length < PASSWORD_MIN_LEN) {
+            res.status(400).json({ error: `Password must be at least ${PASSWORD_MIN_LEN} characters` });
+            return;
+        }
+        const resetToken = await prisma_1.prisma.passwordResetToken.findUnique({
+            where: { token },
+            include: { user: true },
+        });
+        if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
+            res.status(400).json({ error: "Invalid or expired reset link. Please request a new one." });
+            return;
+        }
+        const passwordHash = await bcryptjs_1.default.hash(password, 10);
+        // If user has Google linked, setting a password means "both" providers.
+        // If email-only user is resetting, authProvider stays "email".
+        const newAuthProvider = resetToken.user.googleSub
+            ? "both"
+            : resetToken.user.authProvider;
+        const [updatedUser] = await prisma_1.prisma.$transaction([
+            prisma_1.prisma.user.update({
+                where: { id: resetToken.userId },
+                data: {
+                    passwordHash,
+                    authProvider: newAuthProvider,
+                    // If the user was Google-only and hadn't verified via email signup,
+                    // mark email as verified since they proved ownership through the reset link.
+                    emailVerifiedAt: resetToken.user.emailVerifiedAt ?? new Date(),
+                },
+            }),
+            prisma_1.prisma.passwordResetToken.update({
+                where: { id: resetToken.id },
+                data: { usedAt: new Date() },
+            }),
+        ]);
+        // Issue a JWT so the user is logged in immediately after reset.
+        const jwt_token = signToken({
+            sub: updatedUser.id,
+            email: updatedUser.email,
+            fullName: updatedUser.fullName,
+            role: updatedUser.role,
+            tenantId: updatedUser.tenantId,
+            affiliateId: updatedUser.affiliateId,
+        });
+        res.status(200).json({ token: jwt_token, user: publicUser(updatedUser) });
+    }
+    catch (err) {
+        console.error("[auth] reset-password failed:", err);
+        res.status(500).json({ error: "Password reset failed" });
     }
 });
 // ─────────────────────────────────────────────────────────────────────────────

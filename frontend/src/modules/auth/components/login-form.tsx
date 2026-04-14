@@ -1,20 +1,31 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import { TextInput } from "@/components/ui/text-input";
 import { PasswordInput } from "@/components/ui/password-input";
+import { ApiError } from "@/services/api/client";
 import { useAuthForm } from "../hooks/use-auth-form";
 import { useLoginMutation } from "../hooks/use-login";
 import { loginSchema, type LoginFormValues } from "../schemas";
 
 export function LoginForm() {
   const mutation = useLoginMutation();
+  const [googleOnlyError, setGoogleOnlyError] = useState(false);
 
   const { register, formRef, submitWithFocus, isSubmitting, errors } =
     useAuthForm(loginSchema, async (data: LoginFormValues) => {
-      await mutation.mutateAsync(data);
+      setGoogleOnlyError(false);
+      try {
+        await mutation.mutateAsync(data);
+      } catch (err) {
+        if (err instanceof ApiError && err.code === "GOOGLE_ONLY_ACCOUNT") {
+          setGoogleOnlyError(true);
+        }
+        throw err;
+      }
     });
 
   return (
@@ -64,11 +75,26 @@ export function LoginForm() {
         )}
       </FormField>
 
-      {errors.root && (
+      {googleOnlyError ? (
+        <div className="rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface-card)] px-[var(--space-4)] py-[var(--space-3)] text-center">
+          <p className="font-[var(--font-sans)] text-[var(--text-xs)] text-[var(--color-text-secondary)]">
+            This account was created with Google. Use the{" "}
+            <strong className="text-[var(--color-text-primary)]">Continue with Google</strong>{" "}
+            button above, or{" "}
+            <Link
+              href="/reset-password"
+              className="text-[var(--color-text-link)] underline hover:text-[var(--color-text-link-hover)]"
+            >
+              set a password
+            </Link>{" "}
+            to enable email login.
+          </p>
+        </div>
+      ) : errors.root ? (
         <p className="font-[var(--font-sans)] text-[var(--text-xs)] text-[var(--color-error)] text-center" role="alert">
           {errors.root.message}
         </p>
-      )}
+      ) : null}
 
       <Button
         type="submit"
