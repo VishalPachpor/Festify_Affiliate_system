@@ -9,6 +9,7 @@ export const userSchema = z.object({
   id: z.string(),
   email: z.string(),
   fullName: z.string(),
+  pictureUrl: z.string().nullable().optional(),
   role: userRoleSchema,
   tenantId: z.string().nullable(),
   affiliateId: z.string().nullable(),

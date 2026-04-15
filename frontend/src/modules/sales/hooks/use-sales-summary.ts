@@ -7,10 +7,11 @@ import { salesKeys } from "../query-keys";
 export function useSalesSummary(
   tenantId: string | undefined,
   campaignId?: string,
+  dateRange?: { from?: string; to?: string },
 ) {
   return useQuery({
-    queryKey: salesKeys.summary(tenantId ?? "", campaignId),
+    queryKey: salesKeys.summary(tenantId ?? "", campaignId, dateRange),
     queryFn: () =>
-      getSalesSummary({ tenantId: tenantId!, campaignId }),
+      getSalesSummary({ tenantId: tenantId!, campaignId, from: dateRange?.from, to: dateRange?.to }),
   });
 }

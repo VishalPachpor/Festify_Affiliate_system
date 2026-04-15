@@ -8,8 +8,8 @@ export const salesKeys = {
     [...salesKeys.lists(), { tenantId, campaignId, ...filters }] as const,
 
   summaries: () => [...salesKeys.all, "summary"] as const,
-  summary: (tenantId: string, campaignId?: string) =>
-    [...salesKeys.summaries(), { tenantId, campaignId }] as const,
+  summary: (tenantId: string, campaignId?: string, dateRange?: { from?: string; to?: string }) =>
+    [...salesKeys.summaries(), { tenantId, campaignId, ...dateRange }] as const,
 
   details: () => [...salesKeys.all, "detail"] as const,
   detail: (tenantId: string, saleId: string) =>

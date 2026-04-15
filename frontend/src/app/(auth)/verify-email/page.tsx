@@ -2,7 +2,6 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { VerifyEmailForm } from "@/modules/auth/components/verify-email-form";
 
@@ -30,15 +29,7 @@ function VerifyEmailContent() {
       </Link>
 
       <div className="mt-[var(--space-8)] flex flex-col items-center text-center">
-        <Image
-          src="/token.png"
-          alt="TOKEN2049"
-          width={220}
-          height={28}
-          className="h-[2rem] w-auto"
-          priority
-        />
-        <h2 className="mt-[var(--space-8)] font-[var(--font-display)] text-[var(--text-2xl)] font-bold leading-[1.08] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
+        <h2 className="font-[var(--font-display)] text-[var(--text-2xl)] font-bold leading-[1.08] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
           Verify Your Email
         </h2>
         <p className="mt-[var(--space-3)] max-w-[24rem] font-[var(--font-sans)] text-[var(--text-base)] leading-[1.55] text-[var(--color-text-secondary)]">

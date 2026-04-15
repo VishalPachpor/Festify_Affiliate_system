@@ -273,7 +273,7 @@ export default function AdminDashboardPage() {
                 Referral Code
               </span>
               <span className="font-[var(--font-sans)] text-[var(--text-xs)] tracking-[var(--tracking-caption)] text-[rgba(255,255,255,0.45)]">
-                Sales
+                Revenue
               </span>
               <span className="font-[var(--font-sans)] text-[var(--text-xs)] tracking-[var(--tracking-caption)] text-[rgba(255,255,255,0.45)]">
                 Tier
@@ -297,7 +297,7 @@ export default function AdminDashboardPage() {
                     </p>
                   </div>
                   <span className="font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.60)]">
-                    {aff.totalSales} sales
+                    {aff.referralCode ?? "—"}
                   </span>
                   <span className="font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">
                     {formatCurrency(aff.totalRevenue, currency)}

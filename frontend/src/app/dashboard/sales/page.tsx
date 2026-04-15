@@ -300,14 +300,34 @@ function TableSkeleton() {
 
 const PAGE_SIZE = 6;
 
+function getDateRange(period: string): { from?: string; to?: string } {
+  const now = new Date();
+  const to = now.toISOString().split("T")[0];
+
+  if (period === "This Week") {
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay());
+    return { from: weekStart.toISOString().split("T")[0], to };
+  }
+  if (period === "This Month") {
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    return { from: monthStart.toISOString().split("T")[0], to };
+  }
+  // "All Time" — no filter
+  return {};
+}
+
 export default function SalesPage() {
   const { tenant } = useTenant();
   const { filters, setFilters } = useSalesFilters();
   const [timePeriod, setTimePeriod] = useState<(typeof TIME_PERIODS)[number]>("This Month");
 
-  const { data: summaryData, isLoading: summaryLoading } = useSalesSummary(tenant?.id);
+  const dateRange = getDateRange(timePeriod);
+
+  const { data: summaryData, isLoading: summaryLoading } = useSalesSummary(tenant?.id, undefined, dateRange);
   const { data: listData, isLoading: listLoading } = useSalesList(tenant?.id, {
     ...filters,
+    ...dateRange,
     pageSize: PAGE_SIZE,
   });
 

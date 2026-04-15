@@ -132,8 +132,8 @@ router.get("/api/dashboard/top-affiliates", async (req: Request, res: Response) 
       revenueByAffiliate.set(affId, (revenueByAffiliate.get(affId) ?? 0) + s.amountMinor);
     }
 
-    // Resolve real names/emails from User and Application tables
-    const [users, applications] = await Promise.all([
+    // Resolve real names/emails from User and Application tables, plus referral codes
+    const [users, applications, campaignAffiliates] = await Promise.all([
       prisma.user.findMany({
         where: { tenantId, affiliateId: { in: affiliateIds } },
         select: { affiliateId: true, fullName: true, email: true },
@@ -142,10 +142,15 @@ router.get("/api/dashboard/top-affiliates", async (req: Request, res: Response) 
         where: { tenantId, affiliateId: { in: affiliateIds }, status: "approved" },
         select: { affiliateId: true, firstName: true, email: true },
       }),
+      prisma.campaignAffiliate.findMany({
+        where: { tenantId, affiliateId: { in: affiliateIds } },
+        select: { affiliateId: true, referralCode: true },
+      }),
     ]);
 
     const userByAffId = new Map(users.map((u) => [u.affiliateId, u]));
     const appByAffId = new Map(applications.map((a) => [a.affiliateId, a]));
+    const codeByAffId = new Map(campaignAffiliates.map((c) => [c.affiliateId, c.referralCode]));
 
     const mapped = grouped.map((g) => {
       const user = userByAffId.get(g.affiliateId);
@@ -154,6 +159,7 @@ router.get("/api/dashboard/top-affiliates", async (req: Request, res: Response) 
         id: g.affiliateId,
         name: user?.fullName ?? app?.firstName ?? g.affiliateId,
         email: user?.email ?? app?.email ?? `${g.affiliateId}@affiliate.local`,
+        referralCode: codeByAffId.get(g.affiliateId) ?? null,
         totalSales: g._count._all,
         totalRevenue: revenueByAffiliate.get(g.affiliateId) ?? 0,
         conversionRate: 0,

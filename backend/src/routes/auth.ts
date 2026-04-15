@@ -297,8 +297,11 @@ router.post("/api/auth/signup/organizer", async (req: Request, res: Response) =>
         expiresInMinutes: VERIFY_CODE_TTL_MINUTES,
       });
     } catch (error) {
-      // Roll back: delete user (cascade will handle verification), campaign, tenant
+      // Roll back the entire transaction: user, campaign, and tenant.
+      // Order matters — delete user first (has FK to tenant), then campaign, then tenant.
       await prisma.user.delete({ where: { id: user.id } }).catch(() => {});
+      await prisma.campaign.deleteMany({ where: { tenantId: user.tenantId! } }).catch(() => {});
+      await prisma.tenant.delete({ where: { id: user.tenantId! } }).catch(() => {});
 
       if (error instanceof EmailDeliveryError) {
         console.error("[auth] organizer signup mail delivery failed:", error.message);

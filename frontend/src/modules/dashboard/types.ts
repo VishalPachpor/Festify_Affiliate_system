@@ -45,6 +45,7 @@ export const topAffiliateSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
+  referralCode: z.string().nullable().optional(),
   totalSales: z.number(),
   totalRevenue: z.number(),
   conversionRate: z.number(),

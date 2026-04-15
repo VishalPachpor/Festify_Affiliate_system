@@ -4,6 +4,8 @@ import { salesSummarySchema, type SalesSummary } from "../types";
 export type GetSalesSummaryParams = {
   tenantId: string;
   campaignId?: string;
+  from?: string;
+  to?: string;
 };
 
 export async function getSalesSummary(
@@ -15,6 +17,8 @@ export async function getSalesSummary(
     },
     searchParams: {
       campaignId: params.campaignId,
+      from: params.from,
+      to: params.to,
     },
   });
 

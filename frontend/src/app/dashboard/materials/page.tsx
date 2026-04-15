@@ -166,7 +166,7 @@ export default function MaterialsPage() {
               Marketing Materials
             </h2>
             <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-4)] text-[var(--color-text-secondary)]">
-              Download and use these assets for your TOKEN2049 promotions.
+              Download and use these assets for your promotions.
             </p>
           </div>
 

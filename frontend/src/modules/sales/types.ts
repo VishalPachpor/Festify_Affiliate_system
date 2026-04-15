@@ -115,4 +115,6 @@ export type SalesFilterState = {
   sortOrder?: "asc" | "desc";
   attributed?: "true" | "false";
   attributionSource?: AttributionSource;
+  from?: string;
+  to?: string;
 };

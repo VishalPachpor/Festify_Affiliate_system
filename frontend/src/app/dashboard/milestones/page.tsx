@@ -123,7 +123,7 @@ function MilestoneCard({
   description: string;
   unlocked: boolean;
 }) {
-  const styles = TIER_STYLES[id as keyof typeof TIER_STYLES] ?? TIER_STYLES.bronze;
+  const styles = TIER_STYLES[name.toLowerCase() as keyof typeof TIER_STYLES] ?? TIER_STYLES.bronze;
   const effectiveCurrent = unlocked ? targetAmount : currentAmount;
   const pct = Math.min(100, (effectiveCurrent / targetAmount) * 100);
   const fillColor = styles.progress;

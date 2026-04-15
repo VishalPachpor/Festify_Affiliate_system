@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/modules/auth";
+import { useTenant } from "@/modules/tenant-shell";
 import { useCurrentAffiliate } from "@/modules/affiliates/hooks/use-current-affiliate";
 
 type ProfileVariant = "admin" | "affiliate";
@@ -52,6 +53,7 @@ function initialsFor(name: string): string {
 
 export function ProfilePage({ variant }: { variant: ProfileVariant }) {
   const { user } = useAuth();
+  const { tenant } = useTenant();
   const { data: affiliate } = useCurrentAffiliate();
 
   const fullName = user?.fullName ?? "User";
@@ -75,7 +77,7 @@ export function ProfilePage({ variant }: { variant: ProfileVariant }) {
     variant === "admin"
       ? [
           { label: "Role", value: "Admin" },
-          { label: "Tenant", value: user?.tenantId ?? "—" },
+          { label: "Organization", value: tenant?.name ?? "—" },
         ]
       : [
           { label: "Affiliate Code", value: referralCode },
@@ -84,7 +86,7 @@ export function ProfilePage({ variant }: { variant: ProfileVariant }) {
 
   const summaryLines =
     variant === "admin"
-      ? ["Primary admin", `Tenant: ${user?.tenantId ?? "—"}`]
+      ? ["Primary admin", `Organization: ${tenant?.name ?? "—"}`]
       : [
           `Code: ${referralCode}`,
           affiliate ? `Sales: ${affiliate.totalSales}` : "No sales yet",

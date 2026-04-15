@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardStageCanvas } from "@/modules/dashboard/components/dashboard-stage-canvas";
 import { useTenant } from "@/modules/tenant-shell";
 import { usePayoutSummary } from "@/modules/payouts/hooks/use-payout-summary";
 import { useSalesList } from "@/modules/sales/hooks/use-sales-list";
 import { useSalesFilters } from "@/modules/sales/hooks/use-sales-filters";
+import { apiClient } from "@/services/api/client";
 import type { Sale } from "@/modules/sales/types";
 
 type CommissionStatus = "paid" | "approved" | "pending";
@@ -75,29 +78,6 @@ function StatusCell({ status }: { status: CommissionStatus }) {
   );
 }
 
-// ── Action button ─────────────────────────────────────────────────────────────
-
-function ActionButton({ label, variant }: { label: string; variant: "primary" | "outline" }) {
-  if (variant === "primary") {
-    return (
-      <button
-        type="button"
-        className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
-      >
-        {label}
-      </button>
-    );
-  }
-  return (
-    <button
-      type="button"
-      className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-4)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
-    >
-      {label}
-    </button>
-  );
-}
-
 // ── KPI Card ──────────────────────────────────────────────────────────────────
 
 function KpiCard({ label, value, accentColor }: { label: string; value: string; accentColor: string }) {
@@ -116,6 +96,28 @@ function KpiCard({ label, value, accentColor }: { label: string; value: string; 
   );
 }
 
+// ── CSV Export ────────────────────────────────────────────────────────────────
+
+function exportToCsv(sales: Sale[]) {
+  const headers = ["Affiliate", "Total Sales", "Commission", "Status", "Date"];
+  const rows = sales.map((row) => [
+    row.affiliateName,
+    (row.amount / 100).toFixed(2),
+    (row.commission / 100).toFixed(2),
+    toCommissionStatus(row.status),
+    row.createdAt,
+  ]);
+
+  const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `commissions-${new Date().toISOString().split("T")[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 function toCommissionStatus(s: Sale["status"]): CommissionStatus {
@@ -124,19 +126,65 @@ function toCommissionStatus(s: Sale["status"]): CommissionStatus {
   return "pending";
 }
 
+const STATUS_OPTIONS = [
+  { label: "All status", value: "" },
+  { label: "Pending", value: "pending" },
+  { label: "Confirmed", value: "confirmed" },
+  { label: "Paid", value: "paid" },
+] as const;
+
+const PAGE_SIZE = 10;
+
 export default function AdminCommissionsPage() {
+  const queryClient = useQueryClient();
   const { tenant } = useTenant();
   const { filters, setFilters } = useSalesFilters();
-  const { data: salesData } = useSalesList(tenant?.id, filters);
+  const [statusFilter, setStatusFilter] = useState("");
+
+  const { data: salesData } = useSalesList(tenant?.id, {
+    ...filters,
+    status: statusFilter as Sale["status"] || undefined,
+    pageSize: PAGE_SIZE,
+  });
   const { data: summaryData } = usePayoutSummary(tenant?.id);
 
   const sales: Sale[] = salesData?.sales ?? [];
-  const filtered = sales;
+  const total = salesData?.total ?? 0;
+  const totalPages = salesData?.totalPages ?? 1;
+  const currentPage = filters.page;
 
   const totalPaid = summaryData?.totalPaid ?? 0;
   const totalPending = summaryData?.totalPending ?? 0;
   const totalEarned = totalPaid + totalPending;
-  const currentPage = filters.page;
+
+  const startItem = (currentPage - 1) * PAGE_SIZE + 1;
+  const endItem = Math.min(currentPage * PAGE_SIZE, total);
+
+  // Mutation: create payout for an affiliate (marks as paid)
+  const createPayoutMutation = useMutation({
+    mutationFn: (affiliateId: string) =>
+      apiClient<{ id: string }>("/payouts/create", {
+        method: "POST",
+        body: { affiliateId },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["payouts"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+
+  // Generate page numbers
+  const pageNumbers: number[] = [];
+  const maxPageButtons = 5;
+  let startPage = Math.max(1, currentPage - 2);
+  const endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
+  if (endPage - startPage < maxPageButtons - 1) {
+    startPage = Math.max(1, endPage - maxPageButtons + 1);
+  }
+  for (let i = startPage; i <= endPage; i++) {
+    pageNumbers.push(i);
+  }
 
   return (
     <DashboardStageCanvas>
@@ -174,28 +222,44 @@ export default function AdminCommissionsPage() {
               className="h-[2.5rem] w-full rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] pl-[2.2rem] pr-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.35)] focus:border-[var(--color-ring)] focus:outline-none transition-colors"
             />
           </div>
+          <div className="relative">
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setFilters({ page: 1 });
+              }}
+              className="h-[2.5rem] appearance-none rounded-[var(--radius)] bg-[rgba(255,255,255,0.06)] pl-[var(--space-4)] pr-[2.5rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.10)] border-none focus:outline-none cursor-pointer"
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value} className="bg-[#1a1e2e] text-white">
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-[var(--space-3)] top-1/2 -translate-y-1/2 text-[rgba(255,255,255,0.40)]">
+              <IconChevronDown />
+            </span>
+          </div>
           <button
             type="button"
-            className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] bg-[rgba(255,255,255,0.06)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.10)]"
-          >
-            dd-mm-yyyy
-            <IconChevronDown />
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] bg-[rgba(255,255,255,0.06)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.10)]"
-          >
-            All status
-            <IconChevronDown />
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
+            onClick={() => exportToCsv(sales)}
+            disabled={sales.length === 0}
+            className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)] disabled:opacity-40"
           >
             <IconDownload />
             Export CSV
           </button>
         </div>
+
+        {/* Mutation feedback */}
+        {createPayoutMutation.isError && (
+          <div className="rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[#FCA5A5]">
+            {createPayoutMutation.error instanceof Error
+              ? createPayoutMutation.error.message
+              : "Failed to create payout"}
+          </div>
+        )}
 
         {/* Table */}
         <div className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent">
@@ -203,7 +267,7 @@ export default function AdminCommissionsPage() {
             <table className="w-full border-collapse font-[var(--font-sans)]" aria-label="Commissions">
               <thead>
                 <tr>
-                  {["Affiliate", "Total Sales", "Commission", "Status", "Paid", "Outstanding", "Payout Date", "Actions"].map((col) => (
+                  {["Affiliate", "Total Sales", "Commission", "Status", "Paid", "Outstanding", "Date", "Actions"].map((col) => (
                     <th
                       key={col}
                       scope="col"
@@ -215,46 +279,49 @@ export default function AdminCommissionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((row) => {
+                {sales.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="py-[var(--space-8)] text-center text-[var(--text-sm)] text-[rgba(255,255,255,0.45)]">
+                      No commissions found.
+                    </td>
+                  </tr>
+                )}
+                {sales.map((row) => {
                   const cStatus = toCommissionStatus(row.status);
                   const isPaid = row.status === "paid";
                   return (
                   <tr key={row.id} className="border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-                    {/* Affiliate */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] whitespace-nowrap">
                       {row.affiliateName}
                     </td>
-                    {/* Total Sales */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] text-[#FFFFFF] whitespace-nowrap">
                       {formatCurrency(row.amount)}
                     </td>
-                    {/* Commission */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] text-[#F5A623] whitespace-nowrap">
                       {formatCurrency(row.commission)}
                     </td>
-                    {/* Status */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] whitespace-nowrap">
                       <StatusCell status={cStatus} />
                     </td>
-                    {/* Paid */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] text-[#22C55E] whitespace-nowrap">
                       {formatCurrency(isPaid ? row.commission : 0)}
                     </td>
-                    {/* Outstanding */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] text-[#F5A623] whitespace-nowrap">
                       {formatCurrency(isPaid ? 0 : row.commission)}
                     </td>
-                    {/* Payout Date */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] text-[rgba(255,255,255,0.55)] whitespace-nowrap">
-                      {row.createdAt ?? "—"}
+                      {new Date(row.createdAt).toLocaleDateString()}
                     </td>
-                    {/* Actions */}
                     <td className="py-[var(--space-3)] whitespace-nowrap">
-                      {cStatus === "approved" && (
-                        <ActionButton label="Mark Paid" variant="primary" />
-                      )}
-                      {cStatus === "pending" && (
-                        <ActionButton label="Approve" variant="outline" />
+                      {cStatus === "approved" && row.affiliateId && (
+                        <button
+                          type="button"
+                          onClick={() => createPayoutMutation.mutate(row.affiliateId)}
+                          disabled={createPayoutMutation.isPending}
+                          className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+                        >
+                          {createPayoutMutation.isPending ? "Processing..." : "Mark Paid"}
+                        </button>
                       )}
                     </td>
                   </tr>
@@ -267,26 +334,39 @@ export default function AdminCommissionsPage() {
           {/* Pagination */}
           <div className="flex items-center justify-between border-t px-[var(--space-6)] py-[var(--space-4)]" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
             <p className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.45)]">
-              Showing 1-{filtered.length} of {filtered.length} affiliates
+              {total > 0
+                ? `Showing ${startItem}-${endItem} of ${total} entries`
+                : "No entries"}
             </p>
             <div className="flex gap-[var(--space-2)]">
               <button
                 type="button"
-                disabled
-                className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.30)] disabled:pointer-events-none"
+                disabled={currentPage <= 1}
+                onClick={() => setFilters({ page: currentPage - 1 })}
+                className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.78)] transition-colors hover:border-[rgba(255,255,255,0.18)] disabled:pointer-events-none disabled:opacity-40"
               >
                 Previous
               </button>
+              {pageNumbers.map((num) => (
+                <button
+                  key={num}
+                  type="button"
+                  onClick={() => setFilters({ page: num })}
+                  className={[
+                    "rounded-[var(--radius)] border px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] transition-colors",
+                    currentPage === num
+                      ? "border-[#5B8DEF] bg-[#5B8DEF] text-white"
+                      : "border-[rgba(255,255,255,0.08)] bg-transparent text-[rgba(255,255,255,0.78)] hover:border-[rgba(255,255,255,0.18)]",
+                  ].join(" ")}
+                >
+                  {num}
+                </button>
+              ))}
               <button
                 type="button"
-                className="rounded-[var(--radius)] border border-[#5B8DEF] bg-[#5B8DEF] px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] text-white"
-              >
-                {currentPage}
-              </button>
-              <button
-                type="button"
-                disabled
-                className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.30)] disabled:pointer-events-none"
+                disabled={currentPage >= totalPages}
+                onClick={() => setFilters({ page: currentPage + 1 })}
+                className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.78)] transition-colors hover:border-[rgba(255,255,255,0.18)] disabled:pointer-events-none disabled:opacity-40"
               >
                 Next
               </button>

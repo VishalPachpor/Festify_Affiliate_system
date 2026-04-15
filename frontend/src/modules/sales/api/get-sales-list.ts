@@ -27,6 +27,8 @@ export async function getSalesList(
       sortOrder: filters.sortOrder,
       attributed: filters.attributed,
       attributionSource: filters.attributionSource,
+      from: filters.from,
+      to: filters.to,
     },
   });
 
