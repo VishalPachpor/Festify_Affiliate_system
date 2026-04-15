@@ -170,7 +170,7 @@ export default function AdminCommissionsPage() {
     mutationFn: (affiliateId: string) =>
       apiClient<{ id: string }>("/payouts/create", {
         method: "POST",
-        body: { affiliateId },
+        body: { affiliateId, markAsPaid: true },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales"] });

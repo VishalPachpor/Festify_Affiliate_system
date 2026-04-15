@@ -124,7 +124,7 @@ const IDEMPOTENCY_KEY_REGEX = /^[a-zA-Z0-9_-]{16,128}$/;
 router.post("/api/payouts/create", async (req: Request, res: Response) => {
   try {
     const tenantId = getTenantId(req);
-    const { affiliateId } = req.body;
+    const { affiliateId, markAsPaid } = req.body;
 
     if (!affiliateId || typeof affiliateId !== "string") {
       res.status(400).json({ error: "affiliateId required" });
@@ -176,7 +176,8 @@ router.post("/api/payouts/create", async (req: Request, res: Response) => {
           affiliateId,
           amountMinor: amount,
           currency: "USD",
-          status: "pending",
+          status: markAsPaid ? "paid" : "pending",
+          processedAt: markAsPaid ? new Date() : undefined,
         },
       });
 

@@ -115,7 +115,7 @@ router.get("/api/sales", async (req: Request, res: Response) => {
           attributionClaim: { select: { affiliateId: true } },
           commissionLedgerEntries: {
             where: { type: "earned" },
-            select: { amountMinor: true },
+            select: { amountMinor: true, payoutId: true },
           },
         },
         orderBy: { createdAt: "desc" },
@@ -131,6 +131,8 @@ router.get("/api/sales", async (req: Request, res: Response) => {
         (sum, entry) => sum + entry.amountMinor, 0
       );
       const isAttributed = !!sale.attributionClaim;
+      const isPaidOut = sale.commissionLedgerEntries.length > 0 &&
+        sale.commissionLedgerEntries.every((e) => e.payoutId !== null);
 
       return {
         id: sale.id,
@@ -140,7 +142,11 @@ router.get("/api/sales", async (req: Request, res: Response) => {
         affiliateId: sale.attributionClaim?.affiliateId ?? "",
         affiliateName: sale.attributionClaim?.affiliateId ?? "Unattributed",
         campaignId: sale.campaignId,
-        status: isAttributed ? ("confirmed" as const) : ("pending" as const),
+        status: isPaidOut
+          ? ("paid" as const)
+          : isAttributed
+            ? ("confirmed" as const)
+            : ("pending" as const),
         createdAt: sale.createdAt.toISOString(),
       };
     });
