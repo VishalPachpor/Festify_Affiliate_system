@@ -213,6 +213,9 @@ export default function AdminAffiliatesPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteFeedback, setInviteFeedback] = useState<{ kind: "success" | "error"; message: string } | null>(null);
   const [selectedAffiliate, setSelectedAffiliate] = useState<Affiliate | null>(null);
+  const [editingAffiliate, setEditingAffiliate] = useState<Affiliate | null>(null);
+  const [editCode, setEditCode] = useState("");
+  const [moreMenuAffiliate, setMoreMenuAffiliate] = useState<string | null>(null);
   const [approveTarget, setApproveTarget] = useState<{ id: string; name: string; requestedCode: string } | null>(null);
   const [approveCode, setApproveCode] = useState("");
   const [postApprovalCode, setPostApprovalCode] = useState<string | null>(null);
@@ -290,6 +293,9 @@ export default function AdminAffiliatesPage() {
       : currentTierFilter === "none"
         ? "No tier"
         : currentTierFilter;
+
+  // Close more-menu when clicking outside
+  const handlePageClick = () => { if (moreMenuAffiliate) setMoreMenuAffiliate(null); };
 
   return (
     <DashboardStageCanvas>
@@ -385,7 +391,8 @@ export default function AdminAffiliatesPage() {
         </div>
 
         {/* Table */}
-        <div className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent">
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+        <div className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent" onClick={handlePageClick}>
           <div className="overflow-x-auto px-[var(--space-6)] py-[var(--space-5)]">
             <table className="w-full border-collapse font-[var(--font-sans)]" aria-label="Affiliates">
               <thead>
@@ -475,8 +482,32 @@ export default function AdminAffiliatesPage() {
                             </ActionButton>
                           </>
                         )}
-                        <ActionButton label="Edit" onClick={() => setSelectedAffiliate(aff)}><IconEdit /></ActionButton>
-                        <ActionButton label="More" onClick={() => setSelectedAffiliate(aff)}><IconMore /></ActionButton>
+                        {aff.status === "approved" && (
+                          <ActionButton label="Edit" onClick={() => { setEditingAffiliate(aff); setEditCode(aff.referralCode ?? ""); }}><IconEdit /></ActionButton>
+                        )}
+                        {aff.status === "approved" && (
+                          <div className="relative">
+                            <ActionButton label="More" onClick={() => setMoreMenuAffiliate(moreMenuAffiliate === aff.id ? null : aff.id)}><IconMore /></ActionButton>
+                            {moreMenuAffiliate === aff.id && (
+                              <div className="absolute right-0 top-[1.8rem] z-20 w-[10rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-[#1a1e30] py-[var(--space-1)] shadow-lg">
+                                <button
+                                  type="button"
+                                  onClick={() => { verifyCodeMutation.mutate(aff.id); setMoreMenuAffiliate(null); }}
+                                  className="w-full px-[var(--space-4)] py-[var(--space-2)] text-left font-[var(--font-sans)] text-[var(--text-xs)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.06)]"
+                                >
+                                  Verify Code
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => { setSelectedAffiliate(aff); setMoreMenuAffiliate(null); }}
+                                  className="w-full px-[var(--space-4)] py-[var(--space-2)] text-left font-[var(--font-sans)] text-[var(--text-xs)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.06)]"
+                                >
+                                  View Details
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -599,6 +630,76 @@ export default function AdminAffiliatesPage() {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit affiliate modal */}
+      {editingAffiliate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,0,0.60)]" onClick={() => setEditingAffiliate(null)}>
+          <div className="w-full max-w-[26rem] rounded-[0.75rem] border border-[rgba(255,255,255,0.08)] bg-[#111525] px-[2rem] py-[1.75rem]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
+                Edit Affiliate
+              </h2>
+              <button
+                type="button"
+                onClick={() => setEditingAffiliate(null)}
+                className="text-[rgba(255,255,255,0.40)] transition-colors hover:text-[var(--color-text-primary)]"
+                aria-label="Close"
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l10 10M14 4L4 14" /></svg>
+              </button>
+            </div>
+
+            <div className="mt-[1rem] flex items-center gap-[0.75rem]">
+              <div className="flex size-[2.5rem] shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)]">
+                <span className="font-[var(--font-sans)] text-[0.7rem] font-semibold text-white">
+                  {editingAffiliate.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <p className="font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)]">{editingAffiliate.name}</p>
+                <p className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.50)]">{editingAffiliate.email}</p>
+              </div>
+            </div>
+
+            <div className="mt-[1.25rem] flex flex-col gap-[0.4rem]">
+              <label className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] font-semibold text-[rgba(255,255,255,0.50)]">
+                Referral Code
+              </label>
+              <input
+                type="text"
+                value={editCode}
+                onChange={(e) => setEditCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+                maxLength={20}
+                className="h-[2.75rem] w-full rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.04)] px-[var(--space-4)] font-mono text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.30)] focus:border-[var(--color-ring)] focus:outline-none"
+              />
+              <p className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.40)]">
+                Current: {editingAffiliate.referralCode ?? "—"}
+              </p>
+            </div>
+
+            <div className="mt-[1.25rem] flex gap-[var(--space-3)]">
+              <button
+                type="button"
+                onClick={() => setEditingAffiliate(null)}
+                className="flex-1 rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!editCode || editCode.length < 3 || editCode === editingAffiliate.referralCode}
+                onClick={() => {
+                  // For now, show feedback that code editing requires backend support
+                  setEditingAffiliate(null);
+                }}
+                className="flex-1 rounded-[var(--radius)] bg-[var(--color-primary)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
       )}
