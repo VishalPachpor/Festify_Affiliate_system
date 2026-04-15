@@ -486,22 +486,25 @@ export default function AdminAffiliatesPage() {
                           <ActionButton label="Edit" onClick={() => { setEditingAffiliate(aff); setEditCode(aff.referralCode ?? ""); }}><IconEdit /></ActionButton>
                         )}
                         {aff.status === "approved" && (
-                          <div className="relative">
+                          <div className="relative" onClick={(e) => e.stopPropagation()}>
                             <ActionButton label="More" onClick={() => setMoreMenuAffiliate(moreMenuAffiliate === aff.id ? null : aff.id)}><IconMore /></ActionButton>
                             {moreMenuAffiliate === aff.id && (
-                              <div className="absolute right-0 top-[1.8rem] z-20 w-[10rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-[#1a1e30] py-[var(--space-1)] shadow-lg">
+                              <div className="absolute right-0 top-[calc(100%+0.4rem)] z-30 min-w-[11rem] overflow-hidden rounded-[0.5rem] border border-[rgba(255,255,255,0.10)] bg-[#1c2035] shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
                                 <button
                                   type="button"
                                   onClick={() => { verifyCodeMutation.mutate(aff.id); setMoreMenuAffiliate(null); }}
-                                  className="w-full px-[var(--space-4)] py-[var(--space-2)] text-left font-[var(--font-sans)] text-[var(--text-xs)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.06)]"
+                                  className="flex w-full items-center gap-[0.5rem] px-[0.85rem] py-[0.55rem] text-left font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.06)]"
                                 >
+                                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 7l3 3 5-5" /></svg>
                                   Verify Code
                                 </button>
+                                <div className="mx-[0.5rem] h-px bg-[rgba(255,255,255,0.06)]" />
                                 <button
                                   type="button"
                                   onClick={() => { setSelectedAffiliate(aff); setMoreMenuAffiliate(null); }}
-                                  className="w-full px-[var(--space-4)] py-[var(--space-2)] text-left font-[var(--font-sans)] text-[var(--text-xs)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.06)]"
+                                  className="flex w-full items-center gap-[0.5rem] px-[0.85rem] py-[0.55rem] text-left font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.06)]"
                                 >
+                                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M1 7s2.5-4.5 6-4.5S13 7 13 7s-2.5 4.5-6 4.5S1 7 1 7z" /><circle cx="7" cy="7" r="1.8" /></svg>
                                   View Details
                                 </button>
                               </div>
