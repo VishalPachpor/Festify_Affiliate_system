@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardStageCanvas } from "@/modules/dashboard/components/dashboard-stage-canvas";
 import { useTenant } from "@/modules/tenant-shell";
 import { usePayoutSummary } from "@/modules/payouts/hooks/use-payout-summary";
+import { useSalesSummary } from "@/modules/sales/hooks/use-sales-summary";
 import { useSalesList } from "@/modules/sales/hooks/use-sales-list";
 import { useSalesFilters } from "@/modules/sales/hooks/use-sales-filters";
 import { apiClient } from "@/services/api/client";
@@ -146,16 +147,20 @@ export default function AdminCommissionsPage() {
     status: statusFilter as Sale["status"] || undefined,
     pageSize: PAGE_SIZE,
   });
-  const { data: summaryData } = usePayoutSummary(tenant?.id);
+  const { data: payoutData } = usePayoutSummary(tenant?.id);
+  const { data: salesSummary } = useSalesSummary(tenant?.id);
 
   const sales: Sale[] = salesData?.sales ?? [];
   const total = salesData?.total ?? 0;
   const totalPages = salesData?.totalPages ?? 1;
   const currentPage = filters.page;
 
-  const totalPaid = summaryData?.totalPaid ?? 0;
-  const totalPending = summaryData?.totalPending ?? 0;
-  const totalEarned = totalPaid + totalPending;
+  // Total Earned = all commissions from the ledger (via sales summary)
+  // Total Paid = actual payouts marked as paid
+  // Outstanding = earned minus paid
+  const totalEarned = salesSummary?.totalCommissions ?? 0;
+  const totalPaid = payoutData?.totalPaid ?? 0;
+  const outstanding = totalEarned - totalPaid;
 
   const startItem = (currentPage - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(currentPage * PAGE_SIZE, total);
@@ -203,7 +208,7 @@ export default function AdminCommissionsPage() {
           />
           <KpiCard
             label="Outstanding"
-            value={formatCurrency(totalPending)}
+            value={formatCurrency(outstanding)}
             accentColor="#F5A623"
           />
         </dl>
