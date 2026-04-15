@@ -168,11 +168,11 @@ function MilestoneCard({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-label={`${name} milestone progress`}
-            className="mt-[var(--space-3)] h-[var(--space-1)] w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.12)]"
+            className="mt-[var(--space-3)] h-[0.375rem] w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.14)]"
           >
             <div
-              className="h-full rounded-full"
-              style={{ width: `${pct}%`, background: fillColor }}
+              className="h-full rounded-full transition-[width] duration-500"
+              style={{ width: `${Math.max(pct, 0)}%`, background: fillColor }}
             />
           </div>
         </div>
