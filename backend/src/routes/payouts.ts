@@ -124,7 +124,7 @@ const IDEMPOTENCY_KEY_REGEX = /^[a-zA-Z0-9_-]{16,128}$/;
 router.post("/api/payouts/create", async (req: Request, res: Response) => {
   try {
     const tenantId = getTenantId(req);
-    const { affiliateId, markAsPaid } = req.body;
+    const { affiliateId, saleId, markAsPaid } = req.body;
 
     if (!affiliateId || typeof affiliateId !== "string") {
       res.status(400).json({ error: "affiliateId required" });
@@ -160,9 +160,19 @@ router.post("/api/payouts/create", async (req: Request, res: Response) => {
         }
       }
 
-      // Find all unpaid earned commissions for this affiliate
+      // Find unpaid earned commissions — scoped to a single sale if saleId provided,
+      // otherwise all unpaid entries for the affiliate.
+      const entryWhere: Record<string, unknown> = {
+        tenantId,
+        affiliateId,
+        type: "earned",
+        payoutId: null,
+      };
+      if (typeof saleId === "string" && saleId) {
+        entryWhere.saleId = saleId;
+      }
       const unpaidEntries = await tx.commissionLedgerEntry.findMany({
-        where: { tenantId, affiliateId, type: "earned", payoutId: null },
+        where: entryWhere,
         select: { id: true, amountMinor: true },
       });
 

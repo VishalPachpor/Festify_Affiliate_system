@@ -168,12 +168,12 @@ export default function AdminCommissionsPage() {
   const startItem = (currentPage - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(currentPage * PAGE_SIZE, total);
 
-  // Mutation: create payout for an affiliate (marks as paid)
+  // Mutation: create payout for a specific sale's commission
   const createPayoutMutation = useMutation({
-    mutationFn: (affiliateId: string) =>
+    mutationFn: ({ affiliateId, saleId }: { affiliateId: string; saleId: string }) =>
       apiClient<{ id: string }>("/payouts/create", {
         method: "POST",
-        body: { affiliateId, markAsPaid: true },
+        body: { affiliateId, saleId, markAsPaid: true },
       }),
     onSuccess: () => {
       setPayingSaleId(null);
@@ -328,7 +328,7 @@ export default function AdminCommissionsPage() {
                       {cStatus === "approved" && row.affiliateId && (
                         <button
                           type="button"
-                          onClick={() => { setPayingSaleId(row.id); createPayoutMutation.mutate(row.affiliateId); }}
+                          onClick={() => { setPayingSaleId(row.id); createPayoutMutation.mutate({ affiliateId: row.affiliateId, saleId: row.id }); }}
                           disabled={payingSaleId !== null}
                           className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
                         >
