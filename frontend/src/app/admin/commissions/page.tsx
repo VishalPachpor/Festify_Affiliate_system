@@ -141,6 +141,7 @@ export default function AdminCommissionsPage() {
   const { tenant } = useTenant();
   const { filters, setFilters } = useSalesFilters();
   const [statusFilter, setStatusFilter] = useState("");
+  const [payingSaleId, setPayingSaleId] = useState<string | null>(null);
 
   const { data: salesData } = useSalesList(tenant?.id, {
     ...filters,
@@ -173,9 +174,13 @@ export default function AdminCommissionsPage() {
         body: { affiliateId, markAsPaid: true },
       }),
     onSuccess: () => {
+      setPayingSaleId(null);
       queryClient.invalidateQueries({ queryKey: ["sales"] });
       queryClient.invalidateQueries({ queryKey: ["payouts"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+    onError: () => {
+      setPayingSaleId(null);
     },
   });
 
@@ -321,11 +326,11 @@ export default function AdminCommissionsPage() {
                       {cStatus === "approved" && row.affiliateId && (
                         <button
                           type="button"
-                          onClick={() => createPayoutMutation.mutate(row.affiliateId)}
-                          disabled={createPayoutMutation.isPending}
+                          onClick={() => { setPayingSaleId(row.id); createPayoutMutation.mutate(row.affiliateId); }}
+                          disabled={payingSaleId !== null}
                           className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
                         >
-                          {createPayoutMutation.isPending ? "Processing..." : "Mark Paid"}
+                          {payingSaleId === row.id ? "Processing..." : "Mark Paid"}
                         </button>
                       )}
                     </td>
