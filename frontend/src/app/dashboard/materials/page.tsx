@@ -88,11 +88,11 @@ function AssetCard({ asset }: { asset: Asset }) {
           <img
             src={asset.fileUrl}
             alt=""
-            className="h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-cover"
+            onError={(e) => { e.currentTarget.style.display = "none"; }}
           />
-        ) : (
-          <PreviewIcon type={asset.type} />
-        )}
+        ) : null}
+        <PreviewIcon type={asset.type} />
       </div>
 
       <div className="px-[var(--space-4)] pb-[var(--space-4)] pt-[var(--space-3)]">

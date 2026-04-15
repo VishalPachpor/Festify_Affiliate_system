@@ -290,10 +290,11 @@ export default function AdminMaterialsPage() {
                       src={mat.fileUrl}
                       alt={mat.title}
                       className="absolute inset-0 h-full w-full object-cover"
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
                     />
-                  ) : (
-                    <ThumbIcon />
-                  )}
+                  ) : null}
+                  {/* Fallback icon — always rendered behind the image; visible when image fails or for non-image types */}
+                  <ThumbIcon />
                 </div>
 
                 {/* Content */}
