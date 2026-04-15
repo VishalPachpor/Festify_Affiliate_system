@@ -5,6 +5,7 @@ import { useTenant } from "@/modules/tenant-shell";
 import { useSalesList } from "@/modules/sales/hooks/use-sales-list";
 import { useSalesSummary } from "@/modules/sales/hooks/use-sales-summary";
 import { useSalesFilters } from "@/modules/sales/hooks/use-sales-filters";
+import { useDashboardSummary } from "@/modules/dashboard/hooks/use-dashboard-summary";
 import type { Sale } from "@/modules/sales/types";
 import { DashboardContainer } from "@/modules/dashboard/components/dashboard-layout";
 import { DashboardStageCanvas } from "@/modules/dashboard/components/dashboard-stage-canvas";
@@ -147,16 +148,18 @@ function SummaryCard({
       >
         {label}
       </dt>
-      <dd className="font-[var(--font-display)] font-bold text-[var(--text-xl)] leading-[var(--leading-tight)] tracking-[var(--tracking-heading)] text-[#FFFFFF]">
+      <dd className="font-[var(--font-display)] font-bold text-[var(--text-2xl)] leading-[var(--leading-display)] tracking-[var(--tracking-heading)] text-[#FFFFFF]">
         {value}
       </dd>
-      {change && (
+      {change ? (
         <p className="flex items-center gap-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] text-[#22C55E]">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
             <path d="M2 8.5C4 6 6 4.5 10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           {change}
         </p>
+      ) : (
+        <span aria-hidden="true" className="min-h-[var(--leading-caption)]" />
       )}
     </div>
   );
@@ -325,6 +328,7 @@ export default function SalesPage() {
   const dateRange = getDateRange(timePeriod);
 
   const { data: summaryData, isLoading: summaryLoading } = useSalesSummary(tenant?.id, undefined, dateRange);
+  const { data: dashboardSummary } = useDashboardSummary(tenant?.id);
   const { data: listData, isLoading: listLoading } = useSalesList(tenant?.id, {
     ...filters,
     ...dateRange,
@@ -355,7 +359,7 @@ export default function SalesPage() {
   return (
     <DashboardStageCanvas>
       <DashboardContainer>
-        {/* Time period tabs */}
+        {/* Time period tabs — matches Figma node 71:1573 */}
         <div className="flex items-center gap-[var(--space-2)]">
           {TIME_PERIODS.map((period) => {
             const isActive = timePeriod === period;
@@ -367,8 +371,8 @@ export default function SalesPage() {
                 className={[
                   "rounded-[var(--radius)] border px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--leading-snug)] transition-colors duration-[var(--duration-normal)]",
                   isActive
-                    ? "border-[rgba(255,255,255,0.08)] !bg-[rgba(255,255,255,0.95)] !text-[#000000]"
-                    : "border-transparent bg-[#151A2A] text-[rgba(255,255,255,0.72)] hover:bg-[rgba(255,255,255,0.06)] hover:text-[var(--color-text-primary)]",
+                    ? "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.95)] text-[#000000]"
+                    : "border-[rgba(255,255,255,0.12)] bg-transparent text-[rgba(255,255,255,0.72)] hover:border-[rgba(255,255,255,0.20)] hover:text-[var(--color-text-primary)]",
                 ].join(" ")}
               >
                 {period}
@@ -377,7 +381,7 @@ export default function SalesPage() {
           })}
         </div>
 
-        {/* KPI Summary */}
+        {/* KPI Summary — matches Figma node 71:1573 */}
         <dl className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-3">
           {summaryLoading ? (
             <>
@@ -391,15 +395,29 @@ export default function SalesPage() {
                 label="Total Sales"
                 value={formatCurrency(summaryData?.totalRevenue ?? 0, currency)}
                 accentColor="#FFFFFF"
-              />
-              <SummaryCard
-                label="Commission Earned"
-                value={formatCurrency(summaryData?.totalCommissions ?? 0, currency)}
-                accentColor="#5B8DEF"
+                change={
+                  dashboardSummary?.revenueChangePct !== undefined
+                    ? `+${dashboardSummary.revenueChangePct.toFixed(1)}%`
+                    : undefined
+                }
               />
               <SummaryCard
                 label="Tickets Sold"
                 value={String(summaryData?.totalSales ?? 0)}
+                accentColor="#5B8DEF"
+                change={
+                  summaryData?.confirmedCount !== undefined && summaryData.confirmedCount > 0
+                    ? `+${summaryData.confirmedCount}`
+                    : undefined
+                }
+              />
+              <SummaryCard
+                label="Commission Rate"
+                value={
+                  summaryData && summaryData.totalRevenue > 0
+                    ? `${Math.round((summaryData.totalCommissions / summaryData.totalRevenue) * 100)}%`
+                    : "10%"
+                }
                 accentColor="#22C55E"
               />
             </>

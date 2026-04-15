@@ -13,6 +13,18 @@ function IconFile() {
   );
 }
 
+// Derive Figma-style display media type from mime type.
+// Figma shows generic tokens like "image", "ZIP", "PDF" — not the asset category.
+function getDisplayMediaType(mimeType: string): string {
+  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType.startsWith("video/")) return "video";
+  if (mimeType === "application/pdf") return "PDF";
+  if (mimeType === "application/zip" || mimeType === "application/x-zip-compressed") return "ZIP";
+  if (mimeType === "text/html") return "HTML";
+  if (mimeType === "text/plain") return "TXT";
+  return mimeType.split("/")[1]?.toUpperCase() ?? "file";
+}
+
 export function RecentMaterials() {
   const { tenant } = useTenant();
   const { data, isLoading } = useAssets(tenant?.id);
@@ -56,7 +68,7 @@ export function RecentMaterials() {
                   {item.title}
                 </p>
                 <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-4)] text-[var(--color-text-secondary)]">
-                  {item.type} · {item.sizeLabel}
+                  {getDisplayMediaType(item.mimeType)} · {item.sizeLabel}
                 </p>
               </div>
             </div>

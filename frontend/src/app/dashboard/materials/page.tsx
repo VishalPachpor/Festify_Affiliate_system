@@ -156,6 +156,7 @@ export default function MaterialsPage() {
   );
 
   const assets = (data?.assets ?? []).slice(0, 6);
+  const eventName = tenant?.name?.split(" ")[0] ?? "TOKEN2049";
 
   return (
     <DashboardStageCanvas>
@@ -166,7 +167,7 @@ export default function MaterialsPage() {
               Marketing Materials
             </h2>
             <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-4)] text-[var(--color-text-secondary)]">
-              Download and use these assets for your promotions.
+              Download and use these assets for your {eventName} promotions.
             </p>
           </div>
 
