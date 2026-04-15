@@ -4,10 +4,7 @@ import {
   type ApplicationStatusResponse,
 } from "../types";
 
-export async function getApplicationStatus(
-  email?: string | null,
-): Promise<ApplicationStatusResponse> {
-  const query = email ? `?email=${encodeURIComponent(email)}` : "";
-  const raw = await apiClient<unknown>(`/application/status${query}`);
+export async function getApplicationStatus(): Promise<ApplicationStatusResponse> {
+  const raw = await apiClient<unknown>("/application/status");
   return applicationStatusResponseSchema.parse(raw);
 }
