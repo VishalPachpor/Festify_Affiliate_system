@@ -88,33 +88,31 @@ function PreviewIcon({ type }: { type: AssetType }) {
   return <IconImage />;
 }
 
-// Pre-composited gradients matching Figma 60:1975 visual output.
-// Each value is rgba(color, 0.2) composited over solid rgb(21,26,43),
-// computed as: result = top*0.2 + base*0.8, then converted to hex.
-const CARD_GRADIENTS: Record<AssetType, string> = {
-  banner:
-    "linear-gradient(152deg, #192E55 0%, #332355 100%)",
-  email:
-    "linear-gradient(152deg, #113D32 0%, #113A3B 100%)",
-  social:
-    "linear-gradient(152deg, #421F41 0%, #441B34 100%)",
-  copy:
-    "linear-gradient(152deg, #443422 0%, #442A22 100%)",
-  guide:
-    "linear-gradient(152deg, #113A4E 0%, #192E55 100%)",
-};
+// Pre-composited gradients matching Figma 60:1975.
+// Each hex pair = rgba(color, 0.2) over solid rgb(21,26,43).
+// 6 distinct gradients so every card gets a unique color — the palette
+// cycles by card index, not by type, because Figma assigns different
+// gradients to same-type cards (e.g. two "social" cards have pink vs purple).
+const CARD_PALETTE = [
+  "linear-gradient(152deg, #192E55 0%, #332355 100%)", // blue → purple  (banner)
+  "linear-gradient(152deg, #113D32 0%, #113A3B 100%)", // green → teal   (email)
+  "linear-gradient(152deg, #421F41 0%, #441B34 100%)", // magenta → red  (social)
+  "linear-gradient(152deg, #443422 0%, #442A22 100%)", // amber → orange (copy)
+  "linear-gradient(152deg, #113A4E 0%, #192E55 100%)", // cyan → blue    (guide)
+  "linear-gradient(152deg, #2D2555 0%, #332355 100%)", // violet → purple(social alt)
+];
 
 function formatAddedDate(iso: string) {
   return iso.slice(0, 10);
 }
 
-function AssetCard({ asset }: { asset: Asset }) {
+function AssetCard({ asset, index }: { asset: Asset; index: number }) {
   return (
     <article className="h-full overflow-hidden rounded-[8px] border border-[rgba(255,255,255,0.05)] bg-[rgba(15,22,40,0.5)] p-px">
       {/* Gradient preview — 192px, centered icon */}
       <div
         className="flex h-[192px] items-center justify-center text-[rgba(255,255,255,0.45)]"
-        style={{ backgroundImage: CARD_GRADIENTS[asset.type] ?? CARD_GRADIENTS.banner }}
+        style={{ backgroundImage: CARD_PALETTE[index % CARD_PALETTE.length] }}
         aria-hidden="true"
       >
         <PreviewIcon type={asset.type} />
@@ -242,8 +240,8 @@ export default function MaterialsPage() {
               </div>
             ) : (
               <div className="grid w-full grid-cols-1 items-stretch gap-[24px] md:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))]">
-                {assets.map((asset) => (
-                  <AssetCard key={asset.id} asset={asset} />
+                {assets.map((asset, i) => (
+                  <AssetCard key={asset.id} asset={asset} index={i} />
                 ))}
               </div>
             )}
