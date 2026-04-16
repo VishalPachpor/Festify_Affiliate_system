@@ -170,15 +170,25 @@ async function main() {
   }
 
   // ── Demo sales for chart + table data ─────────────────────────────────
+  // Amounts set so affiliates cross tier thresholds (commission = 10%):
+  // Sarah: $43,500 revenue → $4,350 commission → silver
+  // Priya: $28,000 → $2,800 commission → bronze
+  // James: $18,000 → $1,800 commission → bronze
+  // Marcus: $15,500 → $1,550 commission → bronze
+  // Alex: $8,500 → $850 commission → no tier yet
   const DEMO_SALES = [
-    { extId: "sale_demo_1", amount: 150000, aff: "affiliate_sarah",  daysAgo: 1  },
-    { extId: "sale_demo_2", amount: 80000,  aff: "affiliate_marcus", daysAgo: 1  },
-    { extId: "sale_demo_3", amount: 40000,  aff: AFFILIATE_ID,       daysAgo: 2  },
-    { extId: "sale_demo_4", amount: 60000,  aff: "affiliate_priya",  daysAgo: 3  },
-    { extId: "sale_demo_5", amount: 150000, aff: "affiliate_james",  daysAgo: 4  },
-    { extId: "sale_demo_6", amount: 80000,  aff: "affiliate_sarah",  daysAgo: 5  },
-    { extId: "sale_demo_7", amount: 50000,  aff: "affiliate_marcus", daysAgo: 6  },
-    { extId: "sale_demo_8", amount: 120000, aff: "affiliate_priya",  daysAgo: 7  },
+    { extId: "sale_demo_1",  amount: 1500000, aff: "affiliate_sarah",  daysAgo: 1  },
+    { extId: "sale_demo_2",  amount: 800000,  aff: "affiliate_marcus", daysAgo: 1  },
+    { extId: "sale_demo_3",  amount: 400000,  aff: AFFILIATE_ID,       daysAgo: 2  },
+    { extId: "sale_demo_4",  amount: 600000,  aff: "affiliate_priya",  daysAgo: 3  },
+    { extId: "sale_demo_5",  amount: 1500000, aff: "affiliate_james",  daysAgo: 4  },
+    { extId: "sale_demo_6",  amount: 800000,  aff: "affiliate_sarah",  daysAgo: 5  },
+    { extId: "sale_demo_7",  amount: 500000,  aff: "affiliate_marcus", daysAgo: 6  },
+    { extId: "sale_demo_8",  amount: 1200000, aff: "affiliate_priya",  daysAgo: 7  },
+    { extId: "sale_demo_9",  amount: 2050000, aff: "affiliate_sarah",  daysAgo: 2  },
+    { extId: "sale_demo_10", amount: 250000,  aff: "affiliate_marcus", daysAgo: 3  },
+    { extId: "sale_demo_11", amount: 300000,  aff: "affiliate_james",  daysAgo: 6  },
+    { extId: "sale_demo_12", amount: 450000,  aff: AFFILIATE_ID,       daysAgo: 4  },
   ];
 
   for (const s of DEMO_SALES) {

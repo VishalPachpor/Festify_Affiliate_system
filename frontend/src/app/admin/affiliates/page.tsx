@@ -46,7 +46,7 @@ const TIER_STYLES: Record<string, { bg: string; text: string }> = {
   bronze:   { bg: "rgba(217,119,6,0.14)", text: "#D97706" },
 };
 
-const REFERRAL_CODE_STYLE = { bg: "rgba(196,162,77,0.12)", text: "#C4A24D" };
+const REFERRAL_CODE_STYLE = { bg: "rgba(255,255,255,0.06)", text: "rgba(255,255,255,0.65)" };
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -164,7 +164,10 @@ function ReferralCodeBadge({ code }: { code: string }) {
 function StatusCell({ status }: { status: "active" | "pending" | "rejected" }) {
   if (status === "active") {
     return (
-      <span className="font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.55)]">
+      <span
+        className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
+        style={{ background: "rgba(34,197,94,0.12)", color: "#22C55E" }}
+      >
         active
       </span>
     );
@@ -451,8 +454,8 @@ export default function AdminAffiliatesPage() {
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] whitespace-nowrap text-[#FFFFFF]">
                       {formatCurrency(aff.totalRevenue)}
                     </td>
-                    {/* Commission Due */}
-                    <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] whitespace-nowrap text-[#22C55E]">
+                    {/* Commission Due — gold highlight like Figma */}
+                    <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] font-medium whitespace-nowrap text-[#C9A84C]">
                       {formatCurrency(aff.totalCommission)}
                     </td>
                     {/* Status */}
