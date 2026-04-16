@@ -10,40 +10,47 @@ import { useApplicationStatus } from "@/modules/application";
 
 // ── Icons (20×20, matching Figma node 71:3) ──────────────────────────────────
 
+// Figma 71:23 — Dashboard: 2×2 grid of STROKED rounded squares
 function IconDashboard() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-      <rect x="2" y="2" width="7" height="7" rx="1.5" />
-      <rect x="11" y="2" width="7" height="7" rx="1.5" />
-      <rect x="2" y="11" width="7" height="7" rx="1.5" />
-      <rect x="11" y="11" width="7" height="7" rx="1.5" />
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+      <rect x="2.5" y="2.5" width="6" height="6" rx="1" />
+      <rect x="11.5" y="2.5" width="6" height="6" rx="1" />
+      <rect x="2.5" y="11.5" width="6" height="6" rx="1" />
+      <rect x="11.5" y="11.5" width="6" height="6" rx="1" />
     </svg>
   );
 }
 
+// Figma 71:30 — Materials: folder with tab flap
 function IconMaterials() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M2 7a1 1 0 011-1h3.5l2 2H17a1 1 0 011 1v6a1 1 0 01-1 1H3a1 1 0 01-1-1V7z" />
+      <path d="M3 7.5V6a1 1 0 011-1h3l2 2h7a1 1 0 011 1v7a1 1 0 01-1 1H4a1 1 0 01-1-1V7.5z" />
     </svg>
   );
 }
 
+// Figma 75:19 — Milestones: trophy cup with handles + base
 function IconMilestones() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 3h10v5.5a5 5 0 01-10 0V3z" />
-      <path d="M3 3h2M15 3h2" />
-      <path d="M10 13.5v3M7 16.5h6" />
+      <path d="M6 3h8v5a4 4 0 01-8 0V3z" />
+      <path d="M6 5H4a1 1 0 00-1 1v1a3 3 0 003 3" />
+      <path d="M14 5h2a1 1 0 011 1v1a3 3 0 01-3 3" />
+      <path d="M10 12v3" />
+      <path d="M7 17h6" />
+      <path d="M7 15h6" />
     </svg>
   );
 }
 
+// Figma 75:38 — Sales: dollar sign $ with vertical line + S-curve
 function IconSales() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M10 2.5v15" />
-      <path d="M13.5 5.5H8a2.5 2.5 0 000 5h4a2.5 2.5 0 010 5H6.5" />
+      <path d="M10 2v16" />
+      <path d="M14 5.5H8.5a2.5 2.5 0 000 5h3a2.5 2.5 0 010 5H6" />
     </svg>
   );
 }
