@@ -39,11 +39,11 @@ const AVATAR_COLORS: Record<string, string> = {
   JB: "#EF4444",
 };
 
-const TIER_STYLES: Record<string, { bg: string; text: string }> = {
-  platinum: { bg: "rgba(34,197,94,0.14)", text: "#22C55E" },
-  gold:     { bg: "rgba(234,179,8,0.14)", text: "#EAB308" },
-  silver:   { bg: "rgba(148,163,184,0.14)", text: "#94A3B8" },
-  bronze:   { bg: "rgba(217,119,6,0.14)", text: "#D97706" },
+const TIER_STYLES: Record<string, { bg: string; text: string; border: string }> = {
+  platinum: { bg: "rgba(229,228,226,0.12)", text: "#E5E4E2", border: "rgba(229,228,226,0.25)" },
+  gold:     { bg: "rgba(255,215,0,0.12)",   text: "#FFD700", border: "rgba(255,215,0,0.25)"   },
+  silver:   { bg: "rgba(192,192,192,0.12)", text: "#C0C0C0", border: "rgba(192,192,192,0.25)" },
+  bronze:   { bg: "rgba(205,127,50,0.12)",  text: "#CD7F32", border: "rgba(205,127,50,0.25)"  },
 };
 
 const REFERRAL_CODE_STYLE = { bg: "rgba(255,255,255,0.06)", text: "rgba(255,255,255,0.65)" };
@@ -142,8 +142,8 @@ function TierBadge({ tier }: { tier: string }) {
   if (!style) return <span className="text-[rgba(255,255,255,0.3)]">--</span>;
   return (
     <span
-      className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
-      style={{ background: style.bg, color: style.text }}
+      className="inline-block rounded-[var(--space-1)] border px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium capitalize"
+      style={{ background: style.bg, color: style.text, borderColor: style.border }}
     >
       {tier}
     </span>
@@ -415,7 +415,7 @@ export default function AdminAffiliatesPage() {
                 {affiliates.map((aff) => {
                   const initials = aff.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
                   return (
-                  <tr key={aff.id} className="border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+                  <tr key={aff.id} className="border-t transition-colors duration-150 hover:bg-[rgba(255,255,255,0.03)]" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
                     {/* Name + email */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] whitespace-nowrap">
                       <div className="flex items-center gap-[var(--space-3)]">
