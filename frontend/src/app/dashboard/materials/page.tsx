@@ -88,18 +88,15 @@ function PreviewIcon({ type }: { type: AssetType }) {
   return <IconImage />;
 }
 
-// Pre-composited gradients matching Figma 60:1975.
-// Each hex pair = rgba(color, 0.2) over solid rgb(21,26,43).
-// 6 distinct gradients so every card gets a unique color — the palette
-// cycles by card index, not by type, because Figma assigns different
-// gradients to same-type cards (e.g. two "social" cards have pink vs purple).
+// Multi-stop gradients with subtle hue shifts for richer depth.
+// Enriched with mid-stop for the indigo/purple blending Figma shows.
 const CARD_PALETTE = [
-  "linear-gradient(152deg, #192E55 0%, #332355 100%)", // blue → purple  (banner)
-  "linear-gradient(152deg, #113D32 0%, #113A3B 100%)", // green → teal   (email)
-  "linear-gradient(152deg, #421F41 0%, #441B34 100%)", // magenta → red  (social)
-  "linear-gradient(152deg, #443422 0%, #442A22 100%)", // amber → orange (copy)
-  "linear-gradient(152deg, #113A4E 0%, #192E55 100%)", // cyan → blue    (guide)
-  "linear-gradient(152deg, #2D2555 0%, #332355 100%)", // violet → purple(social alt)
+  "linear-gradient(152deg, #192E55 0%, #25295A 50%, #332355 100%)", // blue → indigo → purple
+  "linear-gradient(152deg, #113D32 0%, #113838 50%, #113A3B 100%)", // green → dark teal
+  "linear-gradient(152deg, #421F41 0%, #3D1A3A 50%, #441B34 100%)", // magenta → wine → red
+  "linear-gradient(152deg, #443422 0%, #3E2E22 50%, #442A22 100%)", // amber → brown → orange
+  "linear-gradient(152deg, #113A4E 0%, #153352 50%, #192E55 100%)", // cyan → navy → blue
+  "linear-gradient(152deg, #2D2555 0%, #302950 50%, #332355 100%)", // violet → deep → purple
 ];
 
 function formatAddedDate(iso: string) {
@@ -118,8 +115,8 @@ function AssetCard({ asset, index }: { asset: Asset; index: number }) {
         <PreviewIcon type={asset.type} />
       </div>
 
-      {/* Card body — p-16, gap-12 */}
-      <div className="flex flex-col gap-[12px] p-[16px]">
+      {/* Card body — p-16, gap-16 for breathing room */}
+      <div className="flex flex-col gap-[16px] p-[16px]">
         {/* Title — Oswald Medium 18px, tracking -0.2px */}
         <h3 className="truncate font-[var(--font-display)] text-[18px] font-medium leading-[20px] tracking-[-0.2px] text-white">
           {asset.title}
@@ -127,7 +124,7 @@ function AssetCard({ asset, index }: { asset: Asset; index: number }) {
 
         {/* Badge + size */}
         <div className="flex items-center gap-[8px]">
-          <span className="rounded-[4px] bg-[rgba(156,164,183,0.2)] px-[8px] py-[4px] font-[var(--font-sans)] text-[12px] font-medium leading-[15px] text-[#eaeaea]">
+          <span className="rounded-[4px] bg-[rgba(156,164,183,0.25)] px-[8px] py-[4px] font-[var(--font-sans)] text-[12px] font-medium leading-[15px] text-[#f0f0f0]">
             {asset.type}
           </span>
           <span className="font-[var(--font-sans)] text-[12px] leading-[18px] text-[#b0b8cc]">
@@ -141,7 +138,7 @@ function AssetCard({ asset, index }: { asset: Asset; index: number }) {
           target="_blank"
           rel="noopener noreferrer"
           download
-          className="flex h-[37px] w-full items-center justify-center gap-[8px] rounded-[8px] border border-[#1c4aa6] bg-[rgba(28,74,166,0.08)] font-[var(--font-sans)] text-[14px] font-semibold leading-[21px] text-[#f0f0f0] transition-colors duration-[var(--duration-normal)] hover:bg-[rgba(28,74,166,0.20)]"
+          className="flex h-[37px] w-full items-center justify-center gap-[8px] rounded-[8px] border border-[#1c4aa6] bg-[rgba(28,74,166,0.12)] font-[var(--font-sans)] text-[14px] font-semibold leading-[21px] text-[#f0f0f0] transition-colors duration-[var(--duration-normal)] hover:bg-[rgba(28,74,166,0.25)]"
           aria-label={`Download ${asset.title}`}
         >
           <IconDownload />
@@ -183,7 +180,11 @@ export default function MaterialsPage() {
     { visibleOnly: true }, // affiliates only see what the organizer flagged visible
   );
 
-  const assets = (data?.assets ?? []).slice(0, 6);
+  // Sort to match Figma layout: banner → email → social → copy → guide → social
+  const FIGMA_TYPE_ORDER: Record<string, number> = { banner: 0, email: 1, social: 2, copy: 3, guide: 4 };
+  const assets = [...(data?.assets ?? [])]
+    .sort((a, b) => (FIGMA_TYPE_ORDER[a.type] ?? 5) - (FIGMA_TYPE_ORDER[b.type] ?? 5))
+    .slice(0, 6);
   const eventName = tenant?.name?.split(" ")[0] ?? "TOKEN2049";
 
   return (
