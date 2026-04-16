@@ -95,12 +95,6 @@ export function ProfilePage({ variant }: { variant: ProfileVariant }) {
             : "Commission: $0",
         ];
 
-  const notificationFields: Field[] = [
-    { label: "New Sale Alerts", value: "Enabled" },
-    { label: "Milestone Alerts", value: "Enabled" },
-    { label: "Payout Updates", value: "Instant" },
-  ];
-
   return (
     <div className="px-[var(--space-8)] py-[var(--space-8)]">
       <div className="grid gap-[var(--space-6)] xl:grid-cols-[minmax(0,1fr)_20rem]">
@@ -127,8 +121,8 @@ export function ProfilePage({ variant }: { variant: ProfileVariant }) {
 
             <p className="mt-[var(--space-4)] max-w-[42rem] font-[var(--font-sans)] text-[var(--text-base)] leading-[var(--space-6)] text-[rgba(255,255,255,0.58)]">
               {variant === "admin"
-                ? "Manage your account identity, contact information, and notification preferences."
-                : "Manage your public profile, payout contact details, and notification settings."}
+                ? "Manage your account identity and contact information."
+                : "Manage your public profile and payout contact details."}
             </p>
           </section>
 
@@ -165,12 +159,6 @@ export function ProfilePage({ variant }: { variant: ProfileVariant }) {
               ))}
             </div>
           </section>
-
-          <SectionCard
-            title="Notification Preferences"
-            description="Choose how you want to be notified for operational updates and important account activity."
-            fields={notificationFields}
-          />
         </div>
       </div>
     </div>
