@@ -22,15 +22,16 @@ export function DashboardStageCanvas({
           "radial-gradient(ellipse at top right, rgba(59,130,246,0.10), rgba(55,48,163,0.04) 50%, transparent 80%)",
       }}
     >
-      {/* Dot pattern — localized top-right, masked fade, matching Figma */}
+      {/* Dot pattern — localized top-right, soft masked fade, matching Figma */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute right-0 top-0 h-[320px] w-[320px] opacity-[0.15]"
+        className="pointer-events-none absolute right-[40px] top-[40px] h-[380px] w-[380px] opacity-[0.12]"
         style={{
-          backgroundImage: "radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px)",
-          backgroundSize: "12px 12px",
-          maskImage: "radial-gradient(circle, white 40%, transparent 75%)",
-          WebkitMaskImage: "radial-gradient(circle, white 40%, transparent 75%)",
+          backgroundImage: "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1.5px)",
+          backgroundSize: "10px 10px",
+          filter: "blur(0.3px)",
+          maskImage: "radial-gradient(circle, white 30%, rgba(255,255,255,0.6) 55%, transparent 80%)",
+          WebkitMaskImage: "radial-gradient(circle, white 30%, rgba(255,255,255,0.6) 55%, transparent 80%)",
         }}
       />
       <div className="pointer-events-none absolute inset-0">
