@@ -127,7 +127,7 @@ function StatusCell({ status }: { status: Sale["status"] }) {
         className="font-[var(--font-sans)] text-[11px] font-medium leading-[14.667px]"
         style={{ color: SALES_COLORS.statusConfirmed }}
       >
-        {status}
+        confirmed
       </span>
     );
   }
@@ -477,7 +477,7 @@ export default function SalesPage() {
         </dl>
 
         {/* ── Commission chart (Figma: 71:1616) ────────────────────────── */}
-        {!listLoading && sales.length > 0 && (
+        {!listLoading && (
           <CommissionChart sales={sales} />
         )}
 

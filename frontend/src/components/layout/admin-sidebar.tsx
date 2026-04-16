@@ -7,80 +7,70 @@ import { cn } from "@/lib/utils";
 import { useTenant } from "@/modules/tenant-shell";
 import { useAuth } from "@/modules/auth";
 
-// ── Icons ─────────────────────────────────────────────────────────────────────
+// ── Icons (20×20, matching Figma sidebar spec) ───────────────────────────────
 
 function IconDashboard() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-      <rect x="1" y="1" width="6" height="6" rx="1" />
-      <rect x="9" y="1" width="6" height="6" rx="1" />
-      <rect x="1" y="9" width="6" height="6" rx="1" />
-      <rect x="9" y="9" width="6" height="6" rx="1" />
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <rect x="2" y="2" width="7" height="7" rx="1.5" />
+      <rect x="11" y="2" width="7" height="7" rx="1.5" />
+      <rect x="2" y="11" width="7" height="7" rx="1.5" />
+      <rect x="11" y="11" width="7" height="7" rx="1.5" />
     </svg>
   );
 }
 
 function IconAffiliates() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="6" cy="5" r="2.5" />
-      <path d="M2 13c0-2.2 1.8-4 4-4s4 1.8 4 4" />
-      <circle cx="11.5" cy="5.5" r="1.5" />
-      <path d="M11.5 9c1.7 0 3 1.3 3 3" />
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="7.5" cy="6" r="3" />
+      <path d="M2.5 16c0-2.8 2.2-5 5-5s5 2.2 5 5" />
+      <circle cx="14" cy="6.5" r="2" />
+      <path d="M14 10.5c2.2 0 4 1.8 4 4" />
     </svg>
   );
 }
 
 function IconMaterials() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M1 5a1 1 0 011-1h3l2 2h7a1 1 0 011 1v5a1 1 0 01-1 1H2a1 1 0 01-1-1V5z" />
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2 7a1 1 0 011-1h3.5l2 2H17a1 1 0 011 1v6a1 1 0 01-1 1H3a1 1 0 01-1-1V7z" />
     </svg>
   );
 }
 
 function IconMilestones() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M4 2h8v5a4 4 0 01-8 0V2z" />
-      <path d="M2 2h2M12 2h2" />
-      <path d="M8 11v3M5 14h6" />
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 3h10v5.5a5 5 0 01-10 0V3z" />
+      <path d="M3 3h2M15 3h2" />
+      <path d="M10 13.5v3M7 16.5h6" />
     </svg>
   );
 }
 
 function IconCommissions() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="1" y="3" width="14" height="10" rx="2" />
-      <path d="M1 7h14" />
-    </svg>
-  );
-}
-
-function IconIntegrations() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="2" y="2" width="5" height="5" rx="1" />
-      <rect x="9" y="9" width="5" height="5" rx="1" />
-      <path d="M7 4.5h3a1.5 1.5 0 011.5 1.5v3" />
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="1.5" y="4" width="17" height="12" rx="2" />
+      <path d="M1.5 8.5h17" />
     </svg>
   );
 }
 
 function IconSettings() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="8" cy="8" r="2" />
-      <path d="M8 1v2M8 13v2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M1 8h2M13 8h2M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" />
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="10" cy="10" r="2.5" />
+      <path d="M10 1.5v2.5M10 16v2.5M3.8 3.8l1.8 1.8M14.4 14.4l1.8 1.8M1.5 10H4M16 10h2.5M3.8 16.2l1.8-1.8M14.4 5.6l1.8-1.8" />
     </svg>
   );
 }
 
 function IconChevron() {
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 5l4 4 4-4" />
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 6l4 4 4-4" />
     </svg>
   );
 }
@@ -119,26 +109,24 @@ export function AdminSidebar() {
       className="flex w-[var(--sidebar-w)] shrink-0 flex-col bg-[var(--color-surface-sidebar)] border-r border-[var(--color-border)]"
       aria-label="Admin navigation"
     >
-      {/* Brand */}
-      <div className="px-[var(--space-5)] pt-[var(--space-6)] pb-[var(--space-4)]">
+      {/* Brand — Figma spec: p-24, border-bottom */}
+      <div className="border-b border-[var(--color-border)] px-[24px] pt-[24px] pb-[24px]">
         <Image
           src="/token.png"
           alt="TOKEN2049"
           width={188}
           height={24}
-          className="h-[var(--space-6)] w-auto"
+          className="h-[21px] w-auto"
           priority
         />
-        <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--space-4)] text-[var(--color-text-secondary)]">
+        <p className="mt-[4px] font-[var(--font-sans)] text-[12px] leading-[18px] text-[#9CA4B7]">
           {brandSubtitle}
         </p>
       </div>
 
-      <div className="mx-[var(--space-6)] h-px bg-[var(--color-border)]" />
-
-      {/* Nav */}
-      <nav className="flex-1 px-[var(--space-3)] py-[var(--space-4)]" aria-label="Admin sections">
-        <ul className="flex flex-col gap-[var(--space-1)]">
+      {/* Nav — Figma spec: pt-16 px-16, gap-4 between items */}
+      <nav className="flex-1 px-[16px] pt-[16px]" aria-label="Admin sections">
+        <ul className="flex flex-col gap-[4px]">
           {NAV_ITEMS.map(({ href, label, Icon }) => {
             const active = isNavActive(href, pathname);
             return (
@@ -146,16 +134,18 @@ export function AdminSidebar() {
                 <Link
                   href={href}
                   className={cn(
-                    "flex items-center gap-[var(--space-3)] rounded-[var(--radius)] px-[var(--space-4)] py-[var(--space-3)]",
-                    "font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-4)]",
+                    "flex h-[48px] items-center gap-[12px] rounded-[8px] pl-[16px]",
+                    "font-[var(--font-sans)] text-[16px] leading-[24px]",
                     "transition-colors duration-[var(--duration-normal)]",
                     active
                       ? "bg-[var(--color-nav-active-bg)] text-[var(--color-nav-active-text)] font-medium"
-                      : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-ghost-hover)] hover:text-[var(--color-text-primary)]",
+                      : "text-[#9CA4B7] hover:bg-[var(--color-surface-ghost-hover)] hover:text-[var(--color-text-primary)]",
                   )}
                   aria-current={active ? "page" : undefined}
                 >
-                  <Icon />
+                  <span className="shrink-0 size-[20px]">
+                    <Icon />
+                  </span>
                   {label}
                 </Link>
               </li>
@@ -164,35 +154,36 @@ export function AdminSidebar() {
         </ul>
       </nav>
 
-      {/* User footer */}
-      <div className="mx-[var(--space-6)] h-px bg-[var(--color-border)]" />
-      <Link
-        href="/admin/settings"
-        className="flex items-center gap-[var(--space-3)] px-[var(--space-5)] py-[var(--space-4)] transition-colors duration-[var(--duration-normal)] hover:bg-[var(--color-surface-ghost-hover)]"
-      >
-        <div
-          className="flex size-[var(--space-10)] shrink-0 items-center justify-center rounded-full bg-[var(--color-avatar-bg)]"
-          aria-hidden="true"
+      {/* User footer — Figma spec: border-top, pt-17 px-16 */}
+      <div className="border-t border-[var(--color-border)] px-[16px] pt-[17px] pb-[16px]">
+        <Link
+          href="/admin/settings"
+          className="flex h-[64px] items-center gap-[12px] rounded-[8px] px-[12px] transition-colors duration-[var(--duration-normal)] hover:bg-[var(--color-surface-ghost-hover)]"
         >
-          <span className="font-[var(--font-sans)] font-semibold text-[var(--text-xs)] text-[var(--color-primary-foreground)]">
-            {user?.fullName?.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() ?? "??"}
+          <div
+            className="flex size-[40px] shrink-0 items-center justify-center rounded-full bg-[var(--color-avatar-bg)] border border-[var(--color-avatar-border)]"
+            aria-hidden="true"
+          >
+            <span className="font-[var(--font-sans)] font-bold text-[16px] leading-[24px] text-[#F0F0F0]">
+              {user?.fullName?.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() ?? "??"}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="truncate font-[var(--font-sans)] font-medium text-[12px] leading-[17px] text-[#F0F0F0]">
+              {user?.fullName ?? "User"}
+            </p>
+            <p className="truncate font-[var(--font-sans)] text-[11px] leading-[15px] text-[#9CA4B7]">
+              {user?.role === "admin" ? "Organizer Admin" : "Affiliate"}
+            </p>
+          </div>
+          <span
+            aria-hidden="true"
+            className="shrink-0 text-[#9CA4B7] transition-colors duration-[var(--duration-normal)]"
+          >
+            <IconChevron />
           </span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="truncate font-[var(--font-sans)] font-medium text-[var(--text-sm)] leading-[var(--space-4)] text-[var(--color-text-primary)]">
-            {user?.fullName ?? "User"}
-          </p>
-          <p className="truncate font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--space-4)] text-[var(--color-text-secondary)]">
-            {user?.role === "admin" ? "Organizer Admin" : "Affiliate"}
-          </p>
-        </div>
-        <span
-          aria-hidden="true"
-          className="shrink-0 text-[var(--color-text-muted)] transition-colors duration-[var(--duration-normal)]"
-        >
-          <IconChevron />
-        </span>
-      </Link>
+        </Link>
+      </div>
     </aside>
   );
 }

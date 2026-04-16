@@ -88,6 +88,34 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
       };
     }
 
+    // ── Revenue change % (current 30 days vs previous 30 days) ──────────
+    const now = new Date();
+    const currentStart = new Date(now);
+    currentStart.setDate(now.getDate() - 30);
+    const prevStart = new Date(currentStart);
+    prevStart.setDate(currentStart.getDate() - 30);
+
+    const [currentRev, prevRev] = await Promise.all([
+      prisma.sale.aggregate({
+        where: { tenantId, createdAt: { gte: currentStart, lte: now } },
+        _sum: { amountMinor: true },
+      }),
+      prisma.sale.aggregate({
+        where: { tenantId, createdAt: { gte: prevStart, lt: currentStart } },
+        _sum: { amountMinor: true },
+      }),
+    ]);
+
+    const curVal = currentRev._sum.amountMinor ?? 0;
+    const prevVal = prevRev._sum.amountMinor ?? 0;
+    const revenueChangePct = prevVal > 0
+      ? Math.round(((curVal - prevVal) / prevVal) * 1000) / 10
+      : curVal > 0
+        ? 100
+        : 0;
+
+    (result as Record<string, unknown>).revenueChangePct = revenueChangePct;
+
     await setCache(cacheKey, result, 60);
     res.status(200).json(result);
   } catch (err) {
