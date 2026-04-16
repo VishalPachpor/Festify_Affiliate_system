@@ -194,9 +194,9 @@ function SummaryCard({
         {label}
       </dt>
 
-      {/* Value — 28px Bold, #f0f0f0, leading 42px */}
+      {/* Value — Open Sauce Sans Bold 28px/42px, #f0f0f0 (body font, not heading) */}
       <dd
-        className="font-[var(--font-display)] text-[28px] font-bold leading-[42px]"
+        className="font-[var(--font-sans)] text-[28px] font-bold leading-[42px]"
         style={{ color: SALES_COLORS.kpiValue }}
       >
         {value}
