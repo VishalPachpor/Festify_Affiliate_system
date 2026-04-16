@@ -177,7 +177,7 @@ function SummaryCard({
 }) {
   return (
     <div
-      className="flex flex-col gap-[10px] rounded-[8px] border p-[28px]"
+      className="flex h-full flex-col gap-[10px] rounded-[8px] border p-[28px]"
       style={{
         borderColor: SALES_COLORS.cardBorder,
         background: SALES_COLORS.cardBg,
@@ -222,7 +222,7 @@ function SummaryCardSkeleton() {
   return (
     <div
       aria-hidden="true"
-      className="rounded-[var(--radius)] border p-[24px] flex flex-col gap-[8px]"
+      className="rounded-[8px] border p-[28px] flex h-full flex-col gap-[10px]"
       style={{ borderColor: SALES_COLORS.cardBorder, background: SALES_COLORS.cardBg }}
     >
       <div className="h-[4px] w-[64px] animate-pulse rounded-[50px] bg-[rgba(255,255,255,0.08)]" />
@@ -435,7 +435,7 @@ export default function SalesPage() {
         </div>
 
         {/* ── KPI Summary (Figma: 71:1848) ─────────────────────────────── */}
-        <dl className="grid grid-cols-1 gap-[24px] sm:grid-cols-[2fr_1fr_1fr]">
+        <dl className="grid grid-cols-1 items-stretch gap-[24px] sm:grid-cols-[2fr_1fr_1fr]">
           {summaryLoading ? (
             <>
               <SummaryCardSkeleton />
