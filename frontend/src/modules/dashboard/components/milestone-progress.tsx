@@ -89,6 +89,7 @@ export function MilestoneProgress() {
             style={{
               width: `${pct}%`,
               backgroundImage: PROGRESS_GRADIENT,
+              boxShadow: "0 0 8px rgba(28,74,166,0.4)",
             }}
           />
         </div>

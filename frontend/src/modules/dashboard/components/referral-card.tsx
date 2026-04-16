@@ -48,7 +48,7 @@ export function ReferralCard() {
           readOnly
           value={isLoading ? "Loading…" : referralUrl}
           aria-label="Referral URL"
-          className="h-[var(--space-8)] flex-1 cursor-text select-all text-[var(--text-sm)] text-[var(--color-text-secondary)] hover:border-[var(--color-border)] focus-visible:ring-0 focus-visible:border-[var(--color-border)]"
+          className="h-[var(--space-8)] flex-1 cursor-text select-all bg-[#0D1420] border-[rgba(255,255,255,0.1)] text-[var(--text-sm)] text-[var(--color-text-secondary)] focus-visible:ring-0 focus-visible:border-[rgba(255,255,255,0.1)]"
         />
         <Button
           variant="primary"

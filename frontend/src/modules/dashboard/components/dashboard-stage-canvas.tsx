@@ -17,6 +17,10 @@ export function DashboardStageCanvas({
         centered && "flex items-center justify-center",
         className,
       )}
+      style={{
+        background:
+          "radial-gradient(ellipse at top right, rgba(59,130,246,0.08), transparent 70%)",
+      }}
     >
       <div className="pointer-events-none absolute inset-0">
         <div

@@ -24,10 +24,18 @@ export function HeroBanner() {
       {/* Subtle radial glow overlay — Figma 53:1734 */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-10"
+        className="pointer-events-none absolute inset-0 opacity-[0.15]"
         style={{
           background:
             "radial-gradient(ellipse at center, rgba(201,168,76,0.3), transparent 70%)",
+        }}
+      />
+      {/* Top-left light reflection — Figma depth highlight */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        style={{
+          background: "linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 50%)",
         }}
       />
       {/* Heading — Figma: Oswald Bold 32px, tracking -0.48px */}
