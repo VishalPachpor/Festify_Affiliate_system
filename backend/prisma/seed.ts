@@ -134,8 +134,35 @@ async function main() {
     },
   });
 
+  // ── Demo marketing materials (Figma node 60:1975) ───────────────────
+  const DEMO_ASSETS = [
+    { id: "asset_hero_banner",     type: "banner" as const, title: "TOKEN2049 Hero Banner",       sizeBytes: 2_516_582, mimeType: "image/png"        },
+    { id: "asset_email_invite",    type: "email"  as const, title: "Email Invite Template",       sizeBytes: 159_744,   mimeType: "text/html"        },
+    { id: "asset_social_square",   type: "social" as const, title: "Social Media Square",         sizeBytes: 1_887_436, mimeType: "image/png"        },
+    { id: "asset_promo_copy",      type: "copy"   as const, title: "Promo Copy Snippets",         sizeBytes: 24_576,    mimeType: "text/plain"       },
+    { id: "asset_best_practices",  type: "guide"  as const, title: "Affiliate Best Practices",    sizeBytes: 1_258_291, mimeType: "application/pdf"  },
+    { id: "asset_ig_story",        type: "social" as const, title: "Instagram Story Template",    sizeBytes: 1_003_520, mimeType: "image/png"        },
+  ];
+
+  for (const a of DEMO_ASSETS) {
+    await prisma.asset.upsert({
+      where: { id: a.id },
+      update: { title: a.title, type: a.type, sizeBytes: a.sizeBytes, mimeType: a.mimeType, visible: true },
+      create: {
+        id: a.id,
+        tenantId: TENANT_ID,
+        type: a.type,
+        title: a.title,
+        fileUrl: `#demo-${a.id}`,
+        sizeBytes: a.sizeBytes,
+        mimeType: a.mimeType,
+        visible: true,
+      },
+    });
+  }
+
   console.log(
-    `[seed] tenant=${TENANT_ID} campaign=${CAMPAIGN_ID}(slug=${CAMPAIGN_SLUG}) affiliate=${AFFILIATE_ID} referral=${REFERRAL_CODE} milestones=${MILESTONES.length}`,
+    `[seed] tenant=${TENANT_ID} campaign=${CAMPAIGN_ID}(slug=${CAMPAIGN_SLUG}) affiliate=${AFFILIATE_ID} referral=${REFERRAL_CODE} milestones=${MILESTONES.length} assets=${DEMO_ASSETS.length}`,
   );
   console.log(`[seed] users: admin@festify.io / alex@festify.io  (password: Password123!)`);
 }
