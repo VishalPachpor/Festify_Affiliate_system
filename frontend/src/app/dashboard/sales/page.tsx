@@ -18,24 +18,56 @@ import {
   CartesianGrid,
 } from "recharts";
 
+// ── Figma-exact color tokens (node 71:1573) ─────────────────────────────────
+
 const SALES_COLORS = {
-  panel: "transparent",
-  border: "rgba(255,255,255,0.08)",
-  label: "rgba(255,255,255,0.50)",
-  subtitle: "rgba(255,255,255,0.50)",
-  chartTick: "rgba(255,255,255,0.40)",
+  // KPI cards
+  cardBg: "rgba(21,26,43,0.8)",
+  cardBorder: "rgba(255,255,255,0.1)",
+  kpiLabel: "#a6d1ff",
+  kpiValue: "#f0f0f0",
+  accentTotalSales: "#d9d9d9",
+  accentTicketsSold: "#1c4aa6",
+  accentCommission: "#22c55e",
+  changeText: "#22c55e",
+
+  // Tabs
+  tabActiveBg: "#ddd",
+  tabActiveText: "#0b0e1a",
+  tabInactiveBg: "#0f1628",
+  tabInactiveText: "#b0b8cc",
+
+  // Chart
+  chartContainerBg: "rgba(15,22,40,0.5)",
+  chartContainerBorder: "rgba(255,255,255,0.05)",
+  chartTick: "#b0b8cc",
   chartGrid: "rgba(255,255,255,0.06)",
-  chartGold: "#F5A623",
-  headerRow: "transparent",
-  headerText: "rgba(255,255,255,0.50)",
-  bodyText: "rgba(255,255,255,0.60)",
-  bodyTextStrong: "#FFFFFF",
-  commission: "#22C55E",
-  plainStatus: "rgba(255,255,255,0.55)",
-  pendingBg: "rgba(234,179,8,0.14)",
-  pendingText: "#EAB308",
-  rejectedBg: "rgba(239,68,68,0.14)",
-  rejectedText: "#EF4444",
+  chartLine: "#F5A623",
+
+  // Table
+  tableBorder: "rgba(255,255,255,0.05)",
+  headerText: "#b0b8cc",
+  bodyDate: "#ffffff",
+  bodyCustomer: "#b0b8cc",
+  bodyTicketType: "#ffffff",
+  bodyOrderValue: "#ffffff",
+  bodyCommission: "#c9a84c",
+  statusConfirmed: "#f0f0f0",
+  pendingBg: "rgba(245,158,11,0.2)",
+  pendingText: "#f59e0b",
+  rejectedBg: "rgba(239,68,68,0.12)",
+  rejectedText: "#ef4444",
+
+  // Pagination
+  paginationActiveBg: "#132054",
+  paginationActiveBorder: "#132054",
+  paginationActiveText: "#f0f0f0",
+  paginationInactiveBorder: "rgba(156,164,183,0.3)",
+  paginationInactiveText: "#9ca4b7",
+
+  // Subtitle / misc
+  subtitle: "#9ca4b7",
+  subtitleLight: "#b0b8cc",
 } as const;
 
 // ── Formatters ─────────────────────────────────────────────────────────────────
@@ -44,8 +76,8 @@ function formatCurrency(minorUnits: number, currency: string): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(minorUnits / 100);
 }
 
@@ -75,14 +107,25 @@ function maskName(name: string): string {
   return `${first}***${lastInitial}@email.com`;
 }
 
-// ── Status styling ─────────────────────────────────────────────────────────────
+// ── Trend icon (Figma node 71:1856) ───────────────────────────────────────────
+
+function IconTrend() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M2 12L6 7L9 10L14 4" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 4H14V8" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// ── Status styling (Figma nodes 71:1747, 71:1775, 71:1817) ──────────────────
 
 function StatusCell({ status }: { status: Sale["status"] }) {
   if (status === "confirmed" || status === "paid") {
     return (
       <span
-        className="font-[var(--font-sans)] text-[var(--text-sm)] font-medium leading-[var(--leading-snug)]"
-        style={{ color: SALES_COLORS.plainStatus }}
+        className="font-[var(--font-sans)] text-[11px] font-medium leading-[14.667px]"
+        style={{ color: SALES_COLORS.statusConfirmed }}
       >
         {status}
       </span>
@@ -91,7 +134,7 @@ function StatusCell({ status }: { status: Sale["status"] }) {
   if (status === "pending") {
     return (
       <span
-        className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[0.125rem] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--leading-snug)]"
+        className="inline-block rounded-[4px] px-[5px] py-[3px] font-[var(--font-sans)] text-[11px] font-medium leading-[14.667px]"
         style={{
           background: SALES_COLORS.pendingBg,
           color: SALES_COLORS.pendingText,
@@ -104,7 +147,7 @@ function StatusCell({ status }: { status: Sale["status"] }) {
   // rejected
   return (
     <span
-      className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[0.125rem] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--leading-snug)]"
+      className="inline-block rounded-[4px] px-[4px] py-[3px] font-[var(--font-sans)] text-[11px] font-medium leading-[14.667px]"
       style={{
         background: SALES_COLORS.rejectedBg,
         color: SALES_COLORS.rejectedText,
@@ -119,7 +162,7 @@ function StatusCell({ status }: { status: Sale["status"] }) {
 
 const TIME_PERIODS = ["This Week", "This Month", "All Time"] as const;
 
-// ── KPI summary card ──────────────────────────────────────────────────────────
+// ── KPI summary card (Figma node 71:1849) ────────────────────────────────────
 
 function SummaryCard({
   label,
@@ -134,32 +177,42 @@ function SummaryCard({
 }) {
   return (
     <div
-      className="flex flex-col gap-[var(--space-2)] rounded-[var(--radius)] border px-[var(--space-5)] py-[var(--space-4)]"
+      className="flex flex-col gap-[8px] rounded-[var(--radius)] border p-[24px]"
       style={{
-        borderColor: SALES_COLORS.border,
-        background: SALES_COLORS.panel,
+        borderColor: SALES_COLORS.cardBorder,
+        background: SALES_COLORS.cardBg,
       }}
     >
-      {/* Short accent line */}
-      <div className="h-[2px] w-[2rem] rounded-full" style={{ background: accentColor }} />
+      {/* Accent line — 64×4 rounded pill */}
+      <div className="h-[4px] w-[64px] rounded-[50px]" style={{ background: accentColor }} />
+
+      {/* Label — 12px uppercase, tracking 0.5px, #a6d1ff */}
       <dt
-        className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] tracking-[var(--tracking-caption)] uppercase"
-        style={{ color: SALES_COLORS.label }}
+        className="font-[var(--font-sans)] text-[12px] leading-[16px] tracking-[0.5px] uppercase"
+        style={{ color: SALES_COLORS.kpiLabel }}
       >
         {label}
       </dt>
-      <dd className="font-[var(--font-display)] font-bold text-[var(--text-2xl)] leading-[var(--leading-display)] tracking-[var(--tracking-heading)] text-[#FFFFFF]">
+
+      {/* Value — Open Sauce Sans Bold 28px/42px, #f0f0f0 (body font, not heading) */}
+      <dd
+        className="font-[var(--font-sans)] text-[28px] font-bold leading-[42px]"
+        style={{ color: SALES_COLORS.kpiValue }}
+      >
         {value}
       </dd>
+
+      {/* Change indicator — 12px, #22c55e, leading 18px */}
       {change ? (
-        <p className="flex items-center gap-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] text-[#22C55E]">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M2 8.5C4 6 6 4.5 10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
+        <p
+          className="flex items-center gap-[4px] font-[var(--font-sans)] text-[12px] leading-[18px]"
+          style={{ color: SALES_COLORS.changeText }}
+        >
+          <IconTrend />
           {change}
         </p>
       ) : (
-        <span aria-hidden="true" className="min-h-[var(--leading-caption)]" />
+        <span aria-hidden="true" className="min-h-[18px]" />
       )}
     </div>
   );
@@ -169,21 +222,21 @@ function SummaryCardSkeleton() {
   return (
     <div
       aria-hidden="true"
-      className="rounded-[var(--radius)] border border-[var(--color-border)] bg-transparent px-[var(--space-5)] py-[var(--space-4)] flex flex-col gap-[var(--space-2)]"
+      className="rounded-[var(--radius)] border p-[24px] flex flex-col gap-[8px]"
+      style={{ borderColor: SALES_COLORS.cardBorder, background: SALES_COLORS.cardBg }}
     >
-      <div className="h-[2px] w-[2rem] animate-pulse rounded-full bg-[var(--color-border)]" />
-      <div className="h-[var(--text-xs)] w-2/3 animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
-      <div className="h-[var(--text-xl)] w-1/2 animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
+      <div className="h-[4px] w-[64px] animate-pulse rounded-[50px] bg-[rgba(255,255,255,0.08)]" />
+      <div className="h-[16px] w-2/3 animate-pulse rounded-[var(--radius)] bg-[rgba(255,255,255,0.08)]" />
+      <div className="h-[28px] w-1/2 animate-pulse rounded-[var(--radius)] bg-[rgba(255,255,255,0.08)]" />
     </div>
   );
 }
 
-// ── Commission trend chart (Recharts) ─────────────────────────────────────────
+// ── Commission trend chart (Figma node 71:1616) ─────────────────────────────
 
 function CommissionChart({ sales }: { sales: Sale[] }) {
   const POINTS = 10;
 
-  // Bucket last N days, compute commission sums
   const buckets: { date: string; value: number }[] = [];
   for (let i = POINTS - 1; i >= 0; i--) {
     const d = new Date();
@@ -210,25 +263,27 @@ function CommissionChart({ sales }: { sales: Sale[] }) {
 
   return (
     <div
-      className="rounded-[var(--radius)] border px-[var(--space-6)] py-[var(--space-5)]"
+      className="rounded-[var(--radius)] border px-[25px] pb-[1px] pt-[25px]"
       style={{
-        borderColor: SALES_COLORS.border,
-        background: SALES_COLORS.panel,
+        borderColor: SALES_COLORS.chartContainerBorder,
+        background: SALES_COLORS.chartContainerBg,
       }}
       aria-label="Commission trend chart"
     >
       <div className="flex items-start justify-between">
-        <h3 className="font-[var(--font-display)] font-bold text-[var(--text-lg)] leading-[var(--leading-tight)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
+        {/* Heading 3 — Oswald Bold 20/28 */}
+        <h3 className="font-[var(--font-display)] text-[20px] font-bold leading-[28px] text-white">
           Commission Trend
         </h3>
+        {/* 12px #b0b8cc */}
         <span
-          className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)]"
-          style={{ color: SALES_COLORS.subtitle }}
+          className="font-[var(--font-sans)] text-[12px] leading-[17.143px]"
+          style={{ color: SALES_COLORS.subtitleLight }}
         >
           Last 10 days
         </span>
       </div>
-      <div className="mt-[var(--space-4)] w-full" style={{ height: 220 }}>
+      <div className="mt-[24px] w-full" style={{ height: 300 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={buckets}
@@ -258,17 +313,17 @@ function CommissionChart({ sales }: { sales: Sale[] }) {
             <Line
               type="monotone"
               dataKey="value"
-              stroke={SALES_COLORS.chartGold}
+              stroke={SALES_COLORS.chartLine}
               strokeWidth={2.5}
               dot={{
                 r: 4,
-                fill: SALES_COLORS.chartGold,
+                fill: SALES_COLORS.chartLine,
                 stroke: "#1A1E2E",
                 strokeWidth: 2,
               }}
               activeDot={{
                 r: 5,
-                fill: SALES_COLORS.chartGold,
+                fill: SALES_COLORS.chartLine,
                 stroke: "#1A1E2E",
                 strokeWidth: 2,
               }}
@@ -287,12 +342,12 @@ function TableSkeleton() {
     <div aria-hidden="true" className="flex flex-col gap-[var(--space-3)]">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="flex items-center gap-[var(--space-4)]">
-          <div className="h-[var(--text-sm)] w-1/6 animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
-          <div className="h-[var(--text-sm)] w-1/5 animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
-          <div className="h-[var(--text-sm)] w-1/6 animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
-          <div className="h-[var(--text-sm)] w-1/6 animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
-          <div className="h-[var(--text-sm)] w-1/6 animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
-          <div className="ml-auto h-[var(--text-xs)] w-16 animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
+          <div className="h-[14px] w-1/6 animate-pulse rounded-[var(--radius)] bg-[rgba(255,255,255,0.08)]" />
+          <div className="h-[14px] w-1/5 animate-pulse rounded-[var(--radius)] bg-[rgba(255,255,255,0.08)]" />
+          <div className="h-[14px] w-1/6 animate-pulse rounded-[var(--radius)] bg-[rgba(255,255,255,0.08)]" />
+          <div className="h-[14px] w-1/6 animate-pulse rounded-[var(--radius)] bg-[rgba(255,255,255,0.08)]" />
+          <div className="h-[14px] w-1/6 animate-pulse rounded-[var(--radius)] bg-[rgba(255,255,255,0.08)]" />
+          <div className="ml-auto h-[12px] w-16 animate-pulse rounded-[var(--radius)] bg-[rgba(255,255,255,0.08)]" />
         </div>
       ))}
     </div>
@@ -316,7 +371,6 @@ function getDateRange(period: string): { from?: string; to?: string } {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     return { from: monthStart.toISOString().split("T")[0], to };
   }
-  // "All Time" — no filter
   return {};
 }
 
@@ -344,7 +398,6 @@ export default function SalesPage() {
   const startItem = (currentPage - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(currentPage * PAGE_SIZE, total);
 
-  // Generate page numbers for pagination
   const pageNumbers: number[] = [];
   const maxPageButtons = 3;
   let startPage = Math.max(1, currentPage - 1);
@@ -359,8 +412,8 @@ export default function SalesPage() {
   return (
     <DashboardStageCanvas>
       <DashboardContainer>
-        {/* Time period tabs — matches Figma node 71:1573 */}
-        <div className="flex items-center gap-[var(--space-2)]">
+        {/* ── Time period tabs (Figma: 71:1834) ────────────────────────── */}
+        <div className="flex items-center gap-[8px]">
           {TIME_PERIODS.map((period) => {
             const isActive = timePeriod === period;
             return (
@@ -368,12 +421,11 @@ export default function SalesPage() {
                 key={period}
                 type="button"
                 onClick={() => setTimePeriod(period)}
-                className={[
-                  "rounded-[var(--radius)] border px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--leading-snug)] transition-colors duration-[var(--duration-normal)]",
-                  isActive
-                    ? "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.95)] text-[#000000]"
-                    : "border-[rgba(255,255,255,0.12)] bg-transparent text-[rgba(255,255,255,0.72)] hover:border-[rgba(255,255,255,0.20)] hover:text-[var(--color-text-primary)]",
-                ].join(" ")}
+                className="inline-flex h-[35px] items-center justify-center rounded-[var(--radius)] border-none px-[16px] font-[var(--font-sans)] text-[14px] leading-[21px] transition-colors duration-[var(--duration-normal)]"
+                style={{
+                  background: isActive ? SALES_COLORS.tabActiveBg : SALES_COLORS.tabInactiveBg,
+                  color: isActive ? SALES_COLORS.tabActiveText : SALES_COLORS.tabInactiveText,
+                }}
               >
                 {period}
               </button>
@@ -381,8 +433,8 @@ export default function SalesPage() {
           })}
         </div>
 
-        {/* KPI Summary — matches Figma node 71:1573 */}
-        <dl className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-3">
+        {/* ── KPI Summary (Figma: 71:1848) ─────────────────────────────── */}
+        <dl className="grid grid-cols-1 gap-[24px] sm:grid-cols-3">
           {summaryLoading ? (
             <>
               <SummaryCardSkeleton />
@@ -394,7 +446,7 @@ export default function SalesPage() {
               <SummaryCard
                 label="Total Sales"
                 value={formatCurrency(summaryData?.totalRevenue ?? 0, currency)}
-                accentColor="#FFFFFF"
+                accentColor={SALES_COLORS.accentTotalSales}
                 change={
                   dashboardSummary?.revenueChangePct !== undefined
                     ? `+${dashboardSummary.revenueChangePct.toFixed(1)}%`
@@ -404,7 +456,7 @@ export default function SalesPage() {
               <SummaryCard
                 label="Tickets Sold"
                 value={String(summaryData?.totalSales ?? 0)}
-                accentColor="#5B8DEF"
+                accentColor={SALES_COLORS.accentTicketsSold}
                 change={
                   summaryData?.confirmedCount !== undefined && summaryData.confirmedCount > 0
                     ? `+${summaryData.confirmedCount}`
@@ -418,45 +470,51 @@ export default function SalesPage() {
                     ? `${Math.round((summaryData.totalCommissions / summaryData.totalRevenue) * 100)}%`
                     : "10%"
                 }
-                accentColor="#22C55E"
+                accentColor={SALES_COLORS.accentCommission}
               />
             </>
           )}
         </dl>
 
-        {/* Commission chart */}
+        {/* ── Commission chart (Figma: 71:1616) ────────────────────────── */}
         {!listLoading && sales.length > 0 && (
           <CommissionChart sales={sales} />
         )}
 
-        {/* Sales History table */}
+        {/* ── Sales History table (Figma: 71:1709) ─────────────────────── */}
         <div
-          className="rounded-[var(--radius)] border"
+          className="overflow-hidden rounded-[var(--radius)] border"
           style={{
-            borderColor: SALES_COLORS.border,
-            background: SALES_COLORS.panel,
+            borderColor: SALES_COLORS.tableBorder,
           }}
         >
-          {/* Panel header */}
-          <div className="border-b px-[var(--space-6)] py-[var(--space-5)]" style={{ borderColor: SALES_COLORS.border }}>
-            <h3 className="font-[var(--font-display)] font-bold text-[var(--text-lg)] leading-[var(--leading-tight)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
-              Sales History
-            </h3>
-            <p
-              className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--leading-snug)]"
-              style={{ color: SALES_COLORS.subtitle }}
-            >
-              Detailed breakdown of your attributed ticket sales
-            </p>
+          {/* Panel header — 24px padding, 8px gap between title and subtitle */}
+          <div
+            className="border-b px-[24px] py-[13px]"
+            style={{ borderColor: SALES_COLORS.tableBorder }}
+          >
+            <div className="flex flex-col gap-[8px]">
+              {/* Heading 3 — Oswald Bold 20/28 */}
+              <h3 className="font-[var(--font-display)] text-[20px] font-bold leading-[28px] text-white">
+                Sales History
+              </h3>
+              {/* Body 2 — 14px/21px, #9ca4b7 */}
+              <p
+                className="font-[var(--font-sans)] text-[14px] leading-[21px]"
+                style={{ color: SALES_COLORS.subtitle }}
+              >
+                Detailed breakdown of your attributed ticket sales
+              </p>
+            </div>
           </div>
 
           {/* Table */}
-          <div className="px-[var(--space-6)] py-[var(--space-5)]" aria-live="polite" aria-busy={listLoading}>
+          <div className="px-[24px] py-[var(--space-5)]" aria-live="polite" aria-busy={listLoading}>
             {listLoading ? (
               <TableSkeleton />
             ) : sales.length === 0 ? (
               <div className="flex h-32 items-center justify-center">
-                <p className="font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-muted)]">
+                <p className="font-[var(--font-sans)] text-[14px] text-[var(--color-text-muted)]">
                   No sales found.
                 </p>
               </div>
@@ -464,13 +522,17 @@ export default function SalesPage() {
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse font-[var(--font-sans)]" aria-label="Sales history">
                   <thead>
-                    <tr style={{ background: SALES_COLORS.headerRow }}>
+                    {/* Header row — 12px Bold uppercase, #b0b8cc, tracking 0.2px, leading 14px, py 16px */}
+                    <tr>
                       {["Date", "Customer", "Ticket Type", "Order Value", "Commission", "Status"].map((col) => (
                         <th
                           key={col}
                           scope="col"
-                          className="px-[var(--space-3)] py-[var(--space-3)] text-left text-[var(--text-xs)] leading-[var(--leading-caption)] tracking-[var(--tracking-caption)] uppercase font-semibold whitespace-nowrap first:pl-0 last:pr-0"
-                          style={{ color: SALES_COLORS.headerText }}
+                          className="px-[16px] py-[16px] text-left text-[12px] font-bold leading-[14px] tracking-[0.2px] uppercase whitespace-nowrap"
+                          style={{
+                            color: SALES_COLORS.headerText,
+                            borderBottom: `1px solid ${SALES_COLORS.tableBorder}`,
+                          }}
                         >
                           {col}
                         </th>
@@ -481,40 +543,48 @@ export default function SalesPage() {
                     {sales.slice(0, PAGE_SIZE).map((sale) => (
                       <tr
                         key={sale.id}
-                        className="border-t"
-                        style={{ borderColor: "rgba(255,255,255,0.06)" }}
+                        style={{
+                          background: "rgba(255,255,255,0.02)",
+                          borderBottom: `1px solid ${SALES_COLORS.tableBorder}`,
+                        }}
                       >
+                        {/* Date — 12px white, leading 17.143px */}
                         <td
-                          className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] leading-[var(--leading-snug)] whitespace-nowrap"
-                          style={{ color: SALES_COLORS.bodyText }}
+                          className="px-[16px] py-[20px] text-[12px] leading-[17.143px] whitespace-nowrap"
+                          style={{ color: SALES_COLORS.bodyDate }}
                         >
                           {formatDate(sale.createdAt)}
                         </td>
+                        {/* Customer — 12px #b0b8cc, leading 16px */}
                         <td
-                          className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] leading-[var(--leading-snug)] whitespace-nowrap"
-                          style={{ color: SALES_COLORS.bodyText }}
+                          className="px-[16px] py-[20px] text-[12px] leading-[16px] whitespace-nowrap"
+                          style={{ color: SALES_COLORS.bodyCustomer }}
                         >
                           {maskName(sale.affiliateName)}
                         </td>
+                        {/* Ticket Type — 12px white, leading 17.143px */}
                         <td
-                          className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] leading-[var(--leading-snug)] whitespace-nowrap"
-                          style={{ color: SALES_COLORS.bodyText }}
+                          className="px-[16px] py-[20px] text-[12px] leading-[17.143px] whitespace-nowrap"
+                          style={{ color: SALES_COLORS.bodyTicketType }}
                         >
                           {deriveTicketType(sale.amount)}
                         </td>
+                        {/* Order Value — 16px Regular white, leading 24px (NOT Oswald, NOT bold) */}
                         <td
-                          className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] leading-[var(--leading-snug)] whitespace-nowrap"
-                          style={{ color: SALES_COLORS.bodyTextStrong }}
+                          className="px-[16px] py-[17px] text-[16px] leading-[24px] whitespace-nowrap"
+                          style={{ color: SALES_COLORS.bodyOrderValue }}
                         >
                           {formatCurrency(sale.amount, sale.currency)}
                         </td>
+                        {/* Commission — 16px Medium #c9a84c (gold), leading 24px */}
                         <td
-                          className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] leading-[var(--leading-snug)] whitespace-nowrap"
-                          style={{ color: SALES_COLORS.commission }}
+                          className="px-[16px] py-[17px] text-[16px] font-medium leading-[24px] whitespace-nowrap"
+                          style={{ color: SALES_COLORS.bodyCommission }}
                         >
                           {formatCurrency(sale.commission, sale.currency)}
                         </td>
-                        <td className="py-[var(--space-3)]">
+                        {/* Status — 11px Medium badge */}
+                        <td className="px-[16px] py-[17px]">
                           <StatusCell status={sale.status} />
                         </td>
                       </tr>
@@ -525,41 +595,59 @@ export default function SalesPage() {
             )}
           </div>
 
-          {/* Pagination */}
+          {/* Pagination (Figma: 71:1819) */}
           {!listLoading && totalPages > 1 && (
-            <div className="flex items-center justify-between border-t px-[var(--space-6)] py-[var(--space-4)]" style={{ borderColor: SALES_COLORS.border }}>
-              <p className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] text-[var(--color-text-muted)]">
+            <div
+              className="flex items-center justify-between px-[16px] pb-[16px] pt-[17px]"
+              style={{ borderTop: `1px solid ${SALES_COLORS.tableBorder}` }}
+            >
+              {/* "Showing X-Y" — 12px #b0b8cc */}
+              <p
+                className="font-[var(--font-sans)] text-[12px] leading-[17.143px]"
+                style={{ color: SALES_COLORS.subtitleLight }}
+              >
                 Showing {startItem}-{endItem} of {total} transactions
               </p>
-              <div className="flex gap-[var(--space-2)]">
+              <div className="flex gap-[8px]">
+                {/* Previous button — border rgba(156,164,183,0.3), 12px Medium #9ca4b7 */}
                 <button
                   type="button"
                   disabled={currentPage <= 1}
                   onClick={() => setFilters({ page: currentPage - 1 })}
-                  className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.78)] transition-colors hover:border-[rgba(255,255,255,0.18)] hover:text-[var(--color-text-primary)] disabled:pointer-events-none disabled:opacity-40"
+                  className="inline-flex h-[35px] items-center justify-center rounded-[var(--radius)] bg-transparent px-[17px] py-[9px] font-[var(--font-sans)] text-[12px] font-medium leading-[17.143px] transition-colors disabled:pointer-events-none disabled:opacity-40"
+                  style={{
+                    border: `1px solid ${SALES_COLORS.paginationInactiveBorder}`,
+                    color: SALES_COLORS.paginationInactiveText,
+                  }}
                 >
                   Previous
                 </button>
+                {/* Page number buttons */}
                 {pageNumbers.map((num) => (
                   <button
                     key={num}
                     type="button"
                     onClick={() => setFilters({ page: num })}
-                    className={[
-                      "rounded-[var(--radius)] border px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] transition-colors",
-                      currentPage === num
-                        ? "border-[#5B8DEF] bg-[#5B8DEF] text-white"
-                        : "border-[rgba(255,255,255,0.12)] bg-transparent text-[rgba(255,255,255,0.78)] hover:border-[rgba(255,255,255,0.18)] hover:text-[var(--color-text-primary)]",
-                    ].join(" ")}
+                    className="inline-flex h-[36px] min-w-[42px] items-center justify-center rounded-[var(--radius)] font-[var(--font-sans)] text-[12px] font-medium leading-[17.143px] transition-colors"
+                    style={{
+                      background: currentPage === num ? SALES_COLORS.paginationActiveBg : "transparent",
+                      border: `1px solid ${currentPage === num ? SALES_COLORS.paginationActiveBorder : SALES_COLORS.paginationInactiveBorder}`,
+                      color: currentPage === num ? SALES_COLORS.paginationActiveText : SALES_COLORS.paginationInactiveText,
+                    }}
                   >
                     {num}
                   </button>
                 ))}
+                {/* Next button */}
                 <button
                   type="button"
                   disabled={currentPage >= totalPages}
                   onClick={() => setFilters({ page: currentPage + 1 })}
-                  className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.78)] transition-colors hover:border-[rgba(255,255,255,0.18)] hover:text-[var(--color-text-primary)] disabled:pointer-events-none disabled:opacity-40"
+                  className="inline-flex h-[36px] items-center justify-center rounded-[var(--radius)] bg-transparent px-[17px] py-[9px] font-[var(--font-sans)] text-[12px] font-medium leading-[17.143px] transition-colors disabled:pointer-events-none disabled:opacity-40"
+                  style={{
+                    border: `1px solid ${SALES_COLORS.paginationInactiveBorder}`,
+                    color: SALES_COLORS.paginationInactiveText,
+                  }}
                 >
                   Next
                 </button>

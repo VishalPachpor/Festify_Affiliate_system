@@ -41,10 +41,9 @@ function IconMilestones() {
 
 function IconSales() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
-      <path d="M8 2v12" />
-      <path d="M5 5h4.5a2.5 2.5 0 010 5H5" />
-      <path d="M5 10h5" />
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M8 1.5v13" />
+      <path d="M11 4.5H6.5a2 2 0 000 4h3a2 2 0 010 4H5" />
     </svg>
   );
 }

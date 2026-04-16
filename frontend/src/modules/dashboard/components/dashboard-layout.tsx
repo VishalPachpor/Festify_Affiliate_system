@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 export function DashboardContainer({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-[var(--space-5)] px-[var(--space-6)] py-[var(--space-5)]">
+    <div className="flex flex-col gap-[var(--space-8)] px-[var(--space-8)] py-[var(--space-8)]">
       {children}
     </div>
   );

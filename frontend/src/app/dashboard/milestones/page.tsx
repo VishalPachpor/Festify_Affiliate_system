@@ -9,15 +9,15 @@ function formatCurrency(minorUnits: number, currency: string): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(minorUnits / 100);
 }
 
 function IconCheck() {
   return (
-    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points="2 6 5 9 10 3" />
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="3 8 7 12 13 4" />
     </svg>
   );
 }
@@ -76,7 +76,7 @@ function TierTile({
         {letter}
       </div>
       {unlocked ? (
-        <span className="absolute -right-[0.22rem] -top-[0.22rem] flex size-[1.32rem] items-center justify-center rounded-full bg-[var(--color-success)] text-white shadow-[0_0_0_2px_rgba(24,28,47,0.96)]">
+        <span className="absolute -right-[6px] -top-[6px] flex size-[1.5rem] items-center justify-center rounded-full bg-[var(--color-success)] text-white shadow-[0_0_0_2px_rgba(24,28,47,0.96)]">
           <IconCheck />
         </span>
       ) : null}
@@ -86,20 +86,23 @@ function TierTile({
 
 function MilestoneCardSkeleton() {
   return (
-    <article className="rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.08)] bg-transparent px-[var(--space-4)] py-[var(--space-4)]">
-      <div className="flex items-center justify-between gap-[var(--space-4)]">
-        <div className="flex items-center gap-[var(--space-3)]">
-          <div className="size-[var(--space-8)] animate-pulse rounded-[var(--radius-sm)] bg-[rgba(255,255,255,0.08)]" />
-          <div className="space-y-[var(--space-1)]">
-            <div className="h-[var(--space-4)] w-[7rem] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
-            <div className="h-[var(--space-3)] w-[8rem] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
+    <article className="overflow-hidden rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.08)] bg-[#181d30] p-[var(--space-6)]">
+      <div className="flex items-start gap-[var(--space-6)]">
+        <div className="size-[4rem] shrink-0 animate-pulse rounded-[var(--radius-md)] bg-[rgba(255,255,255,0.08)]" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-[var(--space-6)]">
+            <div className="h-[1.75rem] w-[5rem] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
+            <div className="h-[1px] w-[var(--space-10)] bg-[rgba(255,255,255,0.08)]" />
+            <div className="h-[1.5rem] w-[4rem] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
           </div>
+          <div className="mt-[var(--space-3)] h-[1.3125rem] w-[60%] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
+          <div className="mt-[var(--space-3)] flex items-center justify-between">
+            <div className="h-[0.875rem] w-[40%] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
+            <div className="h-[0.875rem] w-[3.5rem] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
+          </div>
+          <div className="mt-[var(--space-2)] h-[0.5rem] w-full animate-pulse rounded-full bg-[rgba(255,255,255,0.08)]" />
         </div>
-        <div className="h-[var(--space-3)] w-[4rem] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
       </div>
-      <div className="mt-[var(--space-2)] h-[var(--space-1)] w-full animate-pulse rounded-full bg-[rgba(255,255,255,0.08)]" />
-      <div className="mt-[var(--space-1)] h-[var(--space-3)] w-[42%] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
-      <div className="mt-[var(--space-2)] h-[var(--space-3)] w-[72%] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
     </article>
   );
 }
@@ -129,8 +132,8 @@ function MilestoneCard({
   const fillColor = styles.progress;
 
   return (
-    <article className="overflow-hidden rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.1)] bg-[#181d30] px-[var(--space-6)] py-[var(--space-4)]">
-      <div className="flex items-start gap-[var(--space-4)]">
+    <article className="overflow-hidden rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.1)] bg-[#181d30] p-[var(--space-6)]">
+      <div className="flex items-start gap-[var(--space-6)]">
         <TierTile
           letter={letter}
           tileText={styles.tileText}
@@ -139,25 +142,25 @@ function MilestoneCard({
           unlocked={unlocked}
         />
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-[var(--space-3)]">
-            <h2 className="font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
+          <div className="flex items-center gap-[var(--space-6)]">
+            <h2 className="font-[var(--font-display)] text-[var(--text-lg)] font-bold leading-[1.75rem] text-[var(--color-text-primary)]">
               {name}
             </h2>
             <span className="inline-block h-[1px] w-[var(--space-10)] bg-[rgba(255,255,255,0.42)]" />
-            <p className="font-[var(--font-sans)] text-[var(--text-lg)] font-semibold leading-none text-[var(--color-text-primary)]">
+            <p className="font-[var(--font-display)] text-[1.125rem] font-bold leading-[1.5rem] text-[var(--color-text-primary)]">
               {formatCurrency(targetAmount, currency)}
             </p>
           </div>
 
-          <p className="mt-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-5)] text-[rgba(255,255,255,0.56)]">
+          <p className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.3125rem] text-[rgba(255,255,255,0.56)]">
             {description}
           </p>
 
           <div className="mt-[var(--space-3)] flex items-center justify-between gap-[var(--space-4)]">
-            <p className="font-[var(--font-sans)] text-[var(--text-sm)] leading-none text-[rgba(255,255,255,0.62)]">
+            <p className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[0.875rem] text-[rgba(255,255,255,0.62)]">
               {formatCurrency(effectiveCurrent, currency)} / {formatCurrency(targetAmount, currency)} ({Math.round(pct)}%)
             </p>
-            <span className={`font-[var(--font-sans)] text-[var(--text-sm)] leading-none ${unlocked ? "text-[var(--color-success)]" : "text-[rgba(255,255,255,0.68)]"}`}>
+            <span className={`font-[var(--font-sans)] text-[var(--text-xs)] leading-[0.875rem] ${unlocked ? "text-[var(--color-success)]" : "text-[rgba(255,255,255,0.68)]"}`}>
               {unlocked ? "Unlocked!" : "Locked"}
             </span>
           </div>
@@ -168,7 +171,7 @@ function MilestoneCard({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-label={`${name} milestone progress`}
-            className="mt-[var(--space-3)] h-[0.375rem] w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.14)]"
+            className="mt-[var(--space-2)] h-[0.5rem] w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.14)] p-[1px]"
           >
             <div
               className="h-full rounded-full transition-[width] duration-500"
@@ -191,7 +194,7 @@ export default function MilestonesPage() {
     <DashboardStageCanvas>
       <DashboardContainer>
         <section className="w-full">
-          <div className="space-y-[var(--space-3)]">
+          <div className="space-y-[var(--space-4)]">
             {isLoading
               ? Array.from({ length: 4 }).map((_, index) => <MilestoneCardSkeleton key={index} />)
               : tiers.map((tier) => <MilestoneCard key={tier.id} {...tier} />)}
