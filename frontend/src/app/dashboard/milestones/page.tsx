@@ -72,7 +72,7 @@ function TierTile({
         style={{
           borderColor: tileBorder,
           color: tileText,
-          background: tileBg,
+          background: `linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.02) 100%), ${tileBg}`,
         }}
         aria-hidden="true"
       >
@@ -166,18 +166,18 @@ function MilestoneCard({
             </p>
           </div>
 
-          {/* Description — Figma: Regular 14px, #9CA4B7 */}
-          <p className="mt-[12px] font-[var(--font-sans)] text-[14px] leading-[21px] text-[rgba(255,255,255,0.68)]">
+          {/* Description */}
+          <p className="mt-[12px] font-[var(--font-sans)] text-[14px] leading-[21px] text-[rgba(255,255,255,0.72)]">
             {description}
           </p>
 
           {/* Progress section */}
-          <div className="mt-[16px] flex flex-col gap-[8px]">
+          <div className="mt-[16px] flex flex-col gap-[10px]">
             <div className="flex items-center justify-between">
               <p className="font-[var(--font-sans)] text-[12px] leading-[14px] text-[#9CA4B7]">
                 {formatCurrency(effectiveCurrent, currency)} / {formatCurrency(targetAmount, currency)} ({Math.round(pct)}%)
               </p>
-              <span className={`font-[var(--font-sans)] text-[12px] leading-[14px] ${unlocked ? "text-[#22C55E]" : "text-[#F0F0F0]"}`}>
+              <span className={`font-[var(--font-sans)] text-[12px] font-medium leading-[14px] ${unlocked ? "text-[#22C55E]" : "text-[#F0F0F0]"}`}>
                 {unlocked ? "Unlocked!" : "Locked"}
               </span>
             </div>
@@ -189,7 +189,7 @@ function MilestoneCard({
               aria-valuemin={0}
               aria-valuemax={100}
               aria-label={`${name} milestone progress`}
-              className="h-[8px] w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.08)] p-[1px]"
+              className="h-[8px] w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.10)] p-[1px]"
             >
               {pct > 0 && (
                 <div
