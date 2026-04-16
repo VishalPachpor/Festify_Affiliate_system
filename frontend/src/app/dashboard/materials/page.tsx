@@ -88,18 +88,20 @@ function PreviewIcon({ type }: { type: AssetType }) {
   return <IconImage />;
 }
 
-// Figma-exact gradient per asset type (node 60:1975)
+// Pre-composited gradients matching Figma 60:1975 visual output.
+// Each value is rgba(color, 0.2) composited over solid rgb(21,26,43),
+// computed as: result = top*0.2 + base*0.8, then converted to hex.
 const CARD_GRADIENTS: Record<AssetType, string> = {
   banner:
-    "linear-gradient(152deg, rgba(43,127,255,0.2) 0%, rgba(173,70,255,0.2) 100%), linear-gradient(90deg, rgb(21,26,43) 0%, rgb(21,26,43) 100%)",
+    "linear-gradient(152deg, #192E55 0%, #332355 100%)",
   email:
-    "linear-gradient(152deg, rgba(0,201,80,0.2) 0%, rgba(0,188,125,0.2) 100%), linear-gradient(90deg, rgb(21,26,43) 0%, rgb(21,26,43) 100%)",
+    "linear-gradient(152deg, #113D32 0%, #113A3B 100%)",
   social:
-    "linear-gradient(152deg, rgba(246,51,154,0.2) 0%, rgba(255,32,86,0.2) 100%), linear-gradient(90deg, rgb(21,26,43) 0%, rgb(21,26,43) 100%)",
+    "linear-gradient(152deg, #421F41 0%, #441B34 100%)",
   copy:
-    "linear-gradient(152deg, rgba(254,154,0,0.2) 0%, rgba(255,105,0,0.2) 100%), linear-gradient(90deg, rgb(21,26,43) 0%, rgb(21,26,43) 100%)",
+    "linear-gradient(152deg, #443422 0%, #442A22 100%)",
   guide:
-    "linear-gradient(152deg, rgba(0,184,219,0.2) 0%, rgba(43,127,255,0.2) 100%), linear-gradient(90deg, rgb(21,26,43) 0%, rgb(21,26,43) 100%)",
+    "linear-gradient(152deg, #113A4E 0%, #192E55 100%)",
 };
 
 function formatAddedDate(iso: string) {
