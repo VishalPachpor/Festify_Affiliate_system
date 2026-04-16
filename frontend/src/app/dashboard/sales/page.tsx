@@ -81,7 +81,7 @@ function StatusCell({ status }: { status: Sale["status"] }) {
   if (status === "confirmed" || status === "paid") {
     return (
       <span
-        className="font-[var(--font-sans)] text-[var(--text-sm)] font-medium leading-[var(--leading-snug)]"
+        className="font-[var(--font-sans)] text-[var(--text-xs)] font-medium leading-[0.9375rem]"
         style={{ color: SALES_COLORS.plainStatus }}
       >
         {status}
@@ -91,7 +91,7 @@ function StatusCell({ status }: { status: Sale["status"] }) {
   if (status === "pending") {
     return (
       <span
-        className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[0.125rem] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--leading-snug)]"
+        className="inline-block rounded-[var(--space-1)] px-[var(--space-1)] py-[3px] font-[var(--font-sans)] text-[var(--text-xs)] leading-[0.9375rem]"
         style={{
           background: SALES_COLORS.pendingBg,
           color: SALES_COLORS.pendingText,
@@ -104,7 +104,7 @@ function StatusCell({ status }: { status: Sale["status"] }) {
   // rejected
   return (
     <span
-      className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[0.125rem] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--leading-snug)]"
+      className="inline-block rounded-[var(--space-1)] px-[var(--space-1)] py-[3px] font-[var(--font-sans)] text-[var(--text-xs)] leading-[0.9375rem]"
       style={{
         background: SALES_COLORS.rejectedBg,
         color: SALES_COLORS.rejectedText,
@@ -134,16 +134,16 @@ function SummaryCard({
 }) {
   return (
     <div
-      className="flex flex-col gap-[var(--space-2)] rounded-[var(--radius)] border px-[var(--space-5)] py-[var(--space-4)]"
+      className="flex flex-col gap-[var(--space-2)] rounded-[var(--radius)] border p-[var(--space-6)]"
       style={{
         borderColor: SALES_COLORS.border,
         background: SALES_COLORS.panel,
       }}
     >
       {/* Short accent line */}
-      <div className="h-[2px] w-[2rem] rounded-full" style={{ background: accentColor }} />
+      <div className="h-[4px] w-[4rem] rounded-full" style={{ background: accentColor }} />
       <dt
-        className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] tracking-[var(--tracking-caption)] uppercase"
+        className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[1rem] tracking-[var(--tracking-caption)] uppercase"
         style={{ color: SALES_COLORS.label }}
       >
         {label}
@@ -152,9 +152,9 @@ function SummaryCard({
         {value}
       </dd>
       {change ? (
-        <p className="flex items-center gap-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] text-[#22C55E]">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M2 8.5C4 6 6 4.5 10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <p className="flex items-center gap-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] leading-[1.125rem] text-[#22C55E]">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M3 11.5C5.5 8 8 6 13 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
           {change}
         </p>
@@ -169,9 +169,9 @@ function SummaryCardSkeleton() {
   return (
     <div
       aria-hidden="true"
-      className="rounded-[var(--radius)] border border-[var(--color-border)] bg-transparent px-[var(--space-5)] py-[var(--space-4)] flex flex-col gap-[var(--space-2)]"
+      className="rounded-[var(--radius)] border border-[var(--color-border)] bg-transparent p-[var(--space-6)] flex flex-col gap-[var(--space-2)]"
     >
-      <div className="h-[2px] w-[2rem] animate-pulse rounded-full bg-[var(--color-border)]" />
+      <div className="h-[4px] w-[4rem] animate-pulse rounded-full bg-[var(--color-border)]" />
       <div className="h-[var(--text-xs)] w-2/3 animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
       <div className="h-[var(--text-xl)] w-1/2 animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
     </div>
@@ -218,17 +218,17 @@ function CommissionChart({ sales }: { sales: Sale[] }) {
       aria-label="Commission trend chart"
     >
       <div className="flex items-start justify-between">
-        <h3 className="font-[var(--font-display)] font-bold text-[var(--text-lg)] leading-[var(--leading-tight)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
+        <h3 className="font-[var(--font-display)] font-bold text-[var(--text-lg)] leading-[1.75rem] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
           Commission Trend
         </h3>
         <span
-          className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)]"
+          className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[1.125rem]"
           style={{ color: SALES_COLORS.subtitle }}
         >
           Last 10 days
         </span>
       </div>
-      <div className="mt-[var(--space-4)] w-full" style={{ height: 220 }}>
+      <div className="mt-[var(--space-6)] w-full" style={{ height: 300 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={buckets}
@@ -369,10 +369,10 @@ export default function SalesPage() {
                 type="button"
                 onClick={() => setTimePeriod(period)}
                 className={[
-                  "rounded-[var(--radius)] border px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--leading-snug)] transition-colors duration-[var(--duration-normal)]",
+                  "inline-flex h-[35px] items-center justify-center rounded-[var(--radius)] border px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--leading-snug)] transition-colors duration-[var(--duration-normal)]",
                   isActive
-                    ? "border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.95)] text-[#000000]"
-                    : "border-[rgba(255,255,255,0.12)] bg-transparent text-[rgba(255,255,255,0.72)] hover:border-[rgba(255,255,255,0.20)] hover:text-[var(--color-text-primary)]",
+                    ? "border-[rgba(255,255,255,0.20)] bg-[rgba(255,255,255,0.14)] text-[var(--color-text-primary)]"
+                    : "border-[rgba(255,255,255,0.12)] bg-transparent text-[rgba(255,255,255,0.72)] hover:border-[rgba(255,255,255,0.20)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[var(--color-text-primary)]",
                 ].join(" ")}
               >
                 {period}
@@ -382,7 +382,7 @@ export default function SalesPage() {
         </div>
 
         {/* KPI Summary — matches Figma node 71:1573 */}
-        <dl className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-3">
+        <dl className="grid grid-cols-1 gap-[var(--space-6)] sm:grid-cols-3">
           {summaryLoading ? (
             <>
               <SummaryCardSkeleton />
@@ -439,11 +439,11 @@ export default function SalesPage() {
         >
           {/* Panel header */}
           <div className="border-b px-[var(--space-6)] py-[var(--space-5)]" style={{ borderColor: SALES_COLORS.border }}>
-            <h3 className="font-[var(--font-display)] font-bold text-[var(--text-lg)] leading-[var(--leading-tight)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
+            <h3 className="font-[var(--font-display)] font-bold text-[var(--text-lg)] leading-[1.75rem] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
               Sales History
             </h3>
             <p
-              className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--leading-snug)]"
+              className="mt-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.3125rem]"
               style={{ color: SALES_COLORS.subtitle }}
             >
               Detailed breakdown of your attributed ticket sales
@@ -469,7 +469,7 @@ export default function SalesPage() {
                         <th
                           key={col}
                           scope="col"
-                          className="px-[var(--space-3)] py-[var(--space-3)] text-left text-[var(--text-xs)] leading-[var(--leading-caption)] tracking-[var(--tracking-caption)] uppercase font-semibold whitespace-nowrap first:pl-0 last:pr-0"
+                          className="px-[var(--space-4)] py-[var(--space-4)] text-left text-[var(--text-xs)] leading-[0.875rem] tracking-[var(--tracking-caption)] uppercase font-medium whitespace-nowrap first:pl-[var(--space-4)] last:pr-[var(--space-4)]"
                           style={{ color: SALES_COLORS.headerText }}
                         >
                           {col}
@@ -485,36 +485,36 @@ export default function SalesPage() {
                         style={{ borderColor: "rgba(255,255,255,0.06)" }}
                       >
                         <td
-                          className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] leading-[var(--leading-snug)] whitespace-nowrap"
+                          className="px-[var(--space-4)] py-[var(--space-5)] text-[var(--text-sm)] leading-[1.125rem] whitespace-nowrap"
                           style={{ color: SALES_COLORS.bodyText }}
                         >
                           {formatDate(sale.createdAt)}
                         </td>
                         <td
-                          className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] leading-[var(--leading-snug)] whitespace-nowrap"
+                          className="px-[var(--space-4)] py-[var(--space-5)] text-[var(--text-xs)] leading-[1rem] whitespace-nowrap"
                           style={{ color: SALES_COLORS.bodyText }}
                         >
                           {maskName(sale.affiliateName)}
                         </td>
                         <td
-                          className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] leading-[var(--leading-snug)] whitespace-nowrap"
+                          className="px-[var(--space-4)] py-[var(--space-5)] text-[var(--text-sm)] leading-[1.125rem] whitespace-nowrap"
                           style={{ color: SALES_COLORS.bodyText }}
                         >
                           {deriveTicketType(sale.amount)}
                         </td>
                         <td
-                          className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] leading-[var(--leading-snug)] whitespace-nowrap"
+                          className="px-[var(--space-4)] py-[var(--space-5)] font-[var(--font-display)] text-[1.125rem] font-bold leading-[1.5rem] whitespace-nowrap"
                           style={{ color: SALES_COLORS.bodyTextStrong }}
                         >
                           {formatCurrency(sale.amount, sale.currency)}
                         </td>
                         <td
-                          className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] leading-[var(--leading-snug)] whitespace-nowrap"
+                          className="px-[var(--space-4)] py-[var(--space-5)] font-[var(--font-display)] text-[1.125rem] font-bold leading-[1.5rem] whitespace-nowrap"
                           style={{ color: SALES_COLORS.commission }}
                         >
                           {formatCurrency(sale.commission, sale.currency)}
                         </td>
-                        <td className="py-[var(--space-3)]">
+                        <td className="px-[var(--space-4)] py-[var(--space-5)]">
                           <StatusCell status={sale.status} />
                         </td>
                       </tr>
@@ -528,7 +528,7 @@ export default function SalesPage() {
           {/* Pagination */}
           {!listLoading && totalPages > 1 && (
             <div className="flex items-center justify-between border-t px-[var(--space-6)] py-[var(--space-4)]" style={{ borderColor: SALES_COLORS.border }}>
-              <p className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] text-[var(--color-text-muted)]">
+              <p className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[1.125rem] text-[var(--color-text-muted)]">
                 Showing {startItem}-{endItem} of {total} transactions
               </p>
               <div className="flex gap-[var(--space-2)]">
@@ -536,7 +536,7 @@ export default function SalesPage() {
                   type="button"
                   disabled={currentPage <= 1}
                   onClick={() => setFilters({ page: currentPage - 1 })}
-                  className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.78)] transition-colors hover:border-[rgba(255,255,255,0.18)] hover:text-[var(--color-text-primary)] disabled:pointer-events-none disabled:opacity-40"
+                  className="inline-flex h-[35px] items-center justify-center rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.125rem] text-[rgba(255,255,255,0.78)] transition-colors hover:border-[rgba(255,255,255,0.18)] hover:text-[var(--color-text-primary)] disabled:pointer-events-none disabled:opacity-40"
                 >
                   Previous
                 </button>
@@ -546,7 +546,7 @@ export default function SalesPage() {
                     type="button"
                     onClick={() => setFilters({ page: num })}
                     className={[
-                      "rounded-[var(--radius)] border px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] transition-colors",
+                      "inline-flex h-[36px] min-w-[42px] items-center justify-center rounded-[var(--radius)] border font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.125rem] transition-colors",
                       currentPage === num
                         ? "border-[#5B8DEF] bg-[#5B8DEF] text-white"
                         : "border-[rgba(255,255,255,0.12)] bg-transparent text-[rgba(255,255,255,0.78)] hover:border-[rgba(255,255,255,0.18)] hover:text-[var(--color-text-primary)]",
@@ -559,7 +559,7 @@ export default function SalesPage() {
                   type="button"
                   disabled={currentPage >= totalPages}
                   onClick={() => setFilters({ page: currentPage + 1 })}
-                  className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.78)] transition-colors hover:border-[rgba(255,255,255,0.18)] hover:text-[var(--color-text-primary)] disabled:pointer-events-none disabled:opacity-40"
+                  className="inline-flex h-[36px] items-center justify-center rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.125rem] text-[rgba(255,255,255,0.78)] transition-colors hover:border-[rgba(255,255,255,0.18)] hover:text-[var(--color-text-primary)] disabled:pointer-events-none disabled:opacity-40"
                 >
                   Next
                 </button>

@@ -80,7 +80,7 @@ function AssetCard({ asset }: { asset: Asset }) {
   return (
     <article className="h-full overflow-hidden rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.08)] bg-[rgba(20,24,42,0.92)]">
       <div
-        className="relative flex h-[12.6rem] items-center justify-center overflow-hidden text-[rgba(255,255,255,0.72)]"
+        className="relative flex h-[12rem] items-center justify-center overflow-hidden text-[rgba(255,255,255,0.72)]"
         style={{ background: asset.thumbnailBg }}
         aria-hidden="true"
       >
@@ -95,16 +95,16 @@ function AssetCard({ asset }: { asset: Asset }) {
         <PreviewIcon type={asset.type} />
       </div>
 
-      <div className="px-[var(--space-4)] pb-[var(--space-4)] pt-[var(--space-3)]">
-        <h3 className="truncate font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-[var(--space-5)] tracking-[-0.03em] text-[var(--color-text-primary)]">
+      <div className="p-[var(--space-4)]">
+        <h3 className="truncate font-[var(--font-display)] text-[1.125rem] font-medium leading-[var(--space-5)] tracking-[-0.011em] text-[var(--color-text-primary)]">
           {asset.title}
         </h3>
 
         <div className="mt-[var(--space-2)] flex items-center gap-[var(--space-2)]">
-          <span className="rounded-[var(--radius-sm)] bg-[rgba(255,255,255,0.08)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium leading-[var(--space-4)] text-[rgba(255,255,255,0.9)]">
+          <span className="rounded-[var(--radius-sm)] bg-[rgba(255,255,255,0.08)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium leading-[1.125rem] text-[rgba(255,255,255,0.9)]">
             {asset.type}
           </span>
-          <span className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--space-4)] text-[rgba(255,255,255,0.68)]">
+          <span className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[1.125rem] text-[rgba(255,255,255,0.68)]">
             {asset.sizeLabel}
           </span>
         </div>
@@ -114,16 +114,16 @@ function AssetCard({ asset }: { asset: Asset }) {
           target="_blank"
           rel="noopener noreferrer"
           download
-          className="mt-[var(--space-3)] flex h-[var(--space-12)] w-full items-center justify-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[rgba(59,102,208,0.95)] bg-transparent font-[var(--font-sans)] text-[var(--text-base)] font-medium text-[var(--color-text-primary)] transition-colors duration-[var(--duration-normal)] hover:bg-[rgba(59,102,208,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+          className="mt-[var(--space-3)] flex h-[37px] w-full items-center justify-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[rgba(59,102,208,0.95)] bg-transparent font-[var(--font-sans)] text-[var(--text-sm)] font-semibold leading-[var(--leading-snug)] text-[var(--color-text-primary)] transition-colors duration-[var(--duration-normal)] hover:bg-[rgba(59,102,208,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
           aria-label={`Download ${asset.title}`}
         >
           <IconDownload />
           Download
         </a>
 
-        <div className="mt-[var(--space-4)] flex items-center gap-[var(--space-2)] text-[rgba(255,255,255,0.74)]">
+        <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)] text-[rgba(255,255,255,0.74)]">
           <IconCalendar />
-          <span className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--space-4)]">
+          <span className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[1.125rem]">
             Added {formatAddedDate(asset.addedAt)}
           </span>
         </div>
@@ -135,11 +135,11 @@ function AssetCard({ asset }: { asset: Asset }) {
 function AssetCardSkeleton() {
   return (
     <div className="overflow-hidden rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.08)] bg-[rgba(20,24,42,0.92)]">
-      <div className="h-[12.6rem] animate-pulse bg-[rgba(51,71,124,0.8)]" />
-      <div className="space-y-[var(--space-3)] px-[var(--space-4)] pb-[var(--space-4)] pt-[var(--space-3)]">
+      <div className="h-[12rem] animate-pulse bg-[rgba(51,71,124,0.8)]" />
+      <div className="space-y-[var(--space-3)] p-[var(--space-4)]">
         <div className="h-[var(--space-5)] w-[70%] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
         <div className="h-[var(--space-4)] w-[38%] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
-        <div className="h-[var(--space-12)] w-full animate-pulse rounded-[var(--radius-md)] bg-[rgba(28,74,166,0.2)]" />
+        <div className="h-[37px] w-full animate-pulse rounded-[var(--radius-md)] bg-[rgba(28,74,166,0.2)]" />
         <div className="h-[var(--space-3)] w-[42%] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
       </div>
     </div>
@@ -163,10 +163,10 @@ export default function MaterialsPage() {
       <DashboardContainer>
         <section className="w-full">
           <div className="max-w-[32rem]">
-            <h2 className="font-[var(--font-display)] text-[var(--text-2xl)] font-bold leading-none tracking-[-0.04em] text-[var(--color-text-primary)]">
+            <h2 className="font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-[var(--leading-tight)] tracking-[-0.0125em] text-[var(--color-text-primary)]">
               Marketing Materials
             </h2>
-            <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-4)] text-[var(--color-text-secondary)]">
+            <p className="mt-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-xs)] leading-[1.125rem] text-[var(--color-text-secondary)]">
               Download and use these assets for your {eventName} promotions.
             </p>
           </div>
@@ -174,7 +174,7 @@ export default function MaterialsPage() {
           <div
             role="tablist"
             aria-label="Filter materials by type"
-            className="mt-[var(--space-3)] flex flex-wrap gap-[var(--space-2)]"
+            className="mt-[var(--space-8)] flex flex-wrap gap-[var(--space-2)]"
           >
             {FILTER_TABS.map((tab) => {
               const isActive = activeFilter === tab.value;
@@ -187,9 +187,9 @@ export default function MaterialsPage() {
                   type="button"
                   onClick={() => setActiveFilter(tab.value)}
                   className={cn(
-                    "rounded-[var(--radius-sm)] px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--space-4)] transition-colors duration-[var(--duration-normal)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
+                    "inline-flex h-[35px] items-center justify-center rounded-[var(--radius-sm)] px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--leading-snug)] transition-colors duration-[var(--duration-normal)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
                     isActive
-                      ? "bg-[rgba(255,255,255,0.96)] text-[var(--color-text-dark)]"
+                      ? "bg-[rgba(255,255,255,0.96)] font-semibold text-[var(--color-text-dark)]"
                       : "bg-[rgba(20,24,42,0.9)] text-[rgba(255,255,255,0.62)] hover:bg-[rgba(255,255,255,0.06)] hover:text-[var(--color-text-primary)]",
                   )}
                 >
@@ -203,16 +203,16 @@ export default function MaterialsPage() {
             aria-label="Marketing materials"
             aria-busy={isLoading}
             aria-live="polite"
-            className="mt-[var(--space-4)]"
+            className="mt-[var(--space-8)]"
           >
             {isLoading ? (
-              <div className="grid w-full grid-cols-1 items-stretch gap-[var(--space-4)] md:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))]">
+              <div className="grid w-full grid-cols-1 items-stretch gap-[var(--space-6)] md:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))]">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <AssetCardSkeleton key={i} />
                 ))}
               </div>
             ) : (
-              <div className="grid w-full grid-cols-1 items-stretch gap-[var(--space-4)] md:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))]">
+              <div className="grid w-full grid-cols-1 items-stretch gap-[var(--space-6)] md:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))]">
                 {assets.map((asset) => (
                   <AssetCard key={asset.id} asset={asset} />
                 ))}
