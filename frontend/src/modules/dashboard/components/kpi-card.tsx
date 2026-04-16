@@ -3,9 +3,19 @@ type KpiCardProps = {
   value: string;
   changePct?: number;
   changeLabel?: string;
-  accentClassName: string;
+  accentColor: string;
   isLoading?: boolean;
 };
+
+// Figma trend icon (53:1747) — 16px, green upward arrow
+function IconTrend() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M2 12L6 7L9 10L14 4" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 4H14V8" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 function KpiCardSkeleton({ label }: { label: string }) {
   return (
@@ -13,12 +23,12 @@ function KpiCardSkeleton({ label }: { label: string }) {
       role="status"
       aria-label={`Loading ${label}`}
       aria-busy="true"
-      className="flex min-h-[7.5rem] flex-col gap-[var(--space-2)] rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface-card)] px-[var(--space-5)] py-[var(--space-4)]"
+      className="flex flex-col gap-[8px] rounded-[8px] border border-[rgba(255,255,255,0.1)] p-[24px]"
+      style={{ background: "rgba(21,26,43,0.8)" }}
     >
-      <div className="h-[var(--space-1)] w-[3.5rem] animate-pulse rounded-full bg-[var(--color-border)]" />
-      <div className="h-[var(--space-3)] w-[5rem] animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
-      <div className="h-[2rem] w-[7rem] animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
-      <div className="h-[var(--text-xs)] w-[var(--space-8)] animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
+      <div className="h-[4px] w-[64px] animate-pulse rounded-[50px] bg-[rgba(255,255,255,0.08)]" />
+      <div className="h-[16px] w-[80px] animate-pulse rounded-[4px] bg-[rgba(255,255,255,0.08)]" />
+      <div className="h-[28px] w-[100px] animate-pulse rounded-[4px] bg-[rgba(255,255,255,0.08)]" />
       <span className="sr-only">Loading</span>
     </div>
   );
@@ -29,32 +39,45 @@ export function KpiCard({
   value,
   changePct,
   changeLabel,
-  accentClassName,
+  accentColor,
   isLoading,
 }: KpiCardProps) {
   if (isLoading) return <KpiCardSkeleton label={label} />;
 
   const delta = changeLabel
-    ?? (changePct !== undefined ? `↗ +${changePct.toFixed(1)}%` : "");
+    ?? (changePct !== undefined ? `+${changePct.toFixed(1)}%` : null);
 
   return (
-    <dl className="flex min-h-[7.5rem] flex-col gap-[var(--space-2)] rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface-card)] px-[var(--space-5)] py-[var(--space-4)]">
+    <dl
+      className="flex flex-col gap-[8px] rounded-[8px] border border-[rgba(255,255,255,0.1)] p-[24px]"
+      style={{ background: "rgba(21,26,43,0.8)" }}
+    >
+      {/* Accent bar — 64×4 rounded pill */}
       <span
         aria-hidden="true"
-        className={`h-[var(--space-1)] w-[3.5rem] rounded-full ${accentClassName}`}
+        className="h-[4px] w-[64px] rounded-[50px]"
+        style={{ background: accentColor }}
       />
 
-      <dt className="truncate font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.03em] text-[rgba(166,209,255,0.95)]">
+      {/* Label — 12px uppercase, tracking 0.5px, #A6D1FF, leading 16px */}
+      <dt className="font-[var(--font-sans)] text-[12px] leading-[16px] tracking-[0.5px] uppercase text-[#A6D1FF]">
         {label}
       </dt>
 
-      <dd className="font-[var(--font-sans)] text-[var(--text-2xl)] font-semibold leading-[1.1] text-[var(--color-text-primary)]">
+      {/* Value — Bold 28px, #F0F0F0, leading 42px */}
+      <dd className="font-[var(--font-sans)] text-[28px] font-bold leading-[42px] text-[#F0F0F0]">
         {value}
       </dd>
 
-      <dd className="min-h-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-4)] text-[var(--color-success)]">
-        {delta}
-      </dd>
+      {/* Change indicator — 12px, #22C55E, leading 18px, with trend icon */}
+      {delta ? (
+        <dd className="flex items-center gap-[4px] font-[var(--font-sans)] text-[12px] leading-[18px] text-[#22C55E]">
+          <IconTrend />
+          {delta}
+        </dd>
+      ) : (
+        <dd aria-hidden="true" className="min-h-[18px]" />
+      )}
     </dl>
   );
 }
