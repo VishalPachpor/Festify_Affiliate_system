@@ -22,30 +22,31 @@ function IconCheck() {
   );
 }
 
+// Figma 60:2705 — exact tier colors
 const TIER_STYLES = {
   bronze: {
-    tileText: "#E19A3E",
-    tileBorder: "#9F6B33",
-    tileBg: "rgba(225,154,62,0.12)",
-    progress: "#D8913D",
+    tileText: "#CD7F32",
+    tileBorder: "rgba(205,127,50,0.4)",
+    tileBg: "rgba(205,127,50,0.2)",
+    progress: "linear-gradient(90deg, rgb(205,127,50) 0%, rgb(184,115,51) 100%)",
   },
   silver: {
-    tileText: "#DADCE3",
-    tileBorder: "#8F93A0",
-    tileBg: "rgba(218,220,227,0.12)",
-    progress: "#E5E7EB",
+    tileText: "#C0C0C0",
+    tileBorder: "rgba(192,192,192,0.4)",
+    tileBg: "rgba(192,192,192,0.2)",
+    progress: "linear-gradient(90deg, rgb(192,192,192) 0%, rgb(168,168,168) 100%)",
   },
   gold: {
-    tileText: "#FFD620",
-    tileBorder: "#9E8F19",
-    tileBg: "rgba(255,214,32,0.12)",
-    progress: "#FFC800",
+    tileText: "#FFD700",
+    tileBorder: "rgba(255,215,0,0.4)",
+    tileBg: "rgba(255,215,0,0.2)",
+    progress: "linear-gradient(90deg, rgb(255,215,0) 0%, rgb(255,165,0) 100%)",
   },
   platinum: {
-    tileText: "#E2E4EB",
-    tileBorder: "#8C909D",
-    tileBg: "rgba(226,228,235,0.12)",
-    progress: "#E5E7EB",
+    tileText: "#E5E4E2",
+    tileBorder: "rgba(229,228,226,0.4)",
+    tileBg: "rgba(229,228,226,0.2)",
+    progress: "linear-gradient(90deg, rgb(229,228,226) 0%, rgb(192,192,192) 100%)",
   },
 } as const;
 
@@ -65,7 +66,7 @@ function TierTile({
   return (
     <div className="relative">
       <div
-        className="flex size-[4rem] shrink-0 items-center justify-center rounded-[var(--radius-md)] border-[1.5px] font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-none"
+        className="flex size-[64px] shrink-0 items-center justify-center rounded-[8px] border-2 font-[var(--font-display)] text-[28px] font-bold leading-[32px]"
         style={{
           borderColor: tileBorder,
           color: tileText,
@@ -76,7 +77,7 @@ function TierTile({
         {letter}
       </div>
       {unlocked ? (
-        <span className="absolute -right-[6px] -top-[6px] flex size-[1.5rem] items-center justify-center rounded-full bg-[var(--color-success)] text-white shadow-[0_0_0_2px_rgba(24,28,47,0.96)]">
+        <span className="absolute -right-[6px] -top-[8px] flex size-[24px] items-center justify-center rounded-full border-2 border-[#151A2B] bg-[#22C55E] text-white">
           <IconCheck />
         </span>
       ) : null}
@@ -132,8 +133,11 @@ function MilestoneCard({
   const fillColor = styles.progress;
 
   return (
-    <article className="overflow-hidden rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.1)] bg-[#181d30] p-[var(--space-6)]">
-      <div className="flex items-start gap-[var(--space-6)]">
+    <article
+      className="overflow-hidden rounded-[8px] border border-[rgba(255,255,255,0.1)] p-[24px]"
+      style={{ background: "rgba(21,26,43,0.5)" }}
+    >
+      <div className="flex items-start gap-[24px]">
         <TierTile
           letter={letter}
           tileText={styles.tileText}
@@ -142,41 +146,47 @@ function MilestoneCard({
           unlocked={unlocked}
         />
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-[var(--space-6)]">
-            <h2 className="font-[var(--font-display)] text-[var(--text-lg)] font-bold leading-[1.75rem] text-[var(--color-text-primary)]">
+          {/* Title row — Figma: Oswald Bold 20px + line + Medium 16px amount */}
+          <div className="flex items-center gap-[24px]">
+            <h2 className="font-[var(--font-display)] text-[20px] font-bold leading-[28px] tracking-[-0.3px] text-[#F0F0F0]">
               {name}
             </h2>
-            <span className="inline-block h-[1px] w-[var(--space-10)] bg-[rgba(255,255,255,0.42)]" />
-            <p className="font-[var(--font-display)] text-[1.125rem] font-bold leading-[1.5rem] text-[var(--color-text-primary)]">
+            <span className="inline-block h-[1px] w-[40px] bg-[rgba(255,255,255,0.42)]" />
+            <p className="font-[var(--font-sans)] text-[16px] font-medium leading-[24px] text-[#F0F0F0]">
               {formatCurrency(targetAmount, currency)}
             </p>
           </div>
 
-          <p className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.3125rem] text-[rgba(255,255,255,0.56)]">
+          {/* Description — Figma: Regular 14px, #9CA4B7 */}
+          <p className="mt-[12px] font-[var(--font-sans)] text-[14px] leading-[21px] text-[#9CA4B7]">
             {description}
           </p>
 
-          <div className="mt-[var(--space-3)] flex items-center justify-between gap-[var(--space-4)]">
-            <p className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[0.875rem] text-[rgba(255,255,255,0.62)]">
-              {formatCurrency(effectiveCurrent, currency)} / {formatCurrency(targetAmount, currency)} ({Math.round(pct)}%)
-            </p>
-            <span className={`font-[var(--font-sans)] text-[var(--text-xs)] leading-[0.875rem] ${unlocked ? "text-[var(--color-success)]" : "text-[rgba(255,255,255,0.68)]"}`}>
-              {unlocked ? "Unlocked!" : "Locked"}
-            </span>
-          </div>
+          {/* Progress section — Figma: gap-8 */}
+          <div className="mt-[12px] flex flex-col gap-[8px]">
+            <div className="flex items-center justify-between">
+              <p className="font-[var(--font-sans)] text-[12px] leading-[14px] text-[#9CA4B7]">
+                {formatCurrency(effectiveCurrent, currency)} / {formatCurrency(targetAmount, currency)} ({Math.round(pct)}%)
+              </p>
+              <span className={`font-[var(--font-sans)] text-[12px] leading-[14px] ${unlocked ? "text-[#22C55E]" : "text-[#F0F0F0]"}`}>
+                {unlocked ? "Unlocked!" : "Locked"}
+              </span>
+            </div>
 
-          <div
-            role="progressbar"
-            aria-valuenow={Math.round(pct)}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={`${name} milestone progress`}
-            className="mt-[var(--space-2)] h-[0.5rem] w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.14)] p-[1px]"
-          >
+            {/* Progress bar — Figma: 8px, bg #0D1420, border rgba(255,255,255,0.1), fill 6px */}
             <div
-              className="h-full rounded-full transition-[width] duration-500"
-              style={{ width: `${Math.max(pct, 0)}%`, background: fillColor }}
-            />
+              role="progressbar"
+              aria-valuenow={Math.round(pct)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`${name} milestone progress`}
+              className="h-[8px] w-full overflow-hidden rounded-full border border-[rgba(255,255,255,0.1)] bg-[#0D1420] p-[1px]"
+            >
+              <div
+                className="h-full rounded-full transition-[width] duration-500"
+                style={{ width: `${Math.max(pct, 0)}%`, backgroundImage: fillColor }}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -194,7 +204,7 @@ export default function MilestonesPage() {
     <DashboardStageCanvas>
       <DashboardContainer>
         <section className="w-full">
-          <div className="space-y-[var(--space-4)]">
+          <div className="flex flex-col gap-[16px]">
             {isLoading
               ? Array.from({ length: 4 }).map((_, index) => <MilestoneCardSkeleton key={index} />)
               : tiers.map((tier) => <MilestoneCard key={tier.id} {...tier} />)}
