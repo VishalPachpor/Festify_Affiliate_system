@@ -289,6 +289,12 @@ function CommissionChart({ sales }: { sales: Sale[] }) {
             data={buckets}
             margin={{ top: 10, right: 10, bottom: 0, left: -10 }}
           >
+            <CartesianGrid
+              stroke="rgba(255,255,255,0.06)"
+              strokeDasharray="4 4"
+              vertical={true}
+              horizontal={true}
+            />
             <XAxis
               dataKey="date"
               axisLine={{ stroke: "rgba(255,255,255,0.10)" }}
@@ -299,8 +305,8 @@ function CommissionChart({ sales }: { sales: Sale[] }) {
             <YAxis
               domain={[0, niceMax]}
               ticks={yTicks}
-              axisLine={false}
-              tickLine={false}
+              axisLine={{ stroke: "rgba(255,255,255,0.10)" }}
+              tickLine={{ stroke: "rgba(255,255,255,0.10)", strokeWidth: 1 }}
               tick={{ fill: SALES_COLORS.chartTick, fontSize: 12, fontFamily: "var(--font-sans)" }}
               tickFormatter={(v: number) => String(Math.round(v))}
               width={45}
