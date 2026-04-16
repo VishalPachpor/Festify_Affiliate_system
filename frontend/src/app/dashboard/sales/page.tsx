@@ -46,7 +46,7 @@ const SALES_COLORS = {
 
   // Table
   tableBorder: "rgba(255,255,255,0.05)",
-  headerText: "#b0b8cc",
+  headerText: "rgba(176,184,204,0.7)",
   bodyDate: "#ffffff",
   bodyCustomer: "#b0b8cc",
   bodyTicketType: "#ffffff",
@@ -177,19 +177,19 @@ function SummaryCard({
 }) {
   return (
     <div
-      className="flex flex-col gap-[8px] rounded-[var(--radius)] border p-[24px]"
+      className="flex flex-col gap-[10px] rounded-[8px] border p-[28px]"
       style={{
         borderColor: SALES_COLORS.cardBorder,
         background: SALES_COLORS.cardBg,
       }}
     >
-      {/* Accent line — 64×4 rounded pill */}
-      <div className="h-[4px] w-[64px] rounded-[50px]" style={{ background: accentColor }} />
+      {/* Accent line — 64×5 rounded pill */}
+      <div className="h-[5px] w-[64px] rounded-[50px]" style={{ background: accentColor }} />
 
-      {/* Label — 12px uppercase, tracking 0.5px, #a6d1ff */}
+      {/* Label — 12px uppercase, tracking 0.5px, slightly muted */}
       <dt
         className="font-[var(--font-sans)] text-[12px] leading-[16px] tracking-[0.5px] uppercase"
-        style={{ color: SALES_COLORS.kpiLabel }}
+        style={{ color: "rgba(166,209,255,0.75)" }}
       >
         {label}
       </dt>
@@ -290,7 +290,7 @@ function CommissionChart({ sales }: { sales: Sale[] }) {
             margin={{ top: 10, right: 10, bottom: 0, left: -10 }}
           >
             <CartesianGrid
-              stroke="rgba(255,255,255,0.04)"
+              stroke="rgba(255,255,255,0.03)"
               strokeDasharray="4 4"
               vertical={true}
               horizontal={true}
