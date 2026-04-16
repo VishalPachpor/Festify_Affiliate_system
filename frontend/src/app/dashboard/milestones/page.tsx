@@ -50,6 +50,12 @@ const TIER_STYLES = {
   },
 } as const;
 
+// Locked state: muted colors for tiles that haven't been reached
+const LOCKED_TILE = {
+  tileBorder: "rgba(255,255,255,0.12)",
+  tileBg: "rgba(255,255,255,0.04)",
+};
+
 function TierTile({
   letter,
   tileText,
@@ -68,9 +74,9 @@ function TierTile({
       <div
         className="flex size-[64px] shrink-0 items-center justify-center rounded-[8px] border-2 font-[var(--font-display)] text-[28px] font-bold leading-[32px]"
         style={{
-          borderColor: tileBorder,
-          color: tileText,
-          background: tileBg,
+          borderColor: unlocked ? tileBorder : LOCKED_TILE.tileBorder,
+          color: unlocked ? tileText : "rgba(255,255,255,0.3)",
+          background: unlocked ? tileBg : LOCKED_TILE.tileBg,
         }}
         aria-hidden="true"
       >
@@ -87,21 +93,27 @@ function TierTile({
 
 function MilestoneCardSkeleton() {
   return (
-    <article className="overflow-hidden rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.08)] bg-[#181d30] p-[var(--space-6)]">
-      <div className="flex items-start gap-[var(--space-6)]">
-        <div className="size-[4rem] shrink-0 animate-pulse rounded-[var(--radius-md)] bg-[rgba(255,255,255,0.08)]" />
+    <article
+      className="rounded-[8px] p-[28px]"
+      style={{
+        background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)",
+        boxShadow: "0 0 0 1px rgba(255,255,255,0.05), 0 8px 24px rgba(0,0,0,0.2)",
+      }}
+    >
+      <div className="flex items-start gap-[24px]">
+        <div className="size-[64px] shrink-0 animate-pulse rounded-[8px] bg-[rgba(255,255,255,0.06)]" />
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-[var(--space-6)]">
-            <div className="h-[1.75rem] w-[5rem] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
-            <div className="h-[1px] w-[var(--space-10)] bg-[rgba(255,255,255,0.08)]" />
-            <div className="h-[1.5rem] w-[4rem] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
+          <div className="flex items-center gap-[24px]">
+            <div className="h-[28px] w-[80px] animate-pulse rounded-[4px] bg-[rgba(255,255,255,0.06)]" />
+            <div className="h-[1px] w-[40px] bg-[rgba(255,255,255,0.06)]" />
+            <div className="h-[24px] w-[60px] animate-pulse rounded-[4px] bg-[rgba(255,255,255,0.06)]" />
           </div>
-          <div className="mt-[var(--space-3)] h-[1.3125rem] w-[60%] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
-          <div className="mt-[var(--space-3)] flex items-center justify-between">
-            <div className="h-[0.875rem] w-[40%] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
-            <div className="h-[0.875rem] w-[3.5rem] animate-pulse rounded-[var(--space-1)] bg-[rgba(255,255,255,0.08)]" />
+          <div className="mt-[12px] h-[21px] w-[60%] animate-pulse rounded-[4px] bg-[rgba(255,255,255,0.06)]" />
+          <div className="mt-[16px] flex items-center justify-between">
+            <div className="h-[14px] w-[40%] animate-pulse rounded-[4px] bg-[rgba(255,255,255,0.06)]" />
+            <div className="h-[14px] w-[50px] animate-pulse rounded-[4px] bg-[rgba(255,255,255,0.06)]" />
           </div>
-          <div className="mt-[var(--space-2)] h-[0.5rem] w-full animate-pulse rounded-full bg-[rgba(255,255,255,0.08)]" />
+          <div className="mt-[8px] h-[8px] w-full animate-pulse rounded-full bg-[rgba(255,255,255,0.06)]" />
         </div>
       </div>
     </article>
@@ -109,7 +121,6 @@ function MilestoneCardSkeleton() {
 }
 
 function MilestoneCard({
-  id,
   name,
   letter,
   targetAmount,
@@ -130,12 +141,14 @@ function MilestoneCard({
   const styles = TIER_STYLES[name.toLowerCase() as keyof typeof TIER_STYLES] ?? TIER_STYLES.bronze;
   const effectiveCurrent = unlocked ? targetAmount : currentAmount;
   const pct = Math.min(100, (effectiveCurrent / targetAmount) * 100);
-  const fillColor = styles.progress;
 
   return (
     <article
-      className="overflow-hidden rounded-[8px] border border-[rgba(255,255,255,0.1)] p-[24px]"
-      style={{ background: "rgba(21,26,43,0.5)" }}
+      className="rounded-[8px] p-[28px]"
+      style={{
+        background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)",
+        boxShadow: "0 0 0 1px rgba(255,255,255,0.05), 0 8px 24px rgba(0,0,0,0.2)",
+      }}
     >
       <div className="flex items-start gap-[24px]">
         <TierTile
@@ -162,8 +175,8 @@ function MilestoneCard({
             {description}
           </p>
 
-          {/* Progress section — Figma: gap-8 */}
-          <div className="mt-[12px] flex flex-col gap-[8px]">
+          {/* Progress section */}
+          <div className="mt-[16px] flex flex-col gap-[8px]">
             <div className="flex items-center justify-between">
               <p className="font-[var(--font-sans)] text-[12px] leading-[14px] text-[#9CA4B7]">
                 {formatCurrency(effectiveCurrent, currency)} / {formatCurrency(targetAmount, currency)} ({Math.round(pct)}%)
@@ -173,7 +186,7 @@ function MilestoneCard({
               </span>
             </div>
 
-            {/* Progress bar — Figma: 8px, bg #0D1420, border rgba(255,255,255,0.1), fill 6px */}
+            {/* Progress bar — 8px, colored when unlocked/progressing, grey when locked/0% */}
             <div
               role="progressbar"
               aria-valuenow={Math.round(pct)}
@@ -182,10 +195,16 @@ function MilestoneCard({
               aria-label={`${name} milestone progress`}
               className="h-[8px] w-full overflow-hidden rounded-full border border-[rgba(255,255,255,0.1)] bg-[#0D1420] p-[1px]"
             >
-              <div
-                className="h-full rounded-full transition-[width] duration-500"
-                style={{ width: `${Math.max(pct, 0)}%`, backgroundImage: fillColor }}
-              />
+              {pct > 0 && (
+                <div
+                  className="h-full rounded-full transition-[width] duration-500"
+                  style={{
+                    width: `${pct}%`,
+                    backgroundImage: styles.progress,
+                    boxShadow: unlocked ? `0 0 6px ${styles.tileText}40` : "none",
+                  }}
+                />
+              )}
             </div>
           </div>
         </div>

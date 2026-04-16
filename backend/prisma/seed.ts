@@ -24,11 +24,12 @@ const CAMPAIGN_SLUG = "demo";
 const AFFILIATE_ID = "affiliate_alex";
 const REFERRAL_CODE = "REF-ALEX";
 
+// Figma 60:2705 target values: $1,000 → $5,000 → $10,000 → $25,000
 const MILESTONES = [
-  { key: "bronze",   name: "Bronze",   letter: "B", color: "#E19A3E", description: "Event VIP pass upgrade",            targetMinor: 100_00,    sortOrder: 1 },
-  { key: "silver",   name: "Silver",   letter: "S", color: "#DADCE3", description: "Backstage / speaker lounge access", targetMinor: 500_00,    sortOrder: 2 },
-  { key: "gold",     name: "Gold",     letter: "G", color: "#FFD620", description: "Speaking / panel opportunity",      targetMinor: 1_000_00,  sortOrder: 3 },
-  { key: "platinum", name: "Platinum", letter: "P", color: "#E2E4EB", description: "Revenue share increase to 15%",     targetMinor: 2_500_00,  sortOrder: 4 },
+  { key: "bronze",   name: "Bronze",   letter: "B", color: "#CD7F32", description: "Event VIP pass upgrade",            targetMinor: 1_000_00,   sortOrder: 1 },
+  { key: "silver",   name: "Silver",   letter: "S", color: "#C0C0C0", description: "Backstage / speaker lounge access", targetMinor: 5_000_00,   sortOrder: 2 },
+  { key: "gold",     name: "Gold",     letter: "G", color: "#FFD700", description: "Speaking / panel opportunity",      targetMinor: 10_000_00,  sortOrder: 3 },
+  { key: "platinum", name: "Platinum", letter: "P", color: "#E5E4E2", description: "Revenue share increase to 15%",     targetMinor: 25_000_00,  sortOrder: 4 },
 ];
 
 async function main() {
