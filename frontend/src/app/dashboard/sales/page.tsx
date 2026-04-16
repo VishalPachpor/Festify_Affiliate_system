@@ -53,10 +53,10 @@ const SALES_COLORS = {
   bodyOrderValue: "#ffffff",
   bodyCommission: "#c9a84c",
   statusConfirmed: "#f0f0f0",
-  pendingBg: "rgba(245,158,11,0.2)",
-  pendingText: "#f59e0b",
-  rejectedBg: "rgba(239,68,68,0.12)",
-  rejectedText: "#ef4444",
+  pendingBg: "rgba(245,158,11,0.15)",
+  pendingText: "rgba(245,158,11,0.85)",
+  rejectedBg: "rgba(239,68,68,0.10)",
+  rejectedText: "rgba(239,68,68,0.80)",
 
   // Pagination
   paginationActiveBg: "#132054",
