@@ -435,7 +435,7 @@ export default function SalesPage() {
         </div>
 
         {/* ── KPI Summary (Figma: 71:1848) ─────────────────────────────── */}
-        <dl className="grid grid-cols-1 items-stretch gap-[24px] sm:grid-cols-[2fr_1fr_1fr]">
+        <dl className="grid grid-cols-1 items-stretch gap-[24px] sm:grid-cols-3">
           {summaryLoading ? (
             <>
               <SummaryCardSkeleton />
