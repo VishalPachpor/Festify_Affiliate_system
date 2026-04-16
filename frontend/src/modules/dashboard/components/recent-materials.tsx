@@ -3,26 +3,26 @@
 import { useTenant } from "@/modules/tenant-shell";
 import { useAssets } from "@/modules/assets/hooks/use-assets";
 
-function IconFile() {
+// Figma 60:1454 — article/document icon 24px
+function IconArticle() {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M11 2H5.5A1.5 1.5 0 004 3.5v11A1.5 1.5 0 005.5 16h7a1.5 1.5 0 001.5-1.5V6z" />
-      <path d="M11 2v4h4" />
-      <path d="M7 9.25h4M7 12h4" />
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" />
+      <path d="M14 3v5h5" />
+      <path d="M9 13h6M9 17h4" />
     </svg>
   );
 }
 
-// Derive Figma-style display media type from mime type.
-// Figma shows generic tokens like "image", "ZIP", "PDF" — not the asset category.
+// Derive display media type from mime type
 function getDisplayMediaType(mimeType: string): string {
-  if (mimeType.startsWith("image/")) return "image";
-  if (mimeType.startsWith("video/")) return "video";
+  if (mimeType.startsWith("image/")) return "Image";
+  if (mimeType.startsWith("video/")) return "Video";
   if (mimeType === "application/pdf") return "PDF";
   if (mimeType === "application/zip" || mimeType === "application/x-zip-compressed") return "ZIP";
   if (mimeType === "text/html") return "HTML";
   if (mimeType === "text/plain") return "TXT";
-  return mimeType.split("/")[1]?.toUpperCase() ?? "file";
+  return mimeType.split("/")[1]?.toUpperCase() ?? "File";
 }
 
 export function RecentMaterials() {
@@ -33,41 +33,51 @@ export function RecentMaterials() {
   return (
     <section
       aria-label="Recent materials"
-      className="rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface-card)] px-[var(--space-6)] py-[var(--space-5)]"
+      className="overflow-hidden rounded-[8px] border border-[rgba(255,255,255,0.1)] p-[24px]"
+      style={{ background: "rgba(21,26,43,0.5)" }}
     >
-      <h2 className="font-[var(--font-display)] text-[2rem] font-bold leading-none tracking-[-0.04em] text-[var(--color-text-primary)]">
-        Recent Materials
-      </h2>
+      {/* Heading — Figma 55:2364: Oswald Medium 18px */}
+      <div className="border-b border-[rgba(255,255,255,0.1)] pb-[24px]">
+        <h2 className="font-[var(--font-display)] text-[18px] font-medium leading-[20px] tracking-[-0.2px] text-[#F0F0F0]">
+          Recent Materials
+        </h2>
+      </div>
 
-      <div className="mt-[var(--space-4)] divide-y divide-[var(--color-border)]">
+      {/* Items — Figma 55:2365 */}
+      <div className="flex flex-col">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-[var(--space-4)] py-[var(--space-4)]">
-              <div className="size-[var(--space-10)] shrink-0 animate-pulse rounded-[var(--radius-lg)] bg-[var(--color-border)]" />
-              <div className="flex-1 space-y-[var(--space-1)]">
-                <div className="h-[1rem] w-3/4 animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
-                <div className="h-[var(--text-sm)] w-1/2 animate-pulse rounded-[var(--radius)] bg-[var(--color-border)]" />
+            <div key={i} className="flex items-center gap-[16px] border-b border-[rgba(255,255,255,0.05)] py-[16px] last:border-b-0">
+              <div className="size-[48px] shrink-0 animate-pulse rounded-[8px] bg-[rgba(255,255,255,0.08)]" />
+              <div className="flex-1 space-y-[4px]">
+                <div className="h-[16px] w-3/4 animate-pulse rounded-[4px] bg-[rgba(255,255,255,0.08)]" />
+                <div className="h-[12px] w-1/2 animate-pulse rounded-[4px] bg-[rgba(255,255,255,0.08)]" />
               </div>
             </div>
           ))
         ) : assets.length === 0 ? (
-          <p className="py-[var(--space-5)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-muted)]">
+          <p className="py-[24px] font-[var(--font-sans)] text-[14px] text-[#9CA4B7]">
             No materials uploaded yet.
           </p>
         ) : (
-          assets.map((item) => (
+          assets.map((item, i) => (
             <div
               key={item.id}
-              className="flex items-center gap-[var(--space-4)] py-[var(--space-4)]"
+              className={`flex items-center gap-[16px] py-[16px] pl-[16px] ${
+                i < assets.length - 1 ? "border-b border-[rgba(255,255,255,0.05)]" : ""
+              }`}
             >
-              <div className="flex size-[var(--space-10)] shrink-0 items-center justify-center rounded-[var(--radius-lg)] bg-[rgba(var(--color-primary-rgb),0.22)] text-[var(--color-text-white)]">
-                <IconFile />
+              {/* Icon container — Figma 55:2367: 48px, bg rgba(28,74,166,0.2), border rgba(28,74,166,0.3) */}
+              <div className="flex size-[48px] shrink-0 items-center justify-center rounded-[8px] border border-[rgba(28,74,166,0.3)] bg-[rgba(28,74,166,0.2)] text-[#A6D1FF]">
+                <IconArticle />
               </div>
-              <div className="min-w-0">
-                <p className="truncate font-[var(--font-sans)] text-[var(--text-base)] leading-[var(--space-5)] text-[var(--color-text-primary)]">
+              <div className="min-w-0 flex-1">
+                {/* Title — Figma: Medium 16px, leading 24px */}
+                <p className="truncate font-[var(--font-sans)] text-[16px] font-medium leading-[24px] text-[#F0F0F0]">
                   {item.title}
                 </p>
-                <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-4)] text-[var(--color-text-secondary)]">
+                {/* Subtitle — Figma: Regular 12px, #9CA4B7 */}
+                <p className="font-[var(--font-sans)] text-[12px] leading-[18px] text-[#9CA4B7]">
                   {getDisplayMediaType(item.mimeType)} · {item.sizeLabel}
                 </p>
               </div>
