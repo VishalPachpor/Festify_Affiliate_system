@@ -13,6 +13,7 @@ export const dashboardSummarySchema = z.object({
   periodStart: z.string(),
   periodEnd: z.string(),
   // optional period-over-period change percentages
+  pendingApprovals: z.number().optional(),
   revenueChangePct: z.number().optional(),
   commissionsChangePct: z.number().optional(),
   paidOutChangePct: z.number().optional(),

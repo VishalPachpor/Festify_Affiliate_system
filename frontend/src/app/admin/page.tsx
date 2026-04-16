@@ -100,21 +100,28 @@ function AdminKpiCard({
   change?: string;
 }) {
   return (
-    <div className="flex flex-col gap-[var(--space-2)] rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent px-[var(--space-5)] py-[var(--space-4)]">
-      <div className="h-[2.5px] w-[2rem] rounded-full" style={{ background: accentColor }} />
-      <dt className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] tracking-[var(--tracking-caption)] uppercase text-[rgba(255,255,255,0.50)]">
+    <div
+      className="flex h-full flex-col gap-[10px] rounded-[8px] p-[24px]"
+      style={{
+        background: "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%), rgba(21,26,43,0.8)",
+        boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 10px 30px rgba(0,0,0,0.25)",
+      }}
+    >
+      <div className="h-[4px] w-[64px] rounded-[50px]" style={{ background: accentColor }} />
+      <dt className="font-[var(--font-sans)] text-[12px] leading-[16px] tracking-[0.5px] uppercase text-[rgba(166,209,255,0.75)]">
         {label}
       </dt>
-      <dd className="font-[var(--font-display)] font-bold text-[2rem] leading-[1.1] tracking-[var(--tracking-heading)] text-[#FFFFFF]">
+      <dd className="font-[var(--font-sans)] text-[28px] font-bold leading-[42px] text-[#F0F0F0]">
         {value}
       </dd>
-      <dd className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] text-[rgba(255,255,255,0.45)]">
+      <dd className="font-[var(--font-sans)] text-[12px] leading-[18px] text-[rgba(255,255,255,0.55)]">
         {subtitle}
       </dd>
       {change && (
-        <dd className="flex items-center gap-[0.25rem] font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] text-[#22C55E]">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-            <path d="M2 8.5C4 6 6 4.5 10 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <dd className="flex items-center gap-[4px] font-[var(--font-sans)] text-[12px] leading-[18px] text-[#22C55E]">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M2 12L6 7L9 10L14 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M10 4H14V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           {change}
         </dd>
@@ -133,26 +140,26 @@ function AdminHeroBanner() {
 
   return (
     <section
-      className="relative flex min-h-[6.5rem] flex-col justify-center overflow-hidden rounded-[var(--radius-xl)] border border-[var(--color-border-ghost)] px-[var(--space-8)] py-[var(--space-5)]"
+      className="relative flex min-h-[166px] flex-col justify-center overflow-hidden rounded-[16px] border border-[rgba(255,255,255,0.1)] px-[48px] pt-[48px] pb-[40px]"
       style={{
-        background: `linear-gradient(90deg,
-          rgba(23,29,50,1.00) 0%,
-          rgba(17,21,39,0.86) 7%,
-          rgba(10,14,28,0.71) 14%,
-          rgba(5,8,18,0.57) 21%,
-          rgba(2,3,8,0.43) 29%,
-          rgba(1,1,2,0.29) 36%,
-          rgba(0,0,0,0.14) 43%,
-          rgba(0,0,0,0) 50%,
-          rgba(0,0,0,0) 100%
-        ), linear-gradient(135deg, #1C4AA6 0%, #2855B8 40%, #1C4AA6 100%)`,
+        backgroundImage: "linear-gradient(172deg, rgb(19,32,84) 0%, rgb(21,38,95) 7%, rgb(22,43,106) 14%, rgb(24,49,118) 21%, rgb(25,55,130) 29%, rgb(26,61,142) 36%, rgb(27,68,154) 43%, rgb(28,74,166) 50%, rgb(28,67,148) 57%, rgb(28,61,131) 64%, rgb(28,55,114) 71%, rgb(27,48,97) 79%, rgb(26,42,81) 86%, rgb(25,35,65) 93%, rgb(23,29,50) 100%)",
       }}
       aria-label="Welcome banner"
     >
-      <h2 className="relative z-10 font-[var(--font-display)] text-[var(--text-2xl)] font-bold leading-none tracking-[-0.04em] text-[var(--color-text-primary)]">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-[0.15]"
+        style={{ background: "radial-gradient(ellipse at center, rgba(201,168,76,0.3), transparent 70%)" }}
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 50%)" }}
+      />
+      <h2 className="relative font-[var(--font-display)] text-[32px] font-bold leading-[32px] tracking-[-0.48px] text-[#F0F0F0]">
         Welcome Back, {firstName}!
       </h2>
-      <p className="relative z-10 mt-[var(--space-1)] max-w-[46rem] font-[var(--font-sans)] text-[var(--text-lg)] leading-[var(--leading-normal)] text-[rgba(255,255,255,0.9)]">
+      <p className="relative mt-[8px] max-w-[46rem] font-[var(--font-sans)] text-[18px] leading-[28px] text-[#F0F0F0]">
         Monitor and manage the {eventName} Affiliate Program
       </p>
     </section>
@@ -188,7 +195,7 @@ export default function AdminDashboardPage() {
         <AdminHeroBanner />
 
         {/* KPI Cards */}
-        <dl className="grid grid-cols-1 gap-[var(--space-4)] sm:grid-cols-2 lg:grid-cols-4">
+        <dl className="grid grid-cols-1 items-stretch gap-[24px] sm:grid-cols-2 lg:grid-cols-4">
           <AdminKpiCard
             label="Total Affiliates"
             value={String(summary?.totalAffiliates ?? 0)}
@@ -208,15 +215,21 @@ export default function AdminDashboardPage() {
             accentColor="#22C55E"
           />
           <AdminKpiCard
-            label="Paid Out"
-            value={formatCurrency(summary?.paidOut ?? 0, currency)}
-            subtitle="To affiliates"
-            accentColor="#5B8DEF"
+            label="Pending Approvals"
+            value={String(summary?.pendingApprovals ?? 0)}
+            subtitle="Awaiting review"
+            accentColor="#F5A623"
           />
         </dl>
 
         {/* Quick Actions */}
-        <section className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent px-[var(--space-6)] py-[var(--space-5)]">
+        <section
+          className="rounded-[8px] p-[24px]"
+          style={{
+            background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)",
+            boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 8px 24px rgba(0,0,0,0.2)",
+          }}
+        >
           <h3 className="font-[var(--font-display)] font-bold text-[var(--text-lg)] leading-[var(--leading-tight)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
             Quick Actions
           </h3>
@@ -246,9 +259,15 @@ export default function AdminDashboardPage() {
         </section>
 
         {/* Bottom row: Top Affiliates + Recent Activity */}
-        <div className="grid grid-cols-1 gap-[var(--space-4)] lg:grid-cols-[1fr_22rem]">
+        <div className="grid grid-cols-1 gap-[24px] lg:grid-cols-[2fr_1fr]">
           {/* Top Affiliates */}
-          <section className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent px-[var(--space-6)] py-[var(--space-5)]">
+          <section
+            className="rounded-[8px] p-[24px]"
+            style={{
+              background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)",
+              boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 8px 24px rgba(0,0,0,0.2)",
+            }}
+          >
             <div className="flex items-center justify-between">
               <h3 className="font-[var(--font-display)] font-bold text-[var(--text-lg)] leading-[var(--leading-tight)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
                 Top Affiliates
@@ -314,7 +333,13 @@ export default function AdminDashboardPage() {
           </section>
 
           {/* Recent Activity */}
-          <section className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent px-[var(--space-5)] py-[var(--space-5)]">
+          <section
+            className="rounded-[8px] p-[24px]"
+            style={{
+              background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)",
+              boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 8px 24px rgba(0,0,0,0.2)",
+            }}
+          >
             <h3 className="font-[var(--font-display)] font-bold text-[var(--text-lg)] leading-[var(--leading-tight)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
               Recent Activity
             </h3>

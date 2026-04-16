@@ -37,6 +37,7 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
         const conversionRate = totalSales > 0
           ? Math.round((stats.attributedSales / totalSales) * 1000) / 10
           : 0;
+        const pendingCount = await prisma.application.count({ where: { tenantId, status: "pending" } });
 
         const now = new Date();
         result = {
@@ -45,6 +46,7 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
           totalAffiliates: stats.totalAffiliates,
           conversionRate,
           paidOut: stats.totalPaidOut,
+          pendingApprovals: pendingCount,
           milestonesUnlocked: 0,
           currency: stats.currency,
           periodStart: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0],
@@ -58,7 +60,7 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
       const dateFilter = hasDateFilter ? { createdAt: dateRange } : {};
       const where = { tenantId, ...dateFilter };
 
-      const [revenueSummary, salesCount, commissionSummary, attributedCount, affiliateCount, paidOutSummary] =
+      const [revenueSummary, salesCount, commissionSummary, attributedCount, affiliateCount, paidOutSummary, pendingApprovals] =
         await Promise.all([
           prisma.sale.aggregate({ where, _sum: { amountMinor: true } }),
           prisma.sale.count({ where }),
@@ -66,6 +68,7 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
           prisma.attributionClaim.count({ where: { tenantId, ...dateFilter } }),
           prisma.campaignAffiliate.count({ where: { tenantId } }),
           prisma.payout.aggregate({ where: { tenantId, status: "paid" }, _sum: { amountMinor: true } }),
+          prisma.application.count({ where: { tenantId, status: "pending" } }),
         ]);
 
       const totalRevenue = revenueSummary._sum.amountMinor ?? 0;
@@ -81,6 +84,7 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
         totalAffiliates: affiliateCount,
         conversionRate,
         paidOut: paidOutSummary._sum.amountMinor ?? 0,
+        pendingApprovals,
         milestonesUnlocked: 0,
         currency: "USD",
         periodStart: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0],
