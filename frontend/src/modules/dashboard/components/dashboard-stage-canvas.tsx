@@ -25,7 +25,7 @@ export function DashboardStageCanvas({
       {/* Dot pattern — localized top-right, soft masked fade, matching Figma */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute right-[40px] top-[40px] h-[380px] w-[380px] opacity-[0.10]"
+        className="pointer-events-none absolute right-[40px] top-[40px] h-[380px] w-[380px] opacity-[0.08]"
         style={{
           backgroundImage: "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1.5px)",
           backgroundSize: "10px 10px",

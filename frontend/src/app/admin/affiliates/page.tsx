@@ -46,7 +46,7 @@ const TIER_STYLES: Record<string, { bg: string; text: string; border: string }> 
   bronze:   { bg: "rgba(205,127,50,0.12)",  text: "#CD7F32", border: "rgba(205,127,50,0.25)"  },
 };
 
-const REFERRAL_CODE_STYLE = { bg: "rgba(255,255,255,0.06)", text: "rgba(255,255,255,0.65)" };
+const REFERRAL_CODE_STYLE = { bg: "rgba(255,255,255,0.04)", text: "rgba(255,255,255,0.55)" };
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -166,7 +166,7 @@ function StatusCell({ status }: { status: "active" | "pending" | "rejected" }) {
     return (
       <span
         className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
-        style={{ background: "rgba(34,197,94,0.12)", color: "#22C55E" }}
+        style={{ background: "rgba(34,197,94,0.10)", color: "rgba(34,197,94,0.85)" }}
       >
         active
       </span>
@@ -198,7 +198,7 @@ function ActionButton({ children, label, onClick }: { children: React.ReactNode;
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="flex items-center justify-center text-[rgba(255,255,255,0.40)] transition-colors hover:text-[rgba(255,255,255,0.80)]"
+      className="flex items-center justify-center text-[rgba(255,255,255,0.35)] transition-colors hover:text-[rgba(255,255,255,0.70)]"
     >
       {children}
     </button>
@@ -404,7 +404,7 @@ export default function AdminAffiliatesPage() {
                     <th
                       key={col}
                       scope="col"
-                      className="pb-[var(--space-3)] text-left text-[var(--text-xs)] leading-[var(--leading-caption)] tracking-[var(--tracking-caption)] uppercase font-semibold whitespace-nowrap pr-[var(--space-4)] last:pr-0 text-[rgba(255,255,255,0.45)]"
+                      className="pb-[var(--space-3)] text-left text-[var(--text-xs)] leading-[var(--leading-caption)] tracking-[var(--tracking-caption)] uppercase font-semibold whitespace-nowrap pr-[var(--space-4)] last:pr-0 text-[rgba(255,255,255,0.38)]"
                     >
                       {col}
                     </th>
@@ -415,7 +415,7 @@ export default function AdminAffiliatesPage() {
                 {affiliates.map((aff) => {
                   const initials = aff.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
                   return (
-                  <tr key={aff.id} className="border-t transition-colors duration-150 hover:bg-[rgba(255,255,255,0.03)]" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+                  <tr key={aff.id} className="border-t transition-colors duration-150 hover:bg-[rgba(255,255,255,0.03)]" style={{ borderColor: "rgba(255,255,255,0.04)", background: "linear-gradient(180deg, rgba(255,255,255,0.015), transparent)" }}>
                     {/* Name + email */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] whitespace-nowrap">
                       <div className="flex items-center gap-[var(--space-3)]">
