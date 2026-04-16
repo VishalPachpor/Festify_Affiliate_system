@@ -1,6 +1,16 @@
 import { redis } from "./redis";
 
 const DEFAULT_TTL = 60; // seconds
+const CACHE_TIMEOUT_MS = 2000; // fail fast when Redis is unreachable
+
+/** Race a promise against a timeout — resolves to null on timeout. */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
+  let timer: ReturnType<typeof setTimeout>;
+  return Promise.race([
+    promise,
+    new Promise<null>((resolve) => { timer = setTimeout(() => resolve(null), ms); }),
+  ]).finally(() => clearTimeout(timer!));
+}
 
 /**
  * Build a tenant-scoped cache key.
@@ -34,7 +44,7 @@ export function buildCacheKey(tenantId: string, endpoint: string, query?: Record
  */
 export async function getCache<T>(key: string): Promise<T | null> {
   try {
-    const cached = await redis.get(key);
+    const cached = await withTimeout(redis.get(key), CACHE_TIMEOUT_MS);
     if (cached === null) return null;
 
     try {
@@ -56,7 +66,7 @@ export async function getCache<T>(key: string): Promise<T | null> {
  */
 export async function setCache(key: string, data: unknown, ttl = DEFAULT_TTL): Promise<void> {
   try {
-    await redis.set(key, JSON.stringify(data), "EX", ttl);
+    await withTimeout(redis.set(key, JSON.stringify(data), "EX", ttl), CACHE_TIMEOUT_MS);
   } catch (err) {
     console.warn(`[cache] Redis set failed for "${key}":`, err instanceof Error ? err.message : err);
   }
