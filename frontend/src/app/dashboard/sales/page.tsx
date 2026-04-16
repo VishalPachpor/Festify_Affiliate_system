@@ -290,23 +290,23 @@ function CommissionChart({ sales }: { sales: Sale[] }) {
             margin={{ top: 10, right: 10, bottom: 0, left: -10 }}
           >
             <CartesianGrid
-              stroke="rgba(255,255,255,0.06)"
+              stroke="rgba(255,255,255,0.04)"
               strokeDasharray="4 4"
               vertical={true}
               horizontal={true}
             />
             <XAxis
               dataKey="date"
-              axisLine={{ stroke: "rgba(255,255,255,0.10)" }}
-              tickLine={{ stroke: "rgba(255,255,255,0.10)", strokeWidth: 1 }}
+              axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+              tickLine={{ stroke: "rgba(255,255,255,0.08)", strokeWidth: 1 }}
               tick={{ fill: SALES_COLORS.chartTick, fontSize: 12, fontFamily: "var(--font-sans)" }}
               dy={8}
             />
             <YAxis
               domain={[0, niceMax]}
               ticks={yTicks}
-              axisLine={{ stroke: "rgba(255,255,255,0.10)" }}
-              tickLine={{ stroke: "rgba(255,255,255,0.10)", strokeWidth: 1 }}
+              axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+              tickLine={{ stroke: "rgba(255,255,255,0.08)", strokeWidth: 1 }}
               tick={{ fill: SALES_COLORS.chartTick, fontSize: 12, fontFamily: "var(--font-sans)" }}
               tickFormatter={(v: number) => String(Math.round(v))}
               width={45}
@@ -315,18 +315,18 @@ function CommissionChart({ sales }: { sales: Sale[] }) {
               type="monotone"
               dataKey="value"
               stroke={SALES_COLORS.chartLine}
-              strokeWidth={2.5}
+              strokeWidth={2}
               dot={{
+                r: 3,
+                fill: SALES_COLORS.chartLine,
+                stroke: "#1A1E2E",
+                strokeWidth: 1.5,
+              }}
+              activeDot={{
                 r: 4,
                 fill: SALES_COLORS.chartLine,
                 stroke: "#1A1E2E",
-                strokeWidth: 2,
-              }}
-              activeDot={{
-                r: 5,
-                fill: SALES_COLORS.chartLine,
-                stroke: "#1A1E2E",
-                strokeWidth: 2,
+                strokeWidth: 1.5,
               }}
             />
           </LineChart>
@@ -435,7 +435,7 @@ export default function SalesPage() {
         </div>
 
         {/* ── KPI Summary (Figma: 71:1848) ─────────────────────────────── */}
-        <dl className="grid grid-cols-1 gap-[24px] sm:grid-cols-3">
+        <dl className="grid grid-cols-1 gap-[24px] sm:grid-cols-[2fr_1fr_1fr]">
           {summaryLoading ? (
             <>
               <SummaryCardSkeleton />
@@ -551,21 +551,21 @@ export default function SalesPage() {
                       >
                         {/* Date — 12px white, leading 17.143px */}
                         <td
-                          className="px-[16px] py-[20px] text-[12px] leading-[17.143px] whitespace-nowrap"
+                          className="px-[16px] py-[24px] text-[12px] leading-[17.143px] whitespace-nowrap"
                           style={{ color: SALES_COLORS.bodyDate }}
                         >
                           {formatDate(sale.createdAt)}
                         </td>
                         {/* Customer — 12px #b0b8cc, leading 16px */}
                         <td
-                          className="px-[16px] py-[20px] text-[12px] leading-[16px] whitespace-nowrap"
+                          className="px-[16px] py-[24px] text-[12px] leading-[16px] whitespace-nowrap"
                           style={{ color: SALES_COLORS.bodyCustomer }}
                         >
                           {maskName(sale.affiliateName)}
                         </td>
                         {/* Ticket Type — 12px white, leading 17.143px */}
                         <td
-                          className="px-[16px] py-[20px] text-[12px] leading-[17.143px] whitespace-nowrap"
+                          className="px-[16px] py-[24px] text-[12px] leading-[17.143px] whitespace-nowrap"
                           style={{ color: SALES_COLORS.bodyTicketType }}
                         >
                           {deriveTicketType(sale.amount)}
