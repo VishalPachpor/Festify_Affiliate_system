@@ -35,38 +35,56 @@ function IconCalendar() {
   );
 }
 
+// ── Preview icons (32×32, matching Figma 60:1975 per asset type) ─────────────
+
+/** Banner + Social: landscape/photo icon — frame with sun circle + mountain */
 function IconImage() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="4" y="5" width="16" height="14" rx="2" />
-      <circle cx="9" cy="10" r="1.5" />
-      <path d="M20 16l-4.5-4.5L8 19" />
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="4" y="4" width="24" height="24" rx="3" />
+      <circle cx="11" cy="11" r="2.5" />
+      <path d="M28 22l-7-7L8 28" />
     </svg>
   );
 }
 
+/** Email: closed envelope */
 function IconMail() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="4" y="6" width="16" height="12" rx="2" />
-      <path d="M5.5 8l6.5 5 6.5-5" />
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="6" width="26" height="20" rx="3" />
+      <path d="M3 9l13 8 13-8" />
     </svg>
   );
 }
 
-function IconFile() {
+/** Copy: document with text lines */
+function IconCopy() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" />
-      <path d="M14 3v5h5" />
-      <path d="M9 13h6M9 17h4" />
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M18 3H9a3 3 0 00-3 3v20a3 3 0 003 3h14a3 3 0 003-3V11l-8-8z" />
+      <path d="M18 3v8h8" />
+      <path d="M12 17h8M12 22h5" />
+    </svg>
+  );
+}
+
+/** Guide: document with code brackets </> */
+function IconGuide() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M18 3H9a3 3 0 00-3 3v20a3 3 0 003 3h14a3 3 0 003-3V11l-8-8z" />
+      <path d="M18 3v8h8" />
+      <path d="M13 19l-2.5 2.5L13 24" />
+      <path d="M19 19l2.5 2.5L19 24" />
     </svg>
   );
 }
 
 function PreviewIcon({ type }: { type: AssetType }) {
   if (type === "email") return <IconMail />;
-  if (type === "copy" || type === "guide") return <IconFile />;
+  if (type === "copy") return <IconCopy />;
+  if (type === "guide") return <IconGuide />;
   return <IconImage />;
 }
 
@@ -93,7 +111,7 @@ function AssetCard({ asset }: { asset: Asset }) {
     <article className="h-full overflow-hidden rounded-[8px] border border-[rgba(255,255,255,0.05)] bg-[rgba(15,22,40,0.5)] p-px">
       {/* Gradient preview — 192px, centered icon */}
       <div
-        className="flex h-[192px] items-center justify-center text-[rgba(255,255,255,0.55)]"
+        className="flex h-[192px] items-center justify-center text-[rgba(255,255,255,0.45)]"
         style={{ backgroundImage: CARD_GRADIENTS[asset.type] ?? CARD_GRADIENTS.banner }}
         aria-hidden="true"
       >
