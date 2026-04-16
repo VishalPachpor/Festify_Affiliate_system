@@ -27,8 +27,11 @@ function formatCurrency(minorUnits: number, currency = "USD"): string {
 // ── Colors ────────────────────────────────────────────────────────────────────
 
 const AVATAR_COLORS: Record<string, string> = {
-  SC: "#2B7A78",
-  MW: "#2B7A78",
+  AD: "#5B8DEF",  // Alex Demo
+  SC: "#C9A84C",  // Sarah Chen (gold/warm)
+  MJ: "#2B7A78",  // Marcus Johnson (teal)
+  PS: "#9B59B6",  // Priya Sharma (purple)
+  JW: "#E67E22",  // James Wilson (orange)
   DK: "#22C55E",
   LT: "#5B8DEF",
   AP: "#F5A623",
@@ -166,7 +169,7 @@ function StatusCell({ status }: { status: "active" | "pending" | "rejected" }) {
     return (
       <span
         className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
-        style={{ background: "rgba(34,197,94,0.10)", color: "rgba(34,197,94,0.85)" }}
+        style={{ background: "rgba(34,197,94,0.10)", color: "rgba(34,197,94,0.75)" }}
       >
         active
       </span>

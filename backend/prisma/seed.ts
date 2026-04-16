@@ -170,25 +170,28 @@ async function main() {
   }
 
   // ── Demo sales for chart + table data ─────────────────────────────────
-  // Amounts set so affiliates cross tier thresholds (commission = 10%):
-  // Sarah: $43,500 revenue → $4,350 commission → silver
-  // Priya: $28,000 → $2,800 commission → bronze
-  // James: $18,000 → $1,800 commission → bronze
-  // Marcus: $15,500 → $1,550 commission → bronze
-  // Alex: $8,500 → $850 commission → no tier yet
+  // Commission = 10% of amount. Milestone thresholds (commission):
+  //   Bronze=$1K, Silver=$5K, Gold=$10K, Platinum=$25K
+  //
+  // Target tier distribution:
+  //   Sarah:  $435K revenue → $43.5K commission → PLATINUM
+  //   Priya:  $180K revenue → $18K commission   → GOLD
+  //   James:  $108K revenue → $10.8K commission  → GOLD
+  //   Marcus: $65.5K revenue → $6.55K commission → SILVER
+  //   Alex:   $25.5K revenue → $2.55K commission → BRONZE
   const DEMO_SALES = [
-    { extId: "sale_demo_1",  amount: 1500000, aff: "affiliate_sarah",  daysAgo: 1  },
-    { extId: "sale_demo_2",  amount: 800000,  aff: "affiliate_marcus", daysAgo: 1  },
-    { extId: "sale_demo_3",  amount: 400000,  aff: AFFILIATE_ID,       daysAgo: 2  },
-    { extId: "sale_demo_4",  amount: 600000,  aff: "affiliate_priya",  daysAgo: 3  },
-    { extId: "sale_demo_5",  amount: 1500000, aff: "affiliate_james",  daysAgo: 4  },
-    { extId: "sale_demo_6",  amount: 800000,  aff: "affiliate_sarah",  daysAgo: 5  },
-    { extId: "sale_demo_7",  amount: 500000,  aff: "affiliate_marcus", daysAgo: 6  },
-    { extId: "sale_demo_8",  amount: 1200000, aff: "affiliate_priya",  daysAgo: 7  },
-    { extId: "sale_demo_9",  amount: 2050000, aff: "affiliate_sarah",  daysAgo: 2  },
-    { extId: "sale_demo_10", amount: 250000,  aff: "affiliate_marcus", daysAgo: 3  },
-    { extId: "sale_demo_11", amount: 300000,  aff: "affiliate_james",  daysAgo: 6  },
-    { extId: "sale_demo_12", amount: 450000,  aff: AFFILIATE_ID,       daysAgo: 4  },
+    { extId: "sale_demo_1",  amount: 15000000, aff: "affiliate_sarah",  daysAgo: 1  },
+    { extId: "sale_demo_2",  amount: 8000000,  aff: "affiliate_marcus", daysAgo: 1  },
+    { extId: "sale_demo_3",  amount: 4000000,  aff: AFFILIATE_ID,       daysAgo: 2  },
+    { extId: "sale_demo_4",  amount: 6000000,  aff: "affiliate_priya",  daysAgo: 3  },
+    { extId: "sale_demo_5",  amount: 8000000,  aff: "affiliate_james",  daysAgo: 4  },
+    { extId: "sale_demo_6",  amount: 8000000,  aff: "affiliate_sarah",  daysAgo: 5  },
+    { extId: "sale_demo_7",  amount: 5000000,  aff: "affiliate_marcus", daysAgo: 6  },
+    { extId: "sale_demo_8",  amount: 12000000, aff: "affiliate_priya",  daysAgo: 7  },
+    { extId: "sale_demo_9",  amount: 20500000, aff: "affiliate_sarah",  daysAgo: 2  },
+    { extId: "sale_demo_10", amount: 2500000,  aff: "affiliate_marcus", daysAgo: 3  },
+    { extId: "sale_demo_11", amount: 2800000,  aff: "affiliate_james",  daysAgo: 6  },
+    { extId: "sale_demo_12", amount: 2050000,  aff: AFFILIATE_ID,       daysAgo: 4  },
   ];
 
   for (const s of DEMO_SALES) {
