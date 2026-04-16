@@ -199,37 +199,36 @@ async function main() {
     saleDate.setDate(saleDate.getDate() - s.daysAgo);
     saleDate.setHours(12, 0, 0, 0);
 
-    const existing = await prisma.sale.findFirst({ where: { tenantId: TENANT_ID, externalId: s.extId } });
+    const refCode = s.aff === AFFILIATE_ID ? REFERRAL_CODE :
+      EXTRA_AFFILIATES.find(a => a.id === s.aff)?.code ?? "UNKNOWN";
+
+    const existing = await prisma.sale.findUnique({
+      where: { tenantId_externalOrderId: { tenantId: TENANT_ID, externalOrderId: s.extId } },
+    });
     if (!existing) {
       const sale = await prisma.sale.create({
         data: {
           tenantId: TENANT_ID,
-          externalId: s.extId,
+          campaignId: CAMPAIGN_ID,
+          externalOrderId: s.extId,
           amountMinor: s.amount,
           currency: "USD",
-          buyerEmail: `buyer${s.daysAgo}@example.com`,
-          source: "seed",
+          referralCode: refCode,
           createdAt: saleDate,
         },
       });
-      // Create attribution claim
       await prisma.attributionClaim.create({
         data: {
           tenantId: TENANT_ID,
           saleId: sale.id,
           affiliateId: s.aff,
-          campaignId: CAMPAIGN_ID,
-          referralCode: s.aff === AFFILIATE_ID ? REFERRAL_CODE :
-            EXTRA_AFFILIATES.find(a => a.id === s.aff)?.code ?? "UNKNOWN",
-          source: "seed",
+          method: "referral_code",
         },
       });
-      // Create commission ledger entry (10% commission)
       await prisma.commissionLedgerEntry.create({
         data: {
           tenantId: TENANT_ID,
           affiliateId: s.aff,
-          campaignId: CAMPAIGN_ID,
           saleId: sale.id,
           type: "earned",
           amountMinor: Math.round(s.amount * 0.1),
