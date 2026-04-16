@@ -74,9 +74,9 @@ function TierTile({
       <div
         className="flex size-[64px] shrink-0 items-center justify-center rounded-[8px] border-2 font-[var(--font-display)] text-[28px] font-bold leading-[32px]"
         style={{
-          borderColor: unlocked ? tileBorder : LOCKED_TILE.tileBorder,
-          color: unlocked ? tileText : "rgba(255,255,255,0.3)",
-          background: unlocked ? tileBg : LOCKED_TILE.tileBg,
+          borderColor: unlocked ? tileBorder : "rgba(255,255,255,0.10)",
+          color: unlocked ? tileText : "rgba(255,255,255,0.35)",
+          background: unlocked ? tileBg : "rgba(255,255,255,0.06)",
         }}
         aria-hidden="true"
       >
@@ -97,7 +97,7 @@ function MilestoneCardSkeleton() {
       className="rounded-[8px] p-[28px]"
       style={{
         background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)",
-        boxShadow: "0 0 0 1px rgba(255,255,255,0.05), 0 8px 24px rgba(0,0,0,0.2)",
+        boxShadow: "0 0 0 1px rgba(255,255,255,0.04), 0 8px 24px rgba(0,0,0,0.18)",
       }}
     >
       <div className="flex items-start gap-[24px]">
@@ -147,7 +147,7 @@ function MilestoneCard({
       className="rounded-[8px] p-[28px]"
       style={{
         background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)",
-        boxShadow: "0 0 0 1px rgba(255,255,255,0.05), 0 8px 24px rgba(0,0,0,0.2)",
+        boxShadow: "0 0 0 1px rgba(255,255,255,0.04), 0 8px 24px rgba(0,0,0,0.18)",
       }}
     >
       <div className="flex items-start gap-[24px]">
@@ -171,7 +171,7 @@ function MilestoneCard({
           </div>
 
           {/* Description — Figma: Regular 14px, #9CA4B7 */}
-          <p className="mt-[12px] font-[var(--font-sans)] text-[14px] leading-[21px] text-[#9CA4B7]">
+          <p className="mt-[12px] font-[var(--font-sans)] text-[14px] leading-[21px] text-[rgba(255,255,255,0.68)]">
             {description}
           </p>
 
@@ -193,7 +193,7 @@ function MilestoneCard({
               aria-valuemin={0}
               aria-valuemax={100}
               aria-label={`${name} milestone progress`}
-              className="h-[8px] w-full overflow-hidden rounded-full border border-[rgba(255,255,255,0.1)] bg-[#0D1420] p-[1px]"
+              className="h-[8px] w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.08)] p-[1px]"
             >
               {pct > 0 && (
                 <div
