@@ -35,9 +35,11 @@ export function ReferralCard() {
   return (
     <section
       aria-label="Referral link"
-      className="rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface-card)] px-[var(--space-6)] py-[var(--space-5)]"
+      className="rounded-[8px] border border-[rgba(255,255,255,0.1)] p-[24px]"
+      style={{ background: "rgba(21,26,43,0.5)" }}
     >
-      <h2 className="font-[var(--font-display)] text-[2rem] font-bold leading-none tracking-[-0.04em] text-[var(--color-text-primary)]">
+      {/* Heading — Figma 56:2735: Oswald Medium 18px, tracking -0.2px */}
+      <h2 className="font-[var(--font-display)] text-[18px] font-medium leading-[20px] tracking-[-0.2px] text-[#F0F0F0]">
         Your Referral Link
       </h2>
 
@@ -61,18 +63,19 @@ export function ReferralCard() {
         </Button>
       </div>
 
-      <div className="mt-[var(--space-2)] flex flex-col gap-[var(--space-1)]">
-        <p className="font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-4)] text-[var(--color-text-secondary)]">
+      {/* Helper text — Figma: 12px #E5E5E5, referral code in #22C55E */}
+      <div className="mt-[8px] flex flex-col gap-[4px]">
+        <p className="font-[var(--font-sans)] text-[12px] leading-[18px] text-[#E5E5E5]">
           Share your unique link to earn commissions
         </p>
         {error ? (
-          <p className="font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-4)] text-[#FCA5A5]">
+          <p className="font-[var(--font-sans)] text-[12px] leading-[18px] text-[#FCA5A5]">
             Could not load referral code: {error instanceof Error ? error.message : "unknown error"}
           </p>
         ) : (
-          <p className="font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--space-4)] text-[var(--color-text-secondary)]">
+          <p className="font-[var(--font-sans)] text-[12px] leading-[18px] text-white">
             Referral Code:{" "}
-            <span className="font-medium text-[var(--text-sm)] text-[var(--color-success)]">
+            <span className="text-[#22C55E]">
               {referralCode || "—"}
             </span>
           </p>

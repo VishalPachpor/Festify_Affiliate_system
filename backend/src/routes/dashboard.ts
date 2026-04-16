@@ -95,13 +95,21 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
     const prevStart = new Date(currentStart);
     prevStart.setDate(currentStart.getDate() - 30);
 
-    const [currentRev, prevRev] = await Promise.all([
+    const [currentRev, prevRev, currentComm, prevComm] = await Promise.all([
       prisma.sale.aggregate({
         where: { tenantId, createdAt: { gte: currentStart, lte: now } },
         _sum: { amountMinor: true },
       }),
       prisma.sale.aggregate({
         where: { tenantId, createdAt: { gte: prevStart, lt: currentStart } },
+        _sum: { amountMinor: true },
+      }),
+      prisma.commissionLedgerEntry.aggregate({
+        where: { tenantId, type: "earned", createdAt: { gte: currentStart, lte: now } },
+        _sum: { amountMinor: true },
+      }),
+      prisma.commissionLedgerEntry.aggregate({
+        where: { tenantId, type: "earned", createdAt: { gte: prevStart, lt: currentStart } },
         _sum: { amountMinor: true },
       }),
     ]);
@@ -114,7 +122,16 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
         ? 100
         : 0;
 
+    const curComVal = currentComm._sum.amountMinor ?? 0;
+    const prevComVal = prevComm._sum.amountMinor ?? 0;
+    const commissionsChangePct = prevComVal > 0
+      ? Math.round(((curComVal - prevComVal) / prevComVal) * 1000) / 10
+      : curComVal > 0
+        ? 100
+        : 0;
+
     (result as Record<string, unknown>).revenueChangePct = revenueChangePct;
+    (result as Record<string, unknown>).commissionsChangePct = commissionsChangePct;
 
     await setCache(cacheKey, result, 60);
     res.status(200).json(result);
