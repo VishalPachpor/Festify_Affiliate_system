@@ -26,25 +26,25 @@ function IconCheck() {
 const TIER_STYLES = {
   bronze: {
     tileText: "#CD7F32",
-    tileBorder: "rgba(205,127,50,0.4)",
+    tileBorder: "rgba(205,127,50,0.6)",
     tileBg: "rgba(205,127,50,0.2)",
     progress: "linear-gradient(90deg, rgb(205,127,50) 0%, rgb(184,115,51) 100%)",
   },
   silver: {
     tileText: "#C0C0C0",
-    tileBorder: "rgba(192,192,192,0.4)",
+    tileBorder: "rgba(192,192,192,0.6)",
     tileBg: "rgba(192,192,192,0.2)",
     progress: "linear-gradient(90deg, rgb(192,192,192) 0%, rgb(168,168,168) 100%)",
   },
   gold: {
     tileText: "#FFD700",
-    tileBorder: "rgba(255,215,0,0.4)",
+    tileBorder: "rgba(255,215,0,0.6)",
     tileBg: "rgba(255,215,0,0.2)",
     progress: "linear-gradient(90deg, rgb(255,215,0) 0%, rgb(255,165,0) 100%)",
   },
   platinum: {
     tileText: "#E5E4E2",
-    tileBorder: "rgba(229,228,226,0.4)",
+    tileBorder: "rgba(229,228,226,0.6)",
     tileBg: "rgba(229,228,226,0.2)",
     progress: "linear-gradient(90deg, rgb(229,228,226) 0%, rgb(192,192,192) 100%)",
   },
@@ -93,7 +93,7 @@ function MilestoneCardSkeleton() {
       className="rounded-[8px] p-[28px]"
       style={{
         background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)",
-        boxShadow: "0 0 0 1px rgba(255,255,255,0.04), 0 8px 24px rgba(0,0,0,0.18)",
+        boxShadow: "0 0 0 1px rgba(255,255,255,0.10), 0 8px 24px rgba(0,0,0,0.18)",
       }}
     >
       <div className="flex items-start gap-[24px]">
@@ -143,7 +143,7 @@ function MilestoneCard({
       className="rounded-[8px] p-[28px]"
       style={{
         background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)",
-        boxShadow: "0 0 0 1px rgba(255,255,255,0.04), 0 8px 24px rgba(0,0,0,0.18)",
+        boxShadow: "0 0 0 1px rgba(255,255,255,0.10), 0 8px 24px rgba(0,0,0,0.18)",
       }}
     >
       <div className="flex items-start gap-[24px]">
