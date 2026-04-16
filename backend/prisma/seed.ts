@@ -135,6 +135,98 @@ async function main() {
     },
   });
 
+  // ── Additional demo affiliates for realistic admin dashboard ──────────
+  const EXTRA_AFFILIATES = [
+    { id: "affiliate_sarah",  code: "SARAH2049",  name: "Sarah Chen",     email: "sarah@festify.io"  },
+    { id: "affiliate_marcus", code: "MARCUS26",    name: "Marcus Johnson", email: "marcus@festify.io" },
+    { id: "affiliate_priya",  code: "PRIYA-SG",    name: "Priya Sharma",   email: "priya@festify.io"  },
+    { id: "affiliate_james",  code: "JAMES-VIP",   name: "James Wilson",   email: "james@festify.io"  },
+  ];
+
+  for (const aff of EXTRA_AFFILIATES) {
+    await prisma.campaignAffiliate.upsert({
+      where: { tenantId_referralCode: { tenantId: TENANT_ID, referralCode: aff.code } },
+      update: {},
+      create: {
+        tenantId: TENANT_ID,
+        campaignId: CAMPAIGN_ID,
+        affiliateId: aff.id,
+        referralCode: aff.code,
+      },
+    });
+    await prisma.user.upsert({
+      where: { email: aff.email },
+      update: { tenantId: TENANT_ID, role: "affiliate", affiliateId: aff.id, emailVerifiedAt: new Date() },
+      create: {
+        email: aff.email,
+        fullName: aff.name,
+        passwordHash,
+        role: "affiliate",
+        tenantId: TENANT_ID,
+        affiliateId: aff.id,
+        emailVerifiedAt: new Date(),
+      },
+    });
+  }
+
+  // ── Demo sales for chart + table data ─────────────────────────────────
+  const DEMO_SALES = [
+    { extId: "sale_demo_1", amount: 150000, aff: "affiliate_sarah",  daysAgo: 1  },
+    { extId: "sale_demo_2", amount: 80000,  aff: "affiliate_marcus", daysAgo: 1  },
+    { extId: "sale_demo_3", amount: 40000,  aff: AFFILIATE_ID,       daysAgo: 2  },
+    { extId: "sale_demo_4", amount: 60000,  aff: "affiliate_priya",  daysAgo: 3  },
+    { extId: "sale_demo_5", amount: 150000, aff: "affiliate_james",  daysAgo: 4  },
+    { extId: "sale_demo_6", amount: 80000,  aff: "affiliate_sarah",  daysAgo: 5  },
+    { extId: "sale_demo_7", amount: 50000,  aff: "affiliate_marcus", daysAgo: 6  },
+    { extId: "sale_demo_8", amount: 120000, aff: "affiliate_priya",  daysAgo: 7  },
+  ];
+
+  for (const s of DEMO_SALES) {
+    const saleDate = new Date();
+    saleDate.setDate(saleDate.getDate() - s.daysAgo);
+    saleDate.setHours(12, 0, 0, 0);
+
+    const existing = await prisma.sale.findFirst({ where: { tenantId: TENANT_ID, externalId: s.extId } });
+    if (!existing) {
+      const sale = await prisma.sale.create({
+        data: {
+          tenantId: TENANT_ID,
+          externalId: s.extId,
+          amountMinor: s.amount,
+          currency: "USD",
+          buyerEmail: `buyer${s.daysAgo}@example.com`,
+          source: "seed",
+          createdAt: saleDate,
+        },
+      });
+      // Create attribution claim
+      await prisma.attributionClaim.create({
+        data: {
+          tenantId: TENANT_ID,
+          saleId: sale.id,
+          affiliateId: s.aff,
+          campaignId: CAMPAIGN_ID,
+          referralCode: s.aff === AFFILIATE_ID ? REFERRAL_CODE :
+            EXTRA_AFFILIATES.find(a => a.id === s.aff)?.code ?? "UNKNOWN",
+          source: "seed",
+        },
+      });
+      // Create commission ledger entry (10% commission)
+      await prisma.commissionLedgerEntry.create({
+        data: {
+          tenantId: TENANT_ID,
+          affiliateId: s.aff,
+          campaignId: CAMPAIGN_ID,
+          saleId: sale.id,
+          type: "earned",
+          amountMinor: Math.round(s.amount * 0.1),
+          currency: "USD",
+          createdAt: saleDate,
+        },
+      });
+    }
+  }
+
   // ── Demo marketing materials (Figma node 60:1975) ───────────────────
   const DEMO_ASSETS = [
     { id: "asset_hero_banner",     type: "banner" as const, title: "TOKEN2049 Hero Banner",       sizeBytes: 2_516_582, mimeType: "image/png"        },
