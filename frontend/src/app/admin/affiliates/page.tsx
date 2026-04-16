@@ -9,6 +9,7 @@ import { useAffiliatesFilters } from "@/modules/affiliates/hooks/use-affiliates-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/services/api/client";
 import type { Affiliate } from "@/modules/affiliates/types";
+import { AffiliateDetailDrawer } from "@/modules/affiliates/components/affiliate-detail-drawer";
 
 const PAGE_SIZE = 6;
 const TIER_FILTERS = ["all", "bronze", "silver", "gold", "platinum", "none"] as const;
@@ -570,78 +571,11 @@ export default function AdminAffiliatesPage() {
         </div>
       </DashboardContainer>
 
-      {/* Affiliate Detail Panel */}
-      {selectedAffiliate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,0,0.60)]" onClick={() => setSelectedAffiliate(null)}>
-          <div
-            className="w-full max-w-[28rem] rounded-[0.75rem] border border-[rgba(255,255,255,0.08)] bg-[#111525] px-[2rem] py-[1.75rem]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="font-[var(--font-display)] text-[1.5rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
-                Affiliate Details
-              </h2>
-              <button
-                type="button"
-                onClick={() => setSelectedAffiliate(null)}
-                className="text-[rgba(255,255,255,0.40)] transition-colors hover:text-[var(--color-text-primary)]"
-                aria-label="Close"
-              >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4l10 10M14 4L4 14" /></svg>
-              </button>
-            </div>
-
-            <div className="mt-[1.5rem] flex flex-col gap-[1.25rem]">
-              <div className="flex items-center gap-[0.75rem]">
-                <div className="flex size-[3rem] shrink-0 items-center justify-center rounded-full bg-[var(--color-avatar-bg)]">
-                  <span className="font-[var(--font-sans)] text-[0.9rem] font-semibold text-white">
-                    {selectedAffiliate.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
-                  </span>
-                </div>
-                <div>
-                  <p className="font-[var(--font-sans)] text-[var(--text-base)] font-medium text-[var(--color-text-primary)]">{selectedAffiliate.name}</p>
-                  <p className="font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">{selectedAffiliate.email}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-[1rem]">
-                <div>
-                  <p className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.50)]">Status</p>
-                  <p className="mt-[0.25rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">{selectedAffiliate.status === "approved" ? "Active" : selectedAffiliate.status}</p>
-                </div>
-                <div>
-                  <p className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.50)]">Referral Code</p>
-                  <p className="mt-[0.25rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">{selectedAffiliate.referralCode ?? "—"}</p>
-                </div>
-                <div>
-                  <p className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.50)]">Revenue</p>
-                  <p className="mt-[0.25rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">{formatCurrency(selectedAffiliate.totalRevenue)}</p>
-                </div>
-                <div>
-                  <p className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.50)]">Commission Due</p>
-                  <p className="mt-[0.25rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[#22C55E]">{formatCurrency(selectedAffiliate.totalCommission)}</p>
-                </div>
-                <div>
-                  <p className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.50)]">Total Sales</p>
-                  <p className="mt-[0.25rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">{selectedAffiliate.totalSales}</p>
-                </div>
-                <div>
-                  <p className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.50)]">Joined</p>
-                  <p className="mt-[0.25rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">{new Date(selectedAffiliate.joinedAt).toLocaleDateString()}</p>
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setSelectedAffiliate(null)}
-              className="mt-[1.5rem] w-full rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent py-[0.6rem] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Affiliate Detail Drawer */}
+      <AffiliateDetailDrawer
+        affiliate={selectedAffiliate}
+        onClose={() => setSelectedAffiliate(null)}
+      />
 
       {/* Edit affiliate modal */}
       {editingAffiliate && (
