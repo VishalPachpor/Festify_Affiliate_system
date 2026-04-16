@@ -25,8 +25,8 @@ function KpiCardSkeleton({ label }: { label: string }) {
       aria-busy="true"
       className="flex flex-col gap-[8px] rounded-[8px] p-[24px]"
       style={{
-        background: "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%), rgba(21,26,43,0.8)",
-        boxShadow: "0 0 0 1px rgba(255,255,255,0.05), 0 4px 20px rgba(0,0,0,0.3)",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 40%, transparent 100%), rgba(21,26,43,0.8)",
+        boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 10px 30px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.2)",
       }}
     >
       <div className="h-[4px] w-[64px] animate-pulse rounded-[50px] bg-[rgba(255,255,255,0.08)]" />
@@ -54,8 +54,8 @@ export function KpiCard({
     <dl
       className="flex flex-col gap-[8px] rounded-[8px] p-[24px]"
       style={{
-        background: "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%), rgba(21,26,43,0.8)",
-        boxShadow: "0 0 0 1px rgba(255,255,255,0.05), 0 4px 20px rgba(0,0,0,0.3)",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 40%, transparent 100%), rgba(21,26,43,0.8)",
+        boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 10px 30px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.2)",
       }}
     >
       {/* Accent bar — 64×4 rounded pill */}

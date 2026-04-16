@@ -35,8 +35,8 @@ export function ReferralCard() {
   return (
     <section
       aria-label="Referral link"
-      className="rounded-[8px] border border-[rgba(255,255,255,0.1)] p-[24px]"
-      style={{ background: "rgba(21,26,43,0.5)" }}
+      className="rounded-[8px] p-[24px]"
+      style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)", boxShadow: "0 0 0 1px rgba(255,255,255,0.05), 0 8px 24px rgba(0,0,0,0.2)" }}
     >
       {/* Heading — Figma 56:2735: Oswald Medium 18px, tracking -0.2px */}
       <h2 className="font-[var(--font-display)] text-[18px] font-medium leading-[20px] tracking-[-0.2px] text-[#F0F0F0]">

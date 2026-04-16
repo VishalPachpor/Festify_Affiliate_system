@@ -33,8 +33,8 @@ export function RecentMaterials() {
   return (
     <section
       aria-label="Recent materials"
-      className="overflow-hidden rounded-[8px] border border-[rgba(255,255,255,0.1)] p-[24px]"
-      style={{ background: "rgba(21,26,43,0.5)" }}
+      className="overflow-hidden rounded-[8px] p-[24px]"
+      style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)", boxShadow: "0 0 0 1px rgba(255,255,255,0.05), 0 8px 24px rgba(0,0,0,0.2)" }}
     >
       {/* Heading — Figma 55:2364: Oswald Medium 18px */}
       <div className="border-b border-[rgba(255,255,255,0.1)] pb-[24px]">

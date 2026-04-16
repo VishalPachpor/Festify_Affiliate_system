@@ -22,8 +22,8 @@ function MilestoneSkeleton() {
       aria-label="Milestone progress"
       aria-busy="true"
       aria-live="polite"
-      className="rounded-[8px] border border-[rgba(255,255,255,0.1)] p-[24px]"
-      style={{ background: "rgba(21,26,43,0.5)" }}
+      className="rounded-[8px] p-[24px]"
+      style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)", boxShadow: "0 0 0 1px rgba(255,255,255,0.05), 0 8px 24px rgba(0,0,0,0.2)" }}
     >
       <div className="h-[20px] w-1/2 animate-pulse rounded-[4px] bg-[rgba(255,255,255,0.08)]" />
       <div className="mt-[16px] h-[18px] w-1/3 animate-pulse rounded-[4px] bg-[rgba(255,255,255,0.08)]" />
@@ -51,8 +51,8 @@ export function MilestoneProgress() {
   return (
     <section
       aria-label="Milestone progress"
-      className="rounded-[8px] border border-[rgba(255,255,255,0.1)] p-[24px]"
-      style={{ background: "rgba(21,26,43,0.5)" }}
+      className="rounded-[8px] p-[24px]"
+      style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)", boxShadow: "0 0 0 1px rgba(255,255,255,0.05), 0 8px 24px rgba(0,0,0,0.2)" }}
     >
       {/* Header — Figma 56:2749 */}
       <div className="flex items-center justify-between gap-[16px]">
