@@ -70,60 +70,70 @@ function PreviewIcon({ type }: { type: AssetType }) {
   return <IconImage />;
 }
 
+// Figma-exact gradient per asset type (node 60:1975)
+const CARD_GRADIENTS: Record<AssetType, string> = {
+  banner:
+    "linear-gradient(152deg, rgba(43,127,255,0.2) 0%, rgba(173,70,255,0.2) 100%), linear-gradient(90deg, rgb(21,26,43) 0%, rgb(21,26,43) 100%)",
+  email:
+    "linear-gradient(152deg, rgba(0,201,80,0.2) 0%, rgba(0,188,125,0.2) 100%), linear-gradient(90deg, rgb(21,26,43) 0%, rgb(21,26,43) 100%)",
+  social:
+    "linear-gradient(152deg, rgba(246,51,154,0.2) 0%, rgba(255,32,86,0.2) 100%), linear-gradient(90deg, rgb(21,26,43) 0%, rgb(21,26,43) 100%)",
+  copy:
+    "linear-gradient(152deg, rgba(254,154,0,0.2) 0%, rgba(255,105,0,0.2) 100%), linear-gradient(90deg, rgb(21,26,43) 0%, rgb(21,26,43) 100%)",
+  guide:
+    "linear-gradient(152deg, rgba(0,184,219,0.2) 0%, rgba(43,127,255,0.2) 100%), linear-gradient(90deg, rgb(21,26,43) 0%, rgb(21,26,43) 100%)",
+};
+
 function formatAddedDate(iso: string) {
   return iso.slice(0, 10);
 }
 
 function AssetCard({ asset }: { asset: Asset }) {
-  const isImage = asset.mimeType.startsWith("image/");
-
   return (
-    <article className="h-full overflow-hidden rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.08)] bg-[rgba(20,24,42,0.92)]">
+    <article className="h-full overflow-hidden rounded-[8px] border border-[rgba(255,255,255,0.05)] bg-[rgba(15,22,40,0.5)] p-px">
+      {/* Gradient preview — 192px, centered icon */}
       <div
-        className="relative flex h-[12rem] items-center justify-center overflow-hidden text-[rgba(255,255,255,0.72)]"
-        style={{ background: asset.thumbnailBg }}
+        className="flex h-[192px] items-center justify-center text-[rgba(255,255,255,0.55)]"
+        style={{ backgroundImage: CARD_GRADIENTS[asset.type] ?? CARD_GRADIENTS.banner }}
         aria-hidden="true"
       >
-        {isImage ? (
-          <img
-            src={asset.fileUrl}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-            onError={(e) => { e.currentTarget.style.display = "none"; }}
-          />
-        ) : null}
         <PreviewIcon type={asset.type} />
       </div>
 
-      <div className="p-[var(--space-4)]">
-        <h3 className="truncate font-[var(--font-display)] text-[1.125rem] font-medium leading-[var(--space-5)] tracking-[-0.011em] text-[var(--color-text-primary)]">
+      {/* Card body — p-16, gap-12 */}
+      <div className="flex flex-col gap-[12px] p-[16px]">
+        {/* Title — Oswald Medium 18px, tracking -0.2px */}
+        <h3 className="truncate font-[var(--font-display)] text-[18px] font-medium leading-[20px] tracking-[-0.2px] text-white">
           {asset.title}
         </h3>
 
-        <div className="mt-[var(--space-2)] flex items-center gap-[var(--space-2)]">
-          <span className="rounded-[var(--radius-sm)] bg-[rgba(255,255,255,0.08)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium leading-[1.125rem] text-[rgba(255,255,255,0.9)]">
+        {/* Badge + size */}
+        <div className="flex items-center gap-[8px]">
+          <span className="rounded-[4px] bg-[rgba(156,164,183,0.2)] px-[8px] py-[4px] font-[var(--font-sans)] text-[12px] font-medium leading-[15px] text-[#eaeaea]">
             {asset.type}
           </span>
-          <span className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[1.125rem] text-[rgba(255,255,255,0.68)]">
+          <span className="font-[var(--font-sans)] text-[12px] leading-[18px] text-[#b0b8cc]">
             {asset.sizeLabel}
           </span>
         </div>
 
+        {/* Download button — border #1c4aa6 */}
         <a
           href={asset.fileUrl}
           target="_blank"
           rel="noopener noreferrer"
           download
-          className="mt-[var(--space-3)] flex h-[37px] w-full items-center justify-center gap-[var(--space-2)] rounded-[var(--radius-md)] border border-[rgba(59,102,208,0.95)] bg-transparent font-[var(--font-sans)] text-[var(--text-sm)] font-semibold leading-[var(--leading-snug)] text-[var(--color-text-primary)] transition-colors duration-[var(--duration-normal)] hover:bg-[rgba(59,102,208,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+          className="flex h-[37px] w-full items-center justify-center gap-[8px] rounded-[8px] border border-[#1c4aa6] bg-transparent font-[var(--font-sans)] text-[14px] font-semibold leading-[21px] text-[#f0f0f0] transition-colors duration-[var(--duration-normal)] hover:bg-[rgba(28,74,166,0.15)]"
           aria-label={`Download ${asset.title}`}
         >
           <IconDownload />
           Download
         </a>
 
-        <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)] text-[rgba(255,255,255,0.74)]">
+        {/* Added date — 12px #eaeaea */}
+        <div className="flex items-center gap-[8px] text-[#eaeaea]">
           <IconCalendar />
-          <span className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[1.125rem]">
+          <span className="font-[var(--font-sans)] text-[12px] leading-[18px]">
             Added {formatAddedDate(asset.addedAt)}
           </span>
         </div>
@@ -163,10 +173,10 @@ export default function MaterialsPage() {
       <DashboardContainer>
         <section className="w-full">
           <div className="max-w-[32rem]">
-            <h2 className="font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-[var(--leading-tight)] tracking-[-0.0125em] text-[var(--color-text-primary)]">
+            <h2 className="font-[var(--font-display)] text-[24px] font-bold leading-[32px] tracking-[-0.3px] text-white">
               Marketing Materials
             </h2>
-            <p className="mt-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-xs)] leading-[1.125rem] text-[var(--color-text-secondary)]">
+            <p className="mt-[8px] font-[var(--font-sans)] text-[12px] leading-[18px] text-[#e5e5e5]">
               Download and use these assets for your {eventName} promotions.
             </p>
           </div>
@@ -186,12 +196,11 @@ export default function MaterialsPage() {
                   aria-selected={isActive}
                   type="button"
                   onClick={() => setActiveFilter(tab.value)}
-                  className={cn(
-                    "inline-flex h-[35px] items-center justify-center rounded-[var(--radius-sm)] px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[var(--leading-snug)] transition-colors duration-[var(--duration-normal)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
-                    isActive
-                      ? "bg-[rgba(255,255,255,0.96)] font-semibold text-[var(--color-text-dark)]"
-                      : "bg-[rgba(20,24,42,0.9)] text-[rgba(255,255,255,0.62)] hover:bg-[rgba(255,255,255,0.06)] hover:text-[var(--color-text-primary)]",
-                  )}
+                  className="inline-flex h-[35px] items-center justify-center rounded-[8px] border-none px-[16px] font-[var(--font-sans)] text-[14px] leading-[21px] transition-colors duration-[var(--duration-normal)]"
+                  style={{
+                    background: isActive ? "#ddd" : "#0f1628",
+                    color: isActive ? "#0b0e1a" : "#b0b8cc",
+                  }}
                 >
                   {tab.label}
                 </button>
@@ -206,13 +215,13 @@ export default function MaterialsPage() {
             className="mt-[var(--space-8)]"
           >
             {isLoading ? (
-              <div className="grid w-full grid-cols-1 items-stretch gap-[var(--space-6)] md:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))]">
+              <div className="grid w-full grid-cols-1 items-stretch gap-[24px] md:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))]">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <AssetCardSkeleton key={i} />
                 ))}
               </div>
             ) : (
-              <div className="grid w-full grid-cols-1 items-stretch gap-[var(--space-6)] md:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))]">
+              <div className="grid w-full grid-cols-1 items-stretch gap-[24px] md:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))]">
                 {assets.map((asset) => (
                   <AssetCard key={asset.id} asset={asset} />
                 ))}
