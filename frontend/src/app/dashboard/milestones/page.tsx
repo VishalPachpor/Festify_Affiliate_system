@@ -50,12 +50,6 @@ const TIER_STYLES = {
   },
 } as const;
 
-// Locked state: muted colors for tiles that haven't been reached
-const LOCKED_TILE = {
-  tileBorder: "rgba(255,255,255,0.12)",
-  tileBg: "rgba(255,255,255,0.04)",
-};
-
 function TierTile({
   letter,
   tileText,
@@ -69,14 +63,16 @@ function TierTile({
   tileBg: string;
   unlocked: boolean;
 }) {
+  // Figma: tile ALWAYS shows tier color regardless of locked/unlocked.
+  // Only the checkmark badge differs between states.
   return (
     <div className="relative">
       <div
         className="flex size-[64px] shrink-0 items-center justify-center rounded-[8px] border-2 font-[var(--font-display)] text-[28px] font-bold leading-[32px]"
         style={{
-          borderColor: unlocked ? tileBorder : "rgba(255,255,255,0.10)",
-          color: unlocked ? tileText : "rgba(255,255,255,0.35)",
-          background: unlocked ? tileBg : "rgba(255,255,255,0.06)",
+          borderColor: tileBorder,
+          color: tileText,
+          background: tileBg,
         }}
         aria-hidden="true"
       >
