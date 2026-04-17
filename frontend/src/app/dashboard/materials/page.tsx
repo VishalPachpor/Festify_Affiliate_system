@@ -99,14 +99,26 @@ function formatAddedDate(iso: string) {
 }
 
 function AssetCard({ asset }: { asset: Asset }) {
+  const isImage = asset.mimeType.startsWith("image/");
   return (
     <article className="h-full overflow-hidden rounded-[8px] border border-[rgba(255,255,255,0.05)] bg-[rgba(15,22,40,0.5)] p-px">
-      {/* Gradient preview — 192px, centered icon */}
+      {/* Preview — matches admin behaviour: render the actual image on top of
+          the gradient when possible so a real banner shows its content here
+          too. Gradient + icon remain as the fallback for non-image types or
+          when an image fails to load. */}
       <div
-        className="flex h-[192px] items-center justify-center text-[rgba(255,255,255,0.45)]"
+        className="relative flex h-[192px] items-center justify-center overflow-hidden text-[rgba(255,255,255,0.45)]"
         style={{ background: getMaterialGradient(asset.type) }}
         aria-hidden="true"
       >
+        {isImage ? (
+          <img
+            src={asset.fileUrl}
+            alt={asset.title}
+            className="absolute inset-0 h-full w-full object-cover"
+            onError={(e) => { e.currentTarget.style.display = "none"; }}
+          />
+        ) : null}
         <PreviewIcon type={asset.type} />
       </div>
 
