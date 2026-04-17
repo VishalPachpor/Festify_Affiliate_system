@@ -13,10 +13,10 @@ export function useSetAssetVisibility() {
 
   return useMutation({
     mutationFn: ({ assetId, visible }: { assetId: string; visible: boolean }) =>
-      setAssetVisibility({ tenantId: tenant!.id, assetId, visible }),
+      setAssetVisibility({ tenantId: tenant?.id ?? "", assetId, visible }),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: assetKeys.all(tenant!.id, CAMPAIGN_PLACEHOLDER),
+        queryKey: assetKeys.all(tenant?.id ?? "", CAMPAIGN_PLACEHOLDER),
       });
     },
   });

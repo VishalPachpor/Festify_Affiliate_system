@@ -17,8 +17,11 @@ export function useUploadAsset() {
     onSuccess: () => {
       // Invalidate by prefix so every variant of the assets query refetches —
       // both the admin (all) and affiliate (visible-only) views update.
+      // Match the same `tenantId ?? ""` fallback useAssets uses as its key,
+      // otherwise this crashes with "Cannot read properties of null" when
+      // running on a host where resolveTenant() returns null (e.g. localhost).
       queryClient.invalidateQueries({
-        queryKey: assetKeys.all(tenant!.id, CAMPAIGN_PLACEHOLDER),
+        queryKey: assetKeys.all(tenant?.id ?? "", CAMPAIGN_PLACEHOLDER),
       });
     },
   });

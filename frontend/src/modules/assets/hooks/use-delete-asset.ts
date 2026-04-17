@@ -12,10 +12,11 @@ export function useDeleteAsset() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (assetId: string) => deleteAsset({ tenantId: tenant!.id, assetId }),
+    mutationFn: (assetId: string) =>
+      deleteAsset({ tenantId: tenant?.id ?? "", assetId }),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: assetKeys.all(tenant!.id, CAMPAIGN_PLACEHOLDER),
+        queryKey: assetKeys.all(tenant?.id ?? "", CAMPAIGN_PLACEHOLDER),
       });
     },
   });
