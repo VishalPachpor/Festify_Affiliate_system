@@ -119,10 +119,10 @@ router.get("/api/sales", async (req: Request, res: Response) => {
             select: {
               amountMinor: true,
               payoutId: true,
-              // Payout status is the source of truth for "paid" vs "has payout
-              // record but still pending". Without this, a just-approved
-              // commission (payout.status = pending) collapsed into "paid".
-              payout: { select: { status: true, processedAt: true } },
+              // Need both: processedAt tells us when a paid payout settled,
+              // createdAt is used as the "scheduled" date for approved (pending)
+              // payouts that haven't been paid yet.
+              payout: { select: { status: true, processedAt: true, createdAt: true } },
             },
           },
         },
@@ -133,31 +133,69 @@ router.get("/api/sales", async (req: Request, res: Response) => {
       prisma.sale.count({ where }),
     ]);
 
-    // Map to frontend Sale shape.
-    //
-    // sale.status is the source of truth. Attribution state is returned
-    // separately so the UI can decide which action to show (approve vs
-    // "attribute first"), but status itself is never derived here.
+    // ── Resolve affiliate names in one batched round-trip ─────────────────
+    // affiliateId is an opaque id on AttributionClaim. Real display name lives
+    // on User.fullName (once they sign up) or falls back to Application.firstName
+    // (during the pre-signup admin-approved phase).
+    const affiliateIds = Array.from(
+      new Set(
+        sales
+          .map((s) => s.attributionClaim?.affiliateId)
+          .filter((id): id is string => typeof id === "string" && id.length > 0),
+      ),
+    );
+
+    const [users, applications] = await Promise.all([
+      affiliateIds.length > 0
+        ? prisma.user.findMany({
+            where: { tenantId, affiliateId: { in: affiliateIds } },
+            select: { affiliateId: true, fullName: true },
+          })
+        : Promise.resolve([] as { affiliateId: string | null; fullName: string | null }[]),
+      affiliateIds.length > 0
+        ? prisma.application.findMany({
+            where: { tenantId, affiliateId: { in: affiliateIds }, status: "approved" },
+            select: { affiliateId: true, firstName: true },
+          })
+        : Promise.resolve([] as { affiliateId: string | null; firstName: string | null }[]),
+    ]);
+
+    const nameByAffiliateId = new Map<string, string>();
+    for (const u of users) {
+      if (u.affiliateId && u.fullName) nameByAffiliateId.set(u.affiliateId, u.fullName);
+    }
+    for (const a of applications) {
+      if (a.affiliateId && a.firstName && !nameByAffiliateId.has(a.affiliateId)) {
+        nameByAffiliateId.set(a.affiliateId, a.firstName);
+      }
+    }
+
+    // Map to frontend Sale shape. sale.status is the source of truth; we don't
+    // derive status here. For payoutDate we prefer processedAt (paid) and fall
+    // back to the payout.createdAt (scheduled) so approved rows get a date.
     const mapped = sales.map((sale) => {
       const entries = sale.commissionLedgerEntries;
       const commission = entries.reduce((sum, entry) => sum + entry.amountMinor, 0);
 
-      // Payout date: most recent processedAt across attached payouts.
-      const processedDates = entries
-        .map((e) => e.payout?.processedAt)
+      const dates = entries
+        .map((e) => e.payout?.processedAt ?? e.payout?.createdAt ?? null)
         .filter((d): d is Date => d !== null && d !== undefined);
       const payoutDate =
-        processedDates.length > 0
-          ? new Date(Math.max(...processedDates.map((d) => d.getTime()))).toISOString()
+        dates.length > 0
+          ? new Date(Math.max(...dates.map((d) => d.getTime()))).toISOString()
           : null;
+
+      const affiliateId = sale.attributionClaim?.affiliateId ?? "";
+      const affiliateName =
+        (affiliateId && nameByAffiliateId.get(affiliateId)) || affiliateId || "Unattributed";
 
       return {
         id: sale.id,
         amount: sale.amountMinor,
         commission,
         currency: sale.currency,
-        affiliateId: sale.attributionClaim?.affiliateId ?? "",
-        affiliateName: sale.attributionClaim?.affiliateId ?? "Unattributed",
+        affiliateId,
+        affiliateName,
         campaignId: sale.campaignId,
         status: sale.status,
         createdAt: sale.createdAt.toISOString(),
