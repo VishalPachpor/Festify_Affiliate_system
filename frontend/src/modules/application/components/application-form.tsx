@@ -330,18 +330,9 @@ export function ApplicationForm() {
 
   return (
     <div className="relative z-10 mx-auto max-w-[48rem]">
-      {/* Ambient backdrop. Kept simple on purpose — two soft radial washes
-          that are FELT, not seen. The previous four-layer stack (grid +
-          vignette + heavy orbs) fought with the content; this pass lets
-          the form breathe. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10"
-        style={{
-          background:
-            "radial-gradient(circle at 20% 20%, rgba(59,130,246,0.12), transparent 45%), radial-gradient(circle at 80% 80%, rgba(139,92,246,0.10), transparent 55%)",
-        }}
-      />
+      {/* Ambient backdrop lives on DashboardStageCanvas so the orbs span the
+          full content area (and all other admin/affiliate pages use the same
+          treatment). No per-form backdrop here — it would double up. */}
 
       {/* Subtle top-left back link — unobtrusive, keeps the primary action free
           to live on the right without an awkward mirrored pair at the bottom. */}
@@ -562,7 +553,6 @@ export function ApplicationForm() {
                 </FormField>
 
                 <FormField
-                  labelCase="normal"
                   label="Email Address"
                   required
                   error={errors.email}
@@ -583,7 +573,6 @@ export function ApplicationForm() {
                 </FormField>
 
                 <FormField
-                  labelCase="normal"
                   label="Telegram Username"
                   required
                   error={errors.telegramUsername}
@@ -602,7 +591,7 @@ export function ApplicationForm() {
               </div>
             ) : (
               <div className="grid gap-[var(--space-6)] lg:grid-cols-2">
-                <FormField labelCase="normal" label="Company Name" required error={errors.companyName}>
+                <FormField label="Company Name" required error={errors.companyName}>
                   {(a11y) => (
                     <TextInput
                       {...a11y}
@@ -669,7 +658,6 @@ export function ApplicationForm() {
                 </FormField>
 
                 <FormField
-                  labelCase="normal"
                   label="Signatory Email Address"
                   required
                   error={errors.signatoryEmail}
@@ -690,7 +678,6 @@ export function ApplicationForm() {
                 </FormField>
 
                 <FormField
-                  labelCase="normal"
                   label="Contact Person Telegram Username"
                   required
                   error={errors.contactPersonTelegramUsername}
@@ -871,7 +858,7 @@ export function ApplicationForm() {
                 )}
 
                 {selectedChannelSet.has("linkedin") && (
-                  <FormField labelCase="normal" label="LinkedIn Link" required error={errors.linkedInLink}>
+                  <FormField label="LinkedIn Link" required error={errors.linkedInLink}>
                     {(a11y) => (
                       <TextInput
                         {...a11y}

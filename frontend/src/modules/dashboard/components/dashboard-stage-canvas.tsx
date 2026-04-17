@@ -18,14 +18,23 @@ export function DashboardStageCanvas({
         className,
       )}
       style={{
+        // Premium ambient backdrop — two soft radial orbs that span the full
+        // content area (not just the form). Blue top-left + violet bottom-right
+        // give the whole dashboard shell depth without noise. Kept subtle so
+        // the UI still reads on white surfaces and doesn't fight chart/table
+        // content on data-heavy screens.
         background:
-          "radial-gradient(ellipse at top right, rgba(59,130,246,0.10), rgba(55,48,163,0.04) 50%, transparent 80%)",
+          "radial-gradient(ellipse at 18% 15%, rgba(59,130,246,0.12), transparent 42%)," +
+          "radial-gradient(ellipse at 82% 85%, rgba(139,92,246,0.10), transparent 52%)",
       }}
     >
-      {/* Dot pattern — localized top-right, soft masked fade, matching Figma */}
+      {/* Figma-referenced dot texture in the top-right quadrant — kept because
+          it provides tenant-brand density without adding color noise. The old
+          stacked PNG decorations (bg-dot-right/bg-dot-left/bg-dotted-horizontal)
+          are gone — they added visual chatter the client flagged. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute right-[40px] top-[40px] h-[380px] w-[380px] opacity-[0.08]"
+        className="pointer-events-none absolute right-[40px] top-[40px] h-[380px] w-[380px] opacity-[0.06]"
         style={{
           backgroundImage: "radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1.5px)",
           backgroundSize: "10px 10px",
@@ -34,20 +43,6 @@ export function DashboardStageCanvas({
           WebkitMaskImage: "radial-gradient(circle, white 30%, rgba(255,255,255,0.6) 55%, transparent 80%)",
         }}
       />
-      <div className="pointer-events-none absolute inset-0">
-        <div
-          className="absolute right-[-6%] top-[1.5%] h-[21rem] w-[34rem] bg-no-repeat bg-contain opacity-34"
-          style={{ backgroundImage: "url('/bg-dotted-horizontal.png')" }}
-        />
-        <div
-          className="absolute right-[-13%] top-[10%] h-[30rem] w-[30rem] bg-no-repeat bg-contain opacity-16"
-          style={{ backgroundImage: "url('/bg-dot-right.svg')" }}
-        />
-        <div
-          className="absolute left-[-10%] bottom-[-12%] h-[16rem] w-[16rem] bg-no-repeat bg-contain opacity-8"
-          style={{ backgroundImage: "url('/bg-dot-left.svg')" }}
-        />
-      </div>
 
       <div className={cn("relative z-10 w-full", centered && "mx-auto max-w-[49rem]")}>
         {children}
