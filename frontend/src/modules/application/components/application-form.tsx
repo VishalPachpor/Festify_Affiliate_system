@@ -232,6 +232,13 @@ export function ApplicationForm() {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    // Enter pressed inside a step-1/2 input fires the form's onSubmit, but
+    // we never want to skip steps. Treat early-step submits as "Continue"
+    // so the user can't accidentally bypass validation by pressing Enter.
+    if (step < 3) {
+      handleNext();
+      return;
+    }
     const parsed = applicationSubmissionSchema.safeParse(toPayload(values));
     if (!parsed.success) {
       const nextErrors: FieldErrors = {};
