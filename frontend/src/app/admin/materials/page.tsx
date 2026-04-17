@@ -157,7 +157,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void 
       aria-checked={checked}
       onClick={onChange}
       className="relative inline-flex h-[1.25rem] w-[2.25rem] shrink-0 cursor-pointer rounded-full transition-colors duration-200"
-      style={{ background: checked ? "#5B8DEF" : "rgba(255,255,255,0.15)" }}
+      style={{ background: checked ? "rgba(91,141,239,0.85)" : "rgba(255,255,255,0.12)" }}
     >
       <span
         className="pointer-events-none inline-block size-[1rem] rounded-full bg-white shadow transition-transform duration-200"
@@ -194,7 +194,18 @@ export default function AdminMaterialsPage() {
 
   const assets = assetsData?.assets ?? [];
 
-  const materials = assets
+  // Sort on raw assets (so we can use the ISO addedAt as secondary key)
+  // then map to the view model. Unknown types get pushed to the bottom
+  // via the ?? 99 fallback, and within the same type older items come
+  // first — seeded design content naturally outranks newer test uploads.
+  const materials = [...assets]
+    .sort((a, b) => {
+      const byType = (TYPE_ORDER[a.type] ?? 99) - (TYPE_ORDER[b.type] ?? 99);
+      if (byType !== 0) return byType;
+      const ta = new Date(a.addedAt).getTime();
+      const tb = new Date(b.addedAt).getTime();
+      return ta - tb;
+    })
     .map((a) => ({
       id: a.id,
       title: a.title,
@@ -207,12 +218,7 @@ export default function AdminMaterialsPage() {
       thumbnailGradient: TYPE_TO_GRADIENT[a.type] ?? TYPE_TO_GRADIENT.banner,
       icon: TYPE_TO_ICON[a.type] ?? ("image" as ThumbIcon),
       isImage: a.mimeType.startsWith("image/"),
-    }))
-    .sort((a, b) => {
-      const byType = (TYPE_ORDER[a.type] ?? 99) - (TYPE_ORDER[b.type] ?? 99);
-      if (byType !== 0) return byType;
-      return a.title.localeCompare(b.title);
-    });
+    }));
 
   // Filter is enforced server-side via useAssets(type), so the array is
   // already narrowed when activeFilter !== "all".
@@ -294,11 +300,11 @@ export default function AdminMaterialsPage() {
             return (
               <article
                 key={mat.id}
-                className="flex min-h-[19rem] flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.015)] transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
+                className="flex min-h-[19rem] flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-transparent transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
               >
-                {/* Thumbnail */}
+                {/* Thumbnail — compact top band; stays pure by avoiding any overlay wash behind it */}
                 <div
-                  className="relative flex h-[10rem] shrink-0 items-center justify-center overflow-hidden"
+                  className="relative flex h-[7rem] shrink-0 items-center justify-center overflow-hidden"
                   style={{ background: mat.thumbnailGradient }}
                 >
                   {mat.isImage ? (
@@ -313,8 +319,12 @@ export default function AdminMaterialsPage() {
                   <ThumbIcon />
                 </div>
 
-                {/* Content — flex-1 so footer (actions + date) sits flush at the bottom of every card */}
-                <div className="flex flex-1 flex-col px-[var(--space-4)] py-[var(--space-4)]">
+                {/* Content — subtle wash lives on the body only, never behind the thumbnail,
+                    so the gradient top reads pure. flex-1 pushes the footer row flush. */}
+                <div
+                  className="flex flex-1 flex-col px-[var(--space-4)] py-[var(--space-4)]"
+                  style={{ background: "rgba(255,255,255,0.008)" }}
+                >
                   {/* Title */}
                   <h3 className="font-[var(--font-display)] text-[var(--text-base)] font-bold leading-[var(--leading-snug)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
                     {mat.title}
@@ -334,7 +344,7 @@ export default function AdminMaterialsPage() {
                   </div>
 
                   {/* Visible toggle */}
-                  <div className="mt-[var(--space-4)] flex items-center gap-[var(--space-3)]">
+                  <div className="mt-[var(--space-5)] flex items-center gap-[var(--space-3)]">
                     <span className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
                       Visible to affiliates
                     </span>
@@ -344,16 +354,19 @@ export default function AdminMaterialsPage() {
                     />
                   </div>
 
-                  {/* Spacer — pushes actions + date to the bottom of the card for consistent grid alignment */}
+                  {/* Spacer — pushes actions + date to the bottom so every card has a matching baseline */}
                   <div className="flex-1" />
 
                   {/* Actions */}
-                  <div className="mt-[var(--space-4)] flex items-center gap-[var(--space-2)]">
+                  <div className="mt-[var(--space-5)] flex items-center gap-[var(--space-2)]">
                     <button
                       type="button"
                       onClick={() => handleDownload(mat.fileUrl)}
-                      className="flex flex-1 items-center justify-center gap-[var(--space-2)] rounded-[var(--radius)] px-[var(--space-3)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(28,74,166,0.18)]"
-                      style={{ background: "rgba(28,74,166,0.10)" }}
+                      className="flex flex-1 items-center justify-center gap-[var(--space-2)] rounded-[var(--radius)] border px-[var(--space-3)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(28,74,166,0.14)]"
+                      style={{
+                        background: "rgba(28,74,166,0.08)",
+                        borderColor: "rgba(255,255,255,0.06)",
+                      }}
                     >
                       <IconDownload />
                       Download
@@ -362,8 +375,8 @@ export default function AdminMaterialsPage() {
                       type="button"
                       onClick={() => handleDownload(mat.fileUrl)}
                       aria-label="Preview"
-                      className="flex items-center justify-center rounded-[var(--radius)] border p-[var(--space-2)] text-[rgba(255,255,255,0.35)] transition-colors hover:border-[rgba(255,255,255,0.12)] hover:text-[rgba(255,255,255,0.70)]"
-                      style={{ borderColor: "rgba(255,255,255,0.06)" }}
+                      className="flex items-center justify-center rounded-[var(--radius)] border bg-transparent p-[var(--space-2)] text-[rgba(255,255,255,0.35)] transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-[rgba(255,255,255,0.75)]"
+                      style={{ borderColor: "rgba(255,255,255,0.04)" }}
                     >
                       <IconEye />
                     </button>
@@ -372,15 +385,15 @@ export default function AdminMaterialsPage() {
                       onClick={() => handleDelete(mat.id)}
                       disabled={deleteMutation.isPending}
                       aria-label="Delete"
-                      className="flex items-center justify-center rounded-[var(--radius)] border p-[var(--space-2)] text-[rgba(239,68,68,0.55)] transition-colors hover:border-[rgba(239,68,68,0.30)] hover:bg-[rgba(239,68,68,0.08)] hover:text-[#EF4444] disabled:opacity-40"
-                      style={{ borderColor: "rgba(239,68,68,0.14)" }}
+                      className="flex items-center justify-center rounded-[var(--radius)] border bg-transparent p-[var(--space-2)] text-[rgba(239,68,68,0.55)] transition-colors hover:bg-[rgba(239,68,68,0.08)] hover:text-[#EF4444] disabled:opacity-40"
+                      style={{ borderColor: "rgba(239,68,68,0.10)" }}
                     >
                       <IconTrash />
                     </button>
                   </div>
 
                   {/* Date */}
-                  <div className="mt-[var(--space-4)] flex items-center gap-[var(--space-2)]">
+                  <div className="mt-[var(--space-5)] flex items-center gap-[var(--space-2)]">
                     <span className="text-[rgba(255,255,255,0.35)]">
                       <IconCalendar />
                     </span>
