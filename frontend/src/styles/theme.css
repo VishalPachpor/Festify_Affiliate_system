@@ -144,7 +144,9 @@
   --header-h:               3.6rem;     /* top header */
   --color-surface-sidebar:  #151A2B;    /* Figma: rgb(21,26,43) sidebar surface */
   --color-nav-active-bg:    rgba(var(--color-primary-rgb), 0.20); /* Figma 75:28 active row */
+  --color-nav-hover-bg:     rgba(var(--color-primary-rgb), 0.10); /* derived: half of active */
   --color-nav-active-text:  #A6D1FF;    /* Figma: active link blue */
+  --color-nav-text:         #9CA4B7;    /* Figma 101:9355 default nav text */
   --color-avatar-bg:        #161616;    /* Figma 71:53 dark avatar circle */
   --color-avatar-border:    rgba(166, 209, 255, 0.3); /* Figma avatar ring */
 

@@ -133,7 +133,7 @@ export function AppSidebar() {
                     "transition-colors duration-[var(--duration-normal)]",
                     active
                       ? "bg-[var(--color-nav-active-bg)] text-[var(--color-nav-active-text)] font-medium"
-                      : "text-[#9CA4B7] hover:bg-[var(--color-surface-ghost-hover)] hover:text-[var(--color-text-primary)]",
+                      : "text-[var(--color-nav-text)] hover:bg-[var(--color-nav-hover-bg)] hover:text-[var(--color-nav-active-text)]",
                   )}
                   aria-current={active ? "page" : undefined}
                 >
