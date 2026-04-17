@@ -330,15 +330,49 @@ export function ApplicationForm() {
 
   return (
     <div className="relative z-10 mx-auto max-w-[48rem]">
-      {/* Ambient radial glow — gives the page depth without a heavy overlay */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-[6rem] left-1/2 -z-10 h-[22rem] w-[36rem] -translate-x-1/2"
-        style={{
-          background:
-            "radial-gradient(ellipse at center, rgba(91,141,239,0.14), transparent 65%)",
-        }}
-      />
+      {/* Immersive layered backdrop — four passes that combine into a rich,
+          non-flat environment behind the form:
+            1. Blue orb top-left
+            2. Violet orb bottom-right (complement)
+            3. Faint grid texture for depth
+            4. Soft vignette to draw focus to the form */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div
+          className="absolute -left-[10rem] -top-[8rem] h-[30rem] w-[30rem] rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle at center, rgba(91,141,239,0.22) 0%, rgba(91,141,239,0.08) 35%, transparent 70%)",
+            filter: "blur(24px)",
+          }}
+        />
+        <div
+          className="absolute -right-[8rem] top-[40%] h-[26rem] w-[26rem] rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle at center, rgba(168,85,247,0.18) 0%, rgba(168,85,247,0.05) 40%, transparent 70%)",
+            filter: "blur(32px)",
+          }}
+        />
+        <div
+          className="absolute inset-0 opacity-[0.35]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+            maskImage:
+              "radial-gradient(ellipse 80% 70% at 50% 40%, black 0%, transparent 85%)",
+            WebkitMaskImage:
+              "radial-gradient(ellipse 80% 70% at 50% 40%, black 0%, transparent 85%)",
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse at center, transparent 40%, rgba(12,14,26,0.5) 100%)",
+          }}
+        />
+      </div>
 
       {/* Subtle top-left back link — unobtrusive, keeps the primary action free
           to live on the right without an awkward mirrored pair at the bottom. */}
@@ -363,9 +397,21 @@ export function ApplicationForm() {
         </p>
       </header>
 
+      {/* Glass form container — translucent surface + subtle blur over the
+          layered backdrop. Gives the whole flow a "focus container" feel
+          instead of floating text on a dark page. */}
+      <div
+        className="relative mt-[var(--space-8)] rounded-[var(--radius-xl)] border p-[var(--space-8)] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.45)] backdrop-blur-[10px]"
+        style={{
+          borderColor: "rgba(255,255,255,0.08)",
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.02) 100%)",
+        }}
+      >
+
       {/* Progress — numbered chips with labels, connected by a rule line.
           Active step glows; completed steps swap the number for a check. */}
-      <nav aria-label="Application progress" className="mt-[var(--space-8)]">
+      <nav aria-label="Application progress">
         <ol className="flex items-center gap-[var(--space-3)]">
           {STEPS.map(({ n, label }, i) => {
             const isActive = step === n;
@@ -547,7 +593,7 @@ export function ApplicationForm() {
                   )}
                 </FormField>
 
-                <FormField label="Email Address" required error={errors.email}>
+                <FormField labelCase="normal" label="Email Address" required error={errors.email}>
                   {(a11y) => (
                     <TextInput
                       {...a11y}
@@ -586,7 +632,7 @@ export function ApplicationForm() {
               </div>
             ) : (
               <div className="grid gap-[var(--space-6)] lg:grid-cols-2">
-                <FormField label="Company Name" required error={errors.companyName}>
+                <FormField labelCase="normal" label="Company Name" required error={errors.companyName}>
                   {(a11y) => (
                     <TextInput
                       {...a11y}
@@ -705,6 +751,7 @@ export function ApplicationForm() {
             <legend className="sr-only">Promotion channels</legend>
 
             <FormField
+              labelCase="normal"
               label="Which communication channels will you use to promote this event?"
               required
               error={errors.communicationChannels}
@@ -857,7 +904,7 @@ export function ApplicationForm() {
                 )}
 
                 {selectedChannelSet.has("linkedin") && (
-                  <FormField label="LinkedIn Link" required error={errors.linkedInLink}>
+                  <FormField labelCase="normal" label="LinkedIn Link" required error={errors.linkedInLink}>
                     {(a11y) => (
                       <TextInput
                         {...a11y}
@@ -947,6 +994,7 @@ export function ApplicationForm() {
             </div>
 
             <FormField
+              labelCase="normal"
               label="Previous Affiliate Partnership Experience at events (if any)"
               error={errors.experience}
             >
@@ -965,6 +1013,7 @@ export function ApplicationForm() {
             </FormField>
 
             <FormField
+              labelCase="normal"
               label="Preferred Referral Code (e.g. SATOSHI2049)"
               required
               error={errors.requestedCode}
@@ -992,20 +1041,49 @@ export function ApplicationForm() {
           </fieldset>
         )}
 
-        {/* Primary action anchors to the right. Back lives at the top-left of
-            the page as a subtle text link so the action row stays uncluttered. */}
+        {/* Primary CTA. Gradient fill + strong blue shadow turns it into a
+            visual anchor — the single brightest element on the page. */}
         <div className="flex items-center justify-end gap-[var(--space-4)]">
           {step < 3 ? (
-            <Button type="button" variant="primary" onClick={handleNext}>
+            <button
+              type="button"
+              onClick={handleNext}
+              className="group inline-flex h-[2.75rem] items-center gap-[var(--space-2)] rounded-[var(--radius)] px-[var(--space-6)] font-[var(--font-sans)] text-[var(--text-sm)] font-semibold text-white transition-all hover:-translate-y-px active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-page)]"
+              style={{
+                background:
+                  "linear-gradient(135deg, #3b82f6 0%, #1c4aa6 100%)",
+                boxShadow:
+                  "0 10px 30px rgba(59,130,246,0.30), 0 0 0 1px rgba(255,255,255,0.06) inset",
+              }}
+            >
               {ctaLabel}
-            </Button>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:translate-x-0.5">
+                <path d="M3 7h8M7 3l4 4-4 4" />
+              </svg>
+            </button>
           ) : (
-            <Button type="submit" variant="primary" loading={isPending}>
-              {ctaLabel}
-            </Button>
+            <button
+              type="submit"
+              disabled={isPending}
+              className="group inline-flex h-[2.75rem] items-center gap-[var(--space-2)] rounded-[var(--radius)] px-[var(--space-6)] font-[var(--font-sans)] text-[var(--text-sm)] font-semibold text-white transition-all hover:-translate-y-px active:translate-y-0 disabled:opacity-70 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-page)]"
+              style={{
+                background:
+                  "linear-gradient(135deg, #3b82f6 0%, #1c4aa6 100%)",
+                boxShadow:
+                  "0 10px 30px rgba(59,130,246,0.30), 0 0 0 1px rgba(255,255,255,0.06) inset",
+              }}
+            >
+              {isPending ? "Submitting…" : ctaLabel}
+              {!isPending && (
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 7l3 3 5-6" />
+                </svg>
+              )}
+            </button>
           )}
         </div>
       </form>
+      </div>
     </div>
   );
 }
