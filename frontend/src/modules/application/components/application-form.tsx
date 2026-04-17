@@ -262,8 +262,50 @@ export function ApplicationForm() {
     mutate(parsed.data);
   }
 
+  // Contextual copy per step — drives the right-hand info panel so the form
+  // reads like a guided flow, not a static questionnaire.
+  const CONTEXT_PANEL: Record<1 | 2 | 3, { title: string; items: string[] }> = {
+    1: {
+      title: "Who's applying?",
+      items: [
+        "Pick Individual if you're promoting as yourself. Pick Company if a business is signing the MOU.",
+        "The email you provide here is where we'll send the affiliate MOU once approved.",
+        "Telegram is how our team reaches out during review and for ongoing partner comms.",
+      ],
+    },
+    2: {
+      title: "Where will you promote?",
+      items: [
+        "Top affiliates use 2–3 channels — more isn't always better. Pick the ones you actively post on.",
+        "We'll ask for the exact link or audience size for each channel so we can estimate reach.",
+        "You can add or change channels later once you're approved.",
+      ],
+    },
+    3: {
+      title: "Almost there",
+      items: [
+        "Your preferred referral code is how sales get attributed back to you. 6–20 characters, letters and numbers.",
+        "Codes are case-insensitive and must be unique — we'll suggest an alternative if yours is taken.",
+        "Past event partnerships help us fast-track review. Skip if this is your first time.",
+      ],
+    },
+  };
+
+  const ctaLabel =
+    step === 1 ? "Continue to Promotion" : step === 2 ? "Review Application" : "Submit Application";
+
   return (
     <div className="relative z-10 mx-auto max-w-[73rem]">
+      {/* Ambient radial glow — gives the page depth without a heavy overlay */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(circle at 15% 10%, rgba(91,141,239,0.10), transparent 45%)",
+        }}
+      />
+
       <header>
         <h2 className="font-[var(--font-display)] text-[3rem] font-bold leading-[1.08] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
           Become an Affiliate
@@ -273,7 +315,8 @@ export function ApplicationForm() {
         </p>
       </header>
 
-      {/* Progress — numbered chips with labels, connected by a rule line */}
+      {/* Progress — numbered chips with labels, connected by a rule line.
+          Active step glows; completed steps swap the number for a check. */}
       <nav aria-label="Application progress" className="mt-[var(--space-8)]">
         <ol className="flex items-center gap-[var(--space-3)]">
           {STEPS.map(({ n, label }, i) => {
@@ -283,7 +326,7 @@ export function ApplicationForm() {
               <li key={n} className="flex flex-1 items-center gap-[var(--space-3)] last:flex-none">
                 <div className="flex items-center gap-[var(--space-3)]">
                   <span
-                    className="flex size-[1.75rem] shrink-0 items-center justify-center rounded-full font-[var(--font-sans)] text-[var(--text-xs)] font-semibold"
+                    className="flex size-[1.75rem] shrink-0 items-center justify-center rounded-full font-[var(--font-sans)] text-[var(--text-xs)] font-semibold transition-all duration-[var(--duration-normal)]"
                     style={{
                       background: isActive
                         ? "var(--color-primary)"
@@ -295,9 +338,18 @@ export function ApplicationForm() {
                         : isDone
                           ? "#A6D1FF"
                           : "rgba(255,255,255,0.50)",
+                      boxShadow: isActive
+                        ? "0 0 0 4px rgba(28,74,166,0.18), 0 0 24px rgba(91,141,239,0.25)"
+                        : "none",
                     }}
                   >
-                    {n}
+                    {isDone ? (
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M3 7l3 3 5-6" />
+                      </svg>
+                    ) : (
+                      n
+                    )}
                   </span>
                   <span
                     className="font-[var(--font-sans)] text-[var(--text-sm)]"
@@ -333,7 +385,14 @@ export function ApplicationForm() {
         </p>
       </nav>
 
-      <form className="mt-[var(--space-8)] flex flex-col gap-[var(--space-8)]" onSubmit={handleSubmit}>
+      {/* Two-column: form (left) + contextual info panel (right). On narrow
+          screens the panel falls below the form so the flow stays linear. */}
+      <div className="mt-[var(--space-8)] grid gap-[var(--space-8)] lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <form
+        key={`step-${step}`}
+        className="flex flex-col gap-[var(--space-8)] motion-safe:animate-[step-enter_0.28s_ease-out]"
+        onSubmit={handleSubmit}
+      >
         {step === 1 && (
           <fieldset className="flex flex-col gap-[var(--space-6)]">
             <legend className="sr-only">Applicant</legend>
@@ -537,21 +596,56 @@ export function ApplicationForm() {
               error={errors.communicationChannels}
             >
               {() => (
-                <div className="grid gap-[var(--space-3)] md:grid-cols-2 lg:grid-cols-4">
-                  {COMMUNICATION_CHANNEL_OPTIONS.map((channel) => (
-                    <label
-                      key={channel.value}
-                      className="flex items-center gap-[var(--space-3)] rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-input)] px-[var(--space-4)] py-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]"
-                    >
-                      <input
-                        type="checkbox"
-                        className={checkboxClass}
-                        checked={selectedChannelSet.has(channel.value)}
-                        onChange={() => toggleChannel(channel.value)}
-                      />
-                      <span>{channel.label}</span>
-                    </label>
-                  ))}
+                <div className="grid gap-[var(--space-3)] sm:grid-cols-2">
+                  {COMMUNICATION_CHANNEL_OPTIONS.map((channel) => {
+                    const selected = selectedChannelSet.has(channel.value);
+                    return (
+                      <label
+                        key={channel.value}
+                        className="group flex cursor-pointer items-center justify-between gap-[var(--space-3)] rounded-[var(--radius-md)] border px-[var(--space-4)] py-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] transition-all duration-[var(--duration-normal)]"
+                        style={{
+                          borderColor: selected
+                            ? "rgba(91,141,239,0.45)"
+                            : "rgba(255,255,255,0.08)",
+                          background: selected
+                            ? "rgba(91,141,239,0.10)"
+                            : "var(--color-input)",
+                          color: selected
+                            ? "var(--color-text-primary)"
+                            : "rgba(255,255,255,0.80)",
+                          boxShadow: selected
+                            ? "0 0 0 1px rgba(91,141,239,0.25), 0 4px 16px rgba(91,141,239,0.10)"
+                            : "none",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={selected}
+                          onChange={() => toggleChannel(channel.value)}
+                        />
+                        <span className="font-medium">{channel.label}</span>
+                        <span
+                          aria-hidden="true"
+                          className="flex size-[1.125rem] shrink-0 items-center justify-center rounded-full transition-colors duration-[var(--duration-fast)]"
+                          style={{
+                            background: selected
+                              ? "var(--color-primary)"
+                              : "rgba(255,255,255,0.06)",
+                            border: selected
+                              ? "1px solid rgba(91,141,239,0.50)"
+                              : "1px solid rgba(255,255,255,0.12)",
+                          }}
+                        >
+                          {selected ? (
+                            <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 7l3 3 5-6" />
+                            </svg>
+                          ) : null}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
               )}
             </FormField>
@@ -758,15 +852,57 @@ export function ApplicationForm() {
 
           {step < 3 ? (
             <Button type="button" variant="primary" onClick={handleNext}>
-              Continue
+              {ctaLabel}
             </Button>
           ) : (
             <Button type="submit" variant="primary" loading={isPending}>
-              Submit
+              {ctaLabel}
             </Button>
           )}
         </div>
       </form>
+
+      {/* Contextual info panel — updates per step. Gives the right column a
+          purpose beyond dead space and quietly teaches the user what we're
+          asking for and why. */}
+      <aside
+        key={`panel-${step}`}
+        className="self-start rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent)] p-[var(--space-6)] motion-safe:animate-[step-enter_0.28s_ease-out]"
+      >
+        <p className="font-[var(--font-sans)] text-[var(--text-xs)] font-semibold uppercase tracking-[0.08em] text-[#A6D1FF]">
+          Step {step} of {STEPS.length}
+        </p>
+        <h3 className="mt-[var(--space-2)] font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-tight tracking-[-0.02em] text-[var(--color-text-primary)]">
+          {CONTEXT_PANEL[step].title}
+        </h3>
+        <ul className="mt-[var(--space-4)] flex flex-col gap-[var(--space-3)]">
+          {CONTEXT_PANEL[step].items.map((item, i) => (
+            <li
+              key={i}
+              className="relative pl-[var(--space-5)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.55] text-[var(--color-text-secondary)]"
+            >
+              <span
+                aria-hidden="true"
+                className="absolute left-0 top-[0.55rem] size-[0.375rem] rounded-full"
+                style={{ background: "rgba(91,141,239,0.55)" }}
+              />
+              {item}
+            </li>
+          ))}
+        </ul>
+        <div
+          className="mt-[var(--space-6)] rounded-[var(--radius-md)] border border-[rgba(91,141,239,0.20)] bg-[rgba(91,141,239,0.06)] p-[var(--space-4)]"
+        >
+          <p className="font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[#A6D1FF]">
+            What happens next
+          </p>
+          <p className="mt-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.6] text-[var(--color-text-secondary)]">
+            Once you submit, the team reviews within 24 hours and emails the
+            MOU. You&apos;ll see your status update inside this dashboard.
+          </p>
+        </div>
+      </aside>
+      </div>
     </div>
   );
 }
