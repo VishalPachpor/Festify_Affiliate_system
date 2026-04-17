@@ -19,7 +19,7 @@ function formatCurrency(minorUnits: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-    minimumFractionDigits: 2,
+    minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(minorUnits / 100);
 }
@@ -55,25 +55,19 @@ function IconDownload() {
 // ── Status cell ───────────────────────────────────────────────────────────────
 
 function StatusCell({ status }: { status: CommissionStatus }) {
-  if (status === "paid") {
+  // Figma 101:9195/9218/9258: pill, 22.66px tall, 4px radius, 11px Medium,
+  // paid+approved share a green tint; pending uses amber.
+  const base =
+    "inline-block rounded-[4px] px-[8px] py-[3px] font-[var(--font-sans)] text-[11px] font-medium leading-[14.667px]";
+  if (status === "paid" || status === "approved") {
     return (
-      <span className="font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
-        paid
-      </span>
-    );
-  }
-  if (status === "approved") {
-    return (
-      <span className="font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
-        approved
+      <span className={base} style={{ background: "rgba(34,197,94,0.2)", color: "#f0f0f0" }}>
+        {status}
       </span>
     );
   }
   return (
-    <span
-      className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
-      style={{ background: "rgba(234,179,8,0.14)", color: "#EAB308" }}
-    >
+    <span className={base} style={{ background: "rgba(245,158,11,0.2)", color: "#f59e0b" }}>
       pending
     </span>
   );
@@ -147,6 +141,7 @@ export default function AdminCommissionsPage() {
   const { tenant } = useTenant();
   const { filters, setFilters } = useSalesFilters();
   const [statusFilter, setStatusFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
   const [payingSaleId, setPayingSaleId] = useState<string | null>(null);
 
   const { data: salesData } = useSalesList(tenant?.id, {
@@ -157,7 +152,13 @@ export default function AdminCommissionsPage() {
   const { data: payoutData } = usePayoutSummary(tenant?.id);
   const { data: salesSummary } = useSalesSummary(tenant?.id);
 
-  const sales: Sale[] = salesData?.sales ?? [];
+  const allSales: Sale[] = salesData?.sales ?? [];
+  // Date filter runs client-side against the sale's createdAt — server-side
+  // date params aren't wired into useSalesList yet, but the UI control needs
+  // to behave.
+  const sales: Sale[] = dateFilter
+    ? allSales.filter((s) => s.createdAt.slice(0, 10) === dateFilter)
+    : allSales;
   const total = salesData?.total ?? 0;
   const totalPages = salesData?.totalPages ?? 1;
   const currentPage = filters.page;
@@ -259,6 +260,13 @@ export default function AdminCommissionsPage() {
               className="h-[2.5rem] w-full rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] pl-[2.2rem] pr-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.35)] focus:border-[var(--color-ring)] focus:outline-none transition-colors"
             />
           </div>
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            aria-label="Filter by date"
+            className="h-[2.5rem] rounded-[var(--radius)] bg-[rgba(255,255,255,0.06)] px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.10)] border-none focus:outline-none"
+          />
           <div className="relative">
             <select
               value={statusFilter}
@@ -299,18 +307,28 @@ export default function AdminCommissionsPage() {
         )}
 
         {/* Table */}
-        <div className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent">
+        <div className="rounded-[8px] border border-[rgba(255,255,255,0.05)] bg-[rgba(15,22,40,0.5)]">
           <div className="overflow-x-auto px-[var(--space-6)] py-[var(--space-5)]">
             <table className="w-full border-collapse font-[var(--font-sans)]" aria-label="Commissions">
               <thead>
                 <tr>
-                  {["Affiliate", "Total Sales", "Commission", "Status", "Paid", "Outstanding", "Payout Date", "Actions"].map((col) => (
+                  {[
+                    { label: "Affiliate", align: "left" as const },
+                    { label: "Total Sales", align: "right" as const },
+                    { label: "Commission", align: "right" as const },
+                    { label: "Status", align: "center" as const },
+                    { label: "Paid", align: "right" as const },
+                    { label: "Outstanding", align: "right" as const },
+                    { label: "Payout Date", align: "left" as const },
+                    { label: "Actions", align: "center" as const },
+                  ].map((col) => (
                     <th
-                      key={col}
+                      key={col.label}
                       scope="col"
-                      className="pb-[var(--space-3)] text-left text-[var(--text-xs)] leading-[var(--leading-caption)] tracking-[var(--tracking-caption)] uppercase font-semibold whitespace-nowrap pr-[var(--space-4)] last:pr-0 text-[rgba(255,255,255,0.45)]"
+                      className="pb-[var(--space-3)] text-[12px] leading-[14px] tracking-[0.275px] uppercase whitespace-nowrap pr-[var(--space-4)] last:pr-0 text-[#b0b8cc]"
+                      style={{ textAlign: col.align }}
                     >
-                      {col}
+                      {col.label}
                     </th>
                   ))}
                 </tr>
@@ -323,50 +341,45 @@ export default function AdminCommissionsPage() {
                     </td>
                   </tr>
                 )}
-                {sales.map((row) => {
+                {sales.map((row, rowIndex) => {
                   const cStatus = toCommissionStatus(row.status);
                   const isPaid = row.status === "paid";
                   const paidAmount = isPaid ? row.commission : 0;
                   const outstandingAmount = isPaid ? 0 : row.commission;
-                  // Figma 101:9184 "Payout Date" — empty em-dash for pending rows;
-                  // for paid/approved we surface the sale's createdAt as the stand-in
-                  // until a dedicated payout date field is available.
-                  // Use the real payout processedAt when the backend has one,
-                  // otherwise fall back to an em-dash. Pending rows never have one.
+                  // Figma 101:9187/9210: alternating rows get a 1% white fill.
+                  const zebra = rowIndex % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent";
                   const payoutDate =
                     row.payoutDate
                       ? new Date(row.payoutDate).toISOString().slice(0, 10)
                       : "—";
                   return (
-                  <tr key={row.id} className="border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-                    <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] whitespace-nowrap">
+                  <tr
+                    key={row.id}
+                    className="border-t"
+                    style={{ borderColor: "rgba(255,255,255,0.05)", background: zebra }}
+                  >
+                    <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[14px] font-semibold text-white whitespace-nowrap">
                       {row.affiliateName}
                     </td>
-                    <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] text-[#FFFFFF] whitespace-nowrap">
+                    <td className="py-[var(--space-3)] pr-[var(--space-4)] text-right text-[16px] text-white whitespace-nowrap">
                       {formatCurrency(row.amount)}
                     </td>
-                    <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] text-[#F5A623] whitespace-nowrap">
+                    <td className="py-[var(--space-3)] pr-[var(--space-4)] text-right text-[16px] font-bold text-[#c9a84c] whitespace-nowrap">
                       {formatCurrency(row.commission)}
                     </td>
-                    <td className="py-[var(--space-3)] pr-[var(--space-4)] whitespace-nowrap">
+                    <td className="py-[var(--space-3)] pr-[var(--space-4)] text-center whitespace-nowrap">
                       <StatusCell status={cStatus} />
                     </td>
-                    <td
-                      className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] whitespace-nowrap"
-                      style={{ color: paidAmount > 0 ? "#22C55E" : "rgba(255,255,255,0.35)" }}
-                    >
+                    <td className="py-[var(--space-3)] pr-[var(--space-4)] text-right text-[16px] text-[#22c55e] whitespace-nowrap">
                       {formatCurrency(paidAmount)}
                     </td>
-                    <td
-                      className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] whitespace-nowrap"
-                      style={{ color: outstandingAmount > 0 ? "#22C55E" : "rgba(255,255,255,0.35)" }}
-                    >
+                    <td className="py-[var(--space-3)] pr-[var(--space-4)] text-right text-[16px] text-[#f59e0b] whitespace-nowrap">
                       {formatCurrency(outstandingAmount)}
                     </td>
-                    <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] text-[rgba(255,255,255,0.55)] whitespace-nowrap">
+                    <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[12px] text-[#b0b8cc] whitespace-nowrap">
                       {payoutDate}
                     </td>
-                    <td className="py-[var(--space-3)] whitespace-nowrap">
+                    <td className="py-[var(--space-3)] text-center whitespace-nowrap">
                       {cStatus === "approved" && row.affiliateId && (
                         <button
                           type="button"
@@ -378,7 +391,7 @@ export default function AdminCommissionsPage() {
                             });
                           }}
                           disabled={payingSaleId !== null}
-                          className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+                          className="rounded-[8px] bg-[#1c4aa6] px-[16px] py-[8px] font-[var(--font-sans)] text-[12px] leading-[18px] text-[#f0f0f0] transition-colors hover:bg-[#1a3f8f] disabled:opacity-50"
                         >
                           {payingSaleId === row.id ? "Processing..." : "Mark Paid"}
                         </button>
@@ -391,7 +404,7 @@ export default function AdminCommissionsPage() {
                             approveMutation.mutate(row.id);
                           }}
                           disabled={payingSaleId !== null}
-                          className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+                          className="rounded-[8px] border border-[#132054] bg-[#132054] px-[17px] py-[9px] font-[var(--font-sans)] text-[12px] leading-[18px] text-[#f0f0f0] transition-colors hover:bg-[#1a2a6b] disabled:opacity-50"
                         >
                           {payingSaleId === row.id ? "Approving..." : "Approve"}
                         </button>
@@ -417,19 +430,19 @@ export default function AdminCommissionsPage() {
             </table>
           </div>
 
-          {/* Pagination */}
-          <div className="flex items-center justify-between border-t px-[var(--space-6)] py-[var(--space-4)]" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-            <p className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.45)]">
+          {/* Pagination — Figma 101:9290/9293 */}
+          <div className="flex items-center justify-between border-t px-[16px] py-[var(--space-4)]" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+            <p className="font-[var(--font-sans)] text-[12px] leading-[17.143px] text-[#b0b8cc]">
               {total > 0
                 ? `Showing ${startItem}-${endItem} of ${total} entries`
                 : "No entries"}
             </p>
-            <div className="flex gap-[var(--space-2)]">
+            <div className="flex gap-[8px]">
               <button
                 type="button"
                 disabled={currentPage <= 1}
                 onClick={() => setFilters({ page: currentPage - 1 })}
-                className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.78)] transition-colors hover:border-[rgba(255,255,255,0.18)] disabled:pointer-events-none disabled:opacity-40"
+                className="rounded-[8px] border border-[rgba(156,164,183,0.3)] bg-transparent px-[17px] py-[9px] font-[var(--font-sans)] text-[12px] leading-[17.143px] text-[#9ca4b7] transition-colors hover:border-[rgba(156,164,183,0.5)] disabled:pointer-events-none disabled:opacity-50"
               >
                 Previous
               </button>
@@ -439,10 +452,10 @@ export default function AdminCommissionsPage() {
                   type="button"
                   onClick={() => setFilters({ page: num })}
                   className={[
-                    "rounded-[var(--radius)] border px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] transition-colors",
+                    "rounded-[8px] border px-[17px] py-[9px] font-[var(--font-sans)] text-[12px] leading-[17.143px] transition-colors",
                     currentPage === num
-                      ? "border-[#5B8DEF] bg-[#5B8DEF] text-white"
-                      : "border-[rgba(255,255,255,0.08)] bg-transparent text-[rgba(255,255,255,0.78)] hover:border-[rgba(255,255,255,0.18)]",
+                      ? "border-[#132054] bg-[#132054] text-[#f0f0f0]"
+                      : "border-[rgba(156,164,183,0.3)] bg-transparent text-[#9ca4b7] opacity-50 hover:border-[rgba(156,164,183,0.5)] hover:opacity-100",
                   ].join(" ")}
                 >
                   {num}
@@ -452,7 +465,7 @@ export default function AdminCommissionsPage() {
                 type="button"
                 disabled={currentPage >= totalPages}
                 onClick={() => setFilters({ page: currentPage + 1 })}
-                className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.78)] transition-colors hover:border-[rgba(255,255,255,0.18)] disabled:pointer-events-none disabled:opacity-40"
+                className="rounded-[8px] border border-[rgba(156,164,183,0.3)] bg-transparent px-[17px] py-[9px] font-[var(--font-sans)] text-[12px] leading-[17.143px] text-[#9ca4b7] transition-colors hover:border-[rgba(156,164,183,0.5)] disabled:pointer-events-none disabled:opacity-50"
               >
                 Next
               </button>
