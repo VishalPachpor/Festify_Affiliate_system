@@ -7,25 +7,51 @@
 // color synthesis. Changes land here and propagate everywhere.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Each token layers a top-left radial "light source" over a 2-hue linear
+// gradient. Two distinct hues per type so every card reads as its own
+// identity — no repeat of the same family across types.
+//
+//   banner   indigo  → purple
+//   email    deep teal-green
+//   social   magenta → wine
+//   copy     muted amber
+//   guide    dusty blue
+//   story    deep purple
 export const MATERIAL_GRADIENTS = {
-  banner: "linear-gradient(135deg, #1F2A44 0%, #2C2F6B 50%, #3A2F7A 100%)",
-  email:  "linear-gradient(135deg, #0F3D3E 0%, #115E59 50%, #147D7E 100%)",
-  social: "linear-gradient(135deg, #4A1E3A 0%, #6B2448 50%, #8B2C5A 100%)",
-  copy:   "linear-gradient(135deg, #5A3A1E 0%, #7A4F27 50%, #8C6A2C 100%)",
-  guide:  "linear-gradient(135deg, #1E3A5A 0%, #274B7A 50%, #2F5F9B 100%)",
-  story:  "linear-gradient(135deg, #2E2A5A 0%, #3F2F7A 50%, #4F2C9B 100%)",
+  banner:
+    "radial-gradient(120% 120% at 0% 0%, rgba(255,255,255,0.12) 0%, transparent 50%), linear-gradient(135deg, #2A2F6E 0%, #4B3C8F 100%)",
+  email:
+    "radial-gradient(120% 120% at 0% 0%, rgba(255,255,255,0.10) 0%, transparent 50%), linear-gradient(135deg, #0F5A4F 0%, #1F7A6E 100%)",
+  social:
+    "radial-gradient(120% 120% at 0% 0%, rgba(255,255,255,0.10) 0%, transparent 50%), linear-gradient(135deg, #6A1F3B 0%, #8E2C58 100%)",
+  copy:
+    "radial-gradient(120% 120% at 0% 0%, rgba(255,255,255,0.08) 0%, transparent 50%), linear-gradient(135deg, #7A4E1D 0%, #A06A2C 100%)",
+  guide:
+    "radial-gradient(120% 120% at 0% 0%, rgba(255,255,255,0.10) 0%, transparent 50%), linear-gradient(135deg, #244A73 0%, #3A6A9A 100%)",
+  story:
+    "radial-gradient(120% 120% at 0% 0%, rgba(255,255,255,0.10) 0%, transparent 50%), linear-gradient(135deg, #3E2A6E 0%, #5A3C9A 100%)",
 } as const;
 
 export type MaterialGradientKey = keyof typeof MATERIAL_GRADIENTS;
 
-// Soft top-left "premium glow" highlight — applied as a layer above the hue
-// so the gradient stays pure and picks up the Figma-like light direction.
-const GRADIENT_HIGHLIGHT =
-  "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.12), transparent 40%)";
-
-// Hard fallback: unknown types snap to `banner` so the grid never renders a
-// bare or random background.
+// Explicit switch — makes the mapping unambiguous and gives TypeScript an
+// exhaustiveness check if MaterialGradientKey ever grows. Unknown types snap
+// to banner so the grid never renders a bare background.
 export function getMaterialGradient(type: string): string {
-  const key = (type in MATERIAL_GRADIENTS ? type : "banner") as MaterialGradientKey;
-  return `${GRADIENT_HIGHLIGHT}, ${MATERIAL_GRADIENTS[key]}`;
+  switch (type) {
+    case "banner":
+      return MATERIAL_GRADIENTS.banner;
+    case "email":
+      return MATERIAL_GRADIENTS.email;
+    case "social":
+      return MATERIAL_GRADIENTS.social;
+    case "copy":
+      return MATERIAL_GRADIENTS.copy;
+    case "guide":
+      return MATERIAL_GRADIENTS.guide;
+    case "story":
+      return MATERIAL_GRADIENTS.story;
+    default:
+      return MATERIAL_GRADIENTS.banner;
+  }
 }
