@@ -193,13 +193,13 @@ test("mark paid is idempotent — two clicks do not create duplicate payouts", a
       method: "POST",
       body: { affiliateId: AFFILIATE_ID, saleId, markAsPaid: true },
     });
-    // Second call must not succeed with a new payout — either 400 (no money
-    // left to move) or 201 only if some other channel produced new work.
-    // In our scenario, the sale is already paid → no unpaid entries → 400.
-    assert.equal(
-      second.status,
-      400,
-      `expected 400 on idempotent second call, got ${second.status}`,
+    // Second call is either replayed via the minute-bucketed idempotency key
+    // (→ 200 with the original payout) or comes back empty-handed (→ 400).
+    // Both outcomes are idempotent — what matters is that no NEW payout
+    // row gets created. The count check below enforces that.
+    assert.ok(
+      second.status === 200 || second.status === 400,
+      `expected 200 (replay) or 400 (no-op), got ${second.status}`,
     );
 
     const payoutsAfter = await prisma.payout.count({
@@ -233,7 +233,8 @@ test("bulk payout: sum of linked ledger entries == payout.amountMinor", async ()
     assert.ok(result.status === 200 || result.status === 201);
 
     // Accounting invariant: every paid payout's amount must equal Σ of its
-    // linked ledger entries. No drift.
+    // linked ledger entries. No drift. Also enforce integer-minor-units so
+    // float arithmetic can never sneak in.
     const paidPayouts = await prisma.payout.findMany({
       where: {
         tenantId: TENANT_ID,
@@ -245,7 +246,11 @@ test("bulk payout: sum of linked ledger entries == payout.amountMinor", async ()
     });
     assert.ok(paidPayouts.length > 0, "at least one paid payout should cover these sales");
     for (const p of paidPayouts) {
-      const sum = p.commissionEntries.reduce((acc, e) => acc + e.amountMinor, 0);
+      assert.ok(Number.isInteger(p.amountMinor), `payout ${p.id} amountMinor is not an integer`);
+      const sum = p.commissionEntries.reduce((acc, e) => {
+        assert.ok(Number.isInteger(e.amountMinor), "ledger entry amountMinor is not an integer");
+        return acc + e.amountMinor;
+      }, 0);
       assert.equal(sum, p.amountMinor, `payout ${p.id}: sum ${sum} !== amountMinor ${p.amountMinor}`);
     }
 
@@ -259,5 +264,70 @@ test("bulk payout: sum of linked ledger entries == payout.amountMinor", async ()
   } finally {
     await cleanupSale(s1);
     await cleanupSale(s2);
+  }
+});
+
+test("mixed path: one click settles both unpaid entries AND pending payouts", async () => {
+  // Build the hybrid scenario: sale A is approved (→ pending payout, entries
+  // linked), sale B stays pending (→ unpaid entry). Bulk pay must cover both.
+  const { saleId: sApproved } = await createEphemeralSale(500_000);
+  const { saleId: sUnpaid } = await createEphemeralSale(700_000);
+  try {
+    // Approve only sA — creates a pending payout with the ledger entry linked.
+    await api(`/api/sales/${sApproved}/approve`, { method: "POST" });
+
+    // sUnpaid stays pending: entry is created but payoutId=null.
+    const unpaidBefore = await prisma.commissionLedgerEntry.count({
+      where: { saleId: sUnpaid, payoutId: null },
+    });
+    assert.equal(unpaidBefore, 1);
+
+    const pendingBefore = await prisma.payout.count({
+      where: {
+        tenantId: TENANT_ID,
+        affiliateId: AFFILIATE_ID,
+        status: "pending",
+        commissionEntries: { some: { saleId: sApproved } },
+      },
+    });
+    assert.equal(pendingBefore, 1);
+
+    // One bulk click — should claim the unpaid entry AND promote the pending payout.
+    const result = await api<{ amountMinor: number }>("/api/payouts/create", {
+      method: "POST",
+      body: { affiliateId: AFFILIATE_ID, markAsPaid: true },
+    });
+    assert.ok(result.status === 200 || result.status === 201);
+    assert.ok(Number.isInteger(result.body.amountMinor));
+
+    // Both sales should now be paid.
+    const [a, b] = await Promise.all([
+      prisma.sale.findUnique({ where: { id: sApproved } }),
+      prisma.sale.findUnique({ where: { id: sUnpaid } }),
+    ]);
+    assert.equal(a?.status, "paid", "approved sale should be paid after bulk");
+    assert.equal(b?.status, "paid", "pending sale should be paid after bulk");
+
+    // Both paths should have produced paid payouts, and the accounting
+    // invariant still holds for each.
+    const paidForBoth = await prisma.payout.findMany({
+      where: {
+        tenantId: TENANT_ID,
+        affiliateId: AFFILIATE_ID,
+        status: "paid",
+        commissionEntries: { some: { saleId: { in: [sApproved, sUnpaid] } } },
+      },
+      include: { commissionEntries: { select: { amountMinor: true, saleId: true } } },
+    });
+    const covered = new Set(paidForBoth.flatMap((p) => p.commissionEntries.map((e) => e.saleId)));
+    assert.ok(covered.has(sApproved), "approved sale's entry must be in a paid payout");
+    assert.ok(covered.has(sUnpaid), "unpaid sale's entry must be in a paid payout");
+    for (const p of paidForBoth) {
+      const sum = p.commissionEntries.reduce((acc, e) => acc + e.amountMinor, 0);
+      assert.equal(sum, p.amountMinor, `mixed-path drift on payout ${p.id}`);
+    }
+  } finally {
+    await cleanupSale(sApproved);
+    await cleanupSale(sUnpaid);
   }
 });

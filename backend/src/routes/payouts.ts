@@ -142,12 +142,35 @@ router.post("/api/payouts/create", async (req: Request, res: Response) => {
       idempotencyKey = rawKey.trim();
     }
 
+    // Auto-generate a server-side idempotency key when the client doesn't
+    // supply one. Minute-bucketed per (tenant, affiliate, saleId): a
+    // double-click or retry within the same minute hits the DB unique
+    // constraint and replays the original payout. Prevents duplicate
+    // payouts from UI double-fires or network retries.
+    if (!idempotencyKey) {
+      const minuteBucket = Math.floor(Date.now() / 60_000);
+      const scope = saleId && typeof saleId === "string" ? `sale-${saleId}` : "bulk";
+      idempotencyKey = `auto-${affiliateId}-${scope}-${minuteBucket}`;
+    }
+
     // ── Atomic: idempotency check + payout creation in ONE transaction ──
     // DB-enforced via PayoutIdempotencyKey unique constraint.
     // No race condition possible — even concurrent requests with the same key
     // will see exactly one succeed at the unique-constraint level.
     let alreadyExisted = false;
     const result = await prisma.$transaction(async (tx) => {
+      // Concurrency guard: transaction-scoped advisory lock on the affiliate
+      // ledger. If two admins click "Pay" at the same instant, only one
+      // transaction enters this section at a time — the other waits and
+      // then sees the idempotency record the first one wrote (or a fully
+      // settled state) and no-ops.
+      //   pg_advisory_xact_lock takes a bigint; hashtextextended returns
+      //   64 bits. Fits cleanly and releases automatically on commit/rollback.
+      await tx.$executeRawUnsafe(
+        `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`,
+        `payout:${tenantId}:${affiliateId}`,
+      );
+
       // Idempotency check inside transaction
       if (idempotencyKey) {
         const existing = await tx.payoutIdempotencyKey.findUnique({
