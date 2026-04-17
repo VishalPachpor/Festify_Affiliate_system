@@ -330,49 +330,18 @@ export function ApplicationForm() {
 
   return (
     <div className="relative z-10 mx-auto max-w-[48rem]">
-      {/* Immersive layered backdrop — four passes that combine into a rich,
-          non-flat environment behind the form:
-            1. Blue orb top-left
-            2. Violet orb bottom-right (complement)
-            3. Faint grid texture for depth
-            4. Soft vignette to draw focus to the form */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div
-          className="absolute -left-[10rem] -top-[8rem] h-[30rem] w-[30rem] rounded-full"
-          style={{
-            background:
-              "radial-gradient(circle at center, rgba(91,141,239,0.22) 0%, rgba(91,141,239,0.08) 35%, transparent 70%)",
-            filter: "blur(24px)",
-          }}
-        />
-        <div
-          className="absolute -right-[8rem] top-[40%] h-[26rem] w-[26rem] rounded-full"
-          style={{
-            background:
-              "radial-gradient(circle at center, rgba(168,85,247,0.18) 0%, rgba(168,85,247,0.05) 40%, transparent 70%)",
-            filter: "blur(32px)",
-          }}
-        />
-        <div
-          className="absolute inset-0 opacity-[0.35]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)",
-            backgroundSize: "48px 48px",
-            maskImage:
-              "radial-gradient(ellipse 80% 70% at 50% 40%, black 0%, transparent 85%)",
-            WebkitMaskImage:
-              "radial-gradient(ellipse 80% 70% at 50% 40%, black 0%, transparent 85%)",
-          }}
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse at center, transparent 40%, rgba(12,14,26,0.5) 100%)",
-          }}
-        />
-      </div>
+      {/* Ambient backdrop. Kept simple on purpose — two soft radial washes
+          that are FELT, not seen. The previous four-layer stack (grid +
+          vignette + heavy orbs) fought with the content; this pass lets
+          the form breathe. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(circle at 20% 20%, rgba(59,130,246,0.12), transparent 45%), radial-gradient(circle at 80% 80%, rgba(139,92,246,0.10), transparent 55%)",
+        }}
+      />
 
       {/* Subtle top-left back link — unobtrusive, keeps the primary action free
           to live on the right without an awkward mirrored pair at the bottom. */}
@@ -397,15 +366,14 @@ export function ApplicationForm() {
         </p>
       </header>
 
-      {/* Glass form container — translucent surface + subtle blur over the
-          layered backdrop. Gives the whole flow a "focus container" feel
-          instead of floating text on a dark page. */}
+      {/* Glass form container — translucent surface over the ambient backdrop.
+          Slightly brighter bg (0.04) than the previous pass so the card lifts
+          off the page instead of blending in. */}
       <div
-        className="relative mt-[var(--space-8)] rounded-[var(--radius-xl)] border p-[var(--space-8)] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.45)] backdrop-blur-[10px]"
+        className="relative mt-[var(--space-8)] rounded-[var(--radius-xl)] border p-[var(--space-8)] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.45)] backdrop-blur-[12px]"
         style={{
           borderColor: "rgba(255,255,255,0.08)",
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.02) 100%)",
+          background: "rgba(255,255,255,0.04)",
         }}
       >
 
@@ -593,7 +561,13 @@ export function ApplicationForm() {
                   )}
                 </FormField>
 
-                <FormField labelCase="normal" label="Email Address" required error={errors.email}>
+                <FormField
+                  labelCase="normal"
+                  label="Email Address"
+                  required
+                  error={errors.email}
+                  hint="We'll send the affiliate MOU here once approved. This person will be the signatory."
+                >
                   {(a11y) => (
                     <TextInput
                       {...a11y}
@@ -609,6 +583,7 @@ export function ApplicationForm() {
                 </FormField>
 
                 <FormField
+                  labelCase="normal"
                   label="Telegram Username"
                   required
                   error={errors.telegramUsername}
@@ -624,11 +599,6 @@ export function ApplicationForm() {
                     />
                   )}
                 </FormField>
-
-                <div className="rounded-[var(--radius)] border border-[var(--color-border)] bg-[rgba(255,255,255,0.02)] px-[var(--space-4)] py-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.6] text-[var(--color-text-secondary)]">
-                  If your application is approved, we will send the affiliate MOU,
-                  and this person&apos;s name will be listed as the signatory.
-                </div>
               </div>
             ) : (
               <div className="grid gap-[var(--space-6)] lg:grid-cols-2">
@@ -699,9 +669,11 @@ export function ApplicationForm() {
                 </FormField>
 
                 <FormField
+                  labelCase="normal"
                   label="Signatory Email Address"
                   required
                   error={errors.signatoryEmail}
+                  hint="We'll send the affiliate MOU here for signing on behalf of your organization."
                 >
                   {(a11y) => (
                     <TextInput
@@ -718,6 +690,7 @@ export function ApplicationForm() {
                 </FormField>
 
                 <FormField
+                  labelCase="normal"
                   label="Contact Person Telegram Username"
                   required
                   error={errors.contactPersonTelegramUsername}
@@ -735,12 +708,6 @@ export function ApplicationForm() {
                     />
                   )}
                 </FormField>
-
-                <div className="lg:col-span-2 rounded-[var(--radius)] border border-[var(--color-border)] bg-[rgba(255,255,255,0.02)] px-[var(--space-4)] py-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.6] text-[var(--color-text-secondary)]">
-                  If your application is approved, we will send the affiliate MOU,
-                  and the signatory&apos;s name will be listed as the signatory on
-                  behalf of your organization.
-                </div>
               </div>
             )}
           </fieldset>
