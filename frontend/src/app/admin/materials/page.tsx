@@ -230,8 +230,13 @@ export default function AdminMaterialsPage() {
     deleteMutation.mutate(id);
   }
 
-  function handleDownload(fileUrl: string) {
-    if (typeof window !== "undefined") window.open(fileUrl, "_blank", "noopener,noreferrer");
+  function deriveFilename(fileUrl: string, title: string): string {
+    try {
+      const last = new URL(fileUrl).pathname.split("/").pop();
+      return last || title;
+    } catch {
+      return title;
+    }
   }
 
   return (
@@ -357,9 +362,11 @@ export default function AdminMaterialsPage() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-[var(--space-2)]">
-                    <button
-                      type="button"
-                      onClick={() => handleDownload(mat.fileUrl)}
+                    <a
+                      href={mat.fileUrl}
+                      download={deriveFilename(mat.fileUrl, mat.title)}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="flex flex-1 items-center justify-center gap-[var(--space-2)] rounded-[var(--radius)] border px-[var(--space-3)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(28,74,166,0.14)]"
                       style={{
                         background: "rgba(28,74,166,0.06)",
@@ -368,16 +375,17 @@ export default function AdminMaterialsPage() {
                     >
                       <IconDownload />
                       Download
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDownload(mat.fileUrl)}
+                    </a>
+                    <a
+                      href={mat.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       aria-label="Preview"
                       className="flex items-center justify-center rounded-[var(--radius)] border bg-transparent p-[var(--space-2)] text-[rgba(255,255,255,0.35)] opacity-[0.35] transition-all hover:bg-[rgba(255,255,255,0.05)] hover:opacity-[0.7] hover:text-[rgba(255,255,255,0.75)]"
                       style={{ borderColor: "rgba(255,255,255,0.04)" }}
                     >
                       <IconEye />
-                    </button>
+                    </a>
                     <button
                       type="button"
                       onClick={() => handleDelete(mat.id)}
