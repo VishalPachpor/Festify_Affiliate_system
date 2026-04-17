@@ -39,6 +39,18 @@ const PASSWORD_MIN_LEN = 8;
 const VERIFY_CODE_TTL_MINUTES = 15;
 const RESET_TOKEN_TTL_MINUTES = 30;
 
+// Dev ergonomics: when running locally with no email provider configured,
+// surface the verification code on the signup/resend API response so the
+// client can auto-fill it and the flow is testable without Resend creds.
+// The helper is hard-gated on NODE_ENV === "development" so this can never
+// leak into a production deploy even if EMAIL_PROVIDER is misconfigured.
+function isDevCodeBypass(): boolean {
+  return (
+    process.env.NODE_ENV === "development" &&
+    !(process.env.EMAIL_PROVIDER ?? "").trim()
+  );
+}
+
 const googleClient = process.env.GOOGLE_CLIENT_ID
   ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
   : null;
@@ -188,10 +200,18 @@ router.post("/api/auth/signup", async (req: Request, res: Response) => {
       throw error;
     }
 
-    res.status(201).json({
+    const payload: {
+      message: string;
+      email: string;
+      devVerificationCode?: string;
+    } = {
       message: "Signup successful. Check your email for the verification code.",
       email,
-    });
+    };
+    if (isDevCodeBypass()) payload.devVerificationCode = code;
+    // Belt-and-braces: strip the dev field in anything other than development.
+    if (process.env.NODE_ENV !== "development") delete payload.devVerificationCode;
+    res.status(201).json(payload);
   } catch (err) {
     console.error("[auth] signup failed:", err);
     res.status(500).json({ error: "Signup failed" });
@@ -311,10 +331,17 @@ router.post("/api/auth/signup/organizer", async (req: Request, res: Response) =>
       throw error;
     }
 
-    res.status(201).json({
+    const payload: {
+      message: string;
+      email: string;
+      devVerificationCode?: string;
+    } = {
       message: "Signup successful. Check your email for the verification code.",
       email,
-    });
+    };
+    if (isDevCodeBypass()) payload.devVerificationCode = code;
+    if (process.env.NODE_ENV !== "development") delete payload.devVerificationCode;
+    res.status(201).json(payload);
   } catch (err) {
     console.error("[auth] organizer signup failed:", err);
     res.status(500).json({ error: "Signup failed" });
@@ -437,7 +464,12 @@ router.post("/api/auth/resend-code", async (req: Request, res: Response) => {
       expiresInMinutes: VERIFY_CODE_TTL_MINUTES,
     });
 
-    res.status(200).json({ message: "If the account exists, a code has been sent" });
+    const payload: { message: string; devVerificationCode?: string } = {
+      message: "If the account exists, a code has been sent",
+    };
+    if (isDevCodeBypass()) payload.devVerificationCode = code;
+    if (process.env.NODE_ENV !== "development") delete payload.devVerificationCode;
+    res.status(200).json(payload);
   } catch (err) {
     console.error("[auth] resend-code failed:", err);
     res.status(500).json({ error: "Failed to resend code" });

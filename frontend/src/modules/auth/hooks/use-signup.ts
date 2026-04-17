@@ -11,8 +11,12 @@ export function useSignupMutation() {
 
   return useMutation({
     mutationFn: (data: SignUpFormValues) => signup(data),
-    onSuccess: ({ email }) => {
-      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+    onSuccess: ({ email, devVerificationCode }) => {
+      const params = new URLSearchParams({ email });
+      // Dev-only: backend surfaced the code on the response because no email
+      // provider is configured. Forward it so the verify page auto-fills.
+      if (devVerificationCode) params.set("code", devVerificationCode);
+      router.push(`/verify-email?${params.toString()}`);
     },
   });
 }

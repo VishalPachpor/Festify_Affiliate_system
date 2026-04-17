@@ -39,9 +39,9 @@ type AuthContextValue = {
   user: User | null;
   // Actions
   login: (data: LoginFormValues) => Promise<User>;
-  signup: (data: SignUpFormValues) => Promise<{ email: string }>;
+  signup: (data: SignUpFormValues) => Promise<{ email: string; devVerificationCode?: string }>;
   verifyEmail: (email: string, code: string) => Promise<User>;
-  resendCode: (email: string) => Promise<void>;
+  resendCode: (email: string) => Promise<{ devVerificationCode?: string }>;
   loginWithGoogle: (credential: string) => Promise<User>;
   /** Store a pre-verified JWT + user from the OAuth callback popup. */
   loginDirect: (token: string, user: User) => void;
@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = useCallback(async (data: SignUpFormValues) => {
     const res = await signupRequest(data);
-    return { email: res.email };
+    return { email: res.email, devVerificationCode: res.devVerificationCode };
   }, []);
 
   const verifyEmail = useCallback(async (email: string, code: string): Promise<User> => {
@@ -113,7 +113,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const resendCode = useCallback(async (email: string) => {
-    await resendCodeRequest(email);
+    const res = await resendCodeRequest(email);
+    return { devVerificationCode: res.devVerificationCode };
   }, []);
 
   const loginWithGoogle = useCallback(async (credential: string): Promise<User> => {

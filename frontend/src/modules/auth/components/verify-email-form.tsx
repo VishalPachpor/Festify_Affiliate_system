@@ -1,16 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useVerifyEmailMutation } from "../hooks/use-verify-email";
 import { useResendCodeMutation } from "../hooks/use-resend-code";
 import { verifyEmailSchema } from "../schemas";
 
-export function VerifyEmailForm({ email }: { email: string }) {
-  const [code, setCode] = useState("");
+export function VerifyEmailForm({
+  email,
+  initialCode = "",
+}: {
+  email: string;
+  initialCode?: string;
+}) {
+  const [code, setCode] = useState(initialCode);
   const [error, setError] = useState<string | undefined>();
   const [submitted, setSubmitted] = useState(false);
+
+  // Dev-mode auto-fill: if the signup redirect carried a ?code=, seed it
+  // after mount. Using an effect (not just useState initial value) so the
+  // Suspense boundary's search-param read stays stable across re-renders.
+  useEffect(() => {
+    if (initialCode && initialCode !== code) setCode(initialCode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCode]);
 
   const verifyMutation = useVerifyEmailMutation();
   const resendMutation = useResendCodeMutation();
@@ -42,7 +56,13 @@ export function VerifyEmailForm({ email }: { email: string }) {
 
   const handleResend = useCallback(async () => {
     try {
-      await resendMutation.mutateAsync(email);
+      const res = await resendMutation.mutateAsync(email);
+      // Dev-only: if the backend returned the fresh code because no email
+      // provider is configured, drop it straight into the input.
+      if (res?.devVerificationCode) {
+        setCode(res.devVerificationCode);
+        setError(undefined);
+      }
     } catch {
       // Silently fail — don't reveal whether email exists
     }

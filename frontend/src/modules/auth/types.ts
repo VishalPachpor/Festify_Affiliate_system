@@ -29,8 +29,17 @@ export type SessionResponse = z.infer<typeof sessionResponseSchema>;
 export const signupResponseSchema = z.object({
   message: z.string(),
   email: z.string(),
+  // Dev-mode convenience: backend only sets this when NODE_ENV=development
+  // and no email provider is configured — lets us skip the email inbox.
+  devVerificationCode: z.string().optional(),
 });
 export type SignupResponse = z.infer<typeof signupResponseSchema>;
+
+export const resendCodeResponseSchema = z.object({
+  message: z.string(),
+  devVerificationCode: z.string().optional(),
+});
+export type ResendCodeResponse = z.infer<typeof resendCodeResponseSchema>;
 
 export const meResponseSchema = z.object({
   user: userSchema,

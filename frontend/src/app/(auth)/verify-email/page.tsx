@@ -17,6 +17,9 @@ function ArrowLeftIcon() {
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
+  // Dev-only: when backend surfaces the verification code (no email provider
+  // configured), use-signup forwards it here as ?code=... for auto-fill.
+  const initialCode = searchParams.get("code") ?? "";
 
   return (
     <div className="mx-auto w-[min(35rem,92vw)] rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-input)] px-[var(--space-8)] py-[var(--space-8)] shadow-[var(--shadow-card)]">
@@ -40,7 +43,7 @@ function VerifyEmailContent() {
       </div>
 
       <div className="mt-[var(--space-8)]">
-        <VerifyEmailForm email={email} />
+        <VerifyEmailForm email={email} initialCode={initialCode} />
       </div>
     </div>
   );
