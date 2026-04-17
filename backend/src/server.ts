@@ -119,16 +119,25 @@ app.get("/health", (_req, res) => {
 // backend/uploads/<tenantId>/<file>. Files are addressed by random ids so
 // listing without auth is fine; affiliates need plain URLs to download.
 //
-// Content-Disposition: attachment forces a browser download instead of
-// inline rendering. The HTML `download` attribute is ignored for
-// cross-origin URLs (dev: frontend:3000 ↔ backend:3001), so the server has
-// to signal intent itself.
+// Content-Disposition is opt-in: only force a browser download when the
+// request carries ?download=1. Without it, the browser renders inline so
+// the Preview/eye button can show images/PDFs in a new tab. The HTML
+// `download` attribute alone is ignored cross-origin (dev:3000 ↔ :3001),
+// so the attachment intent has to be signalled by the server.
 app.use(
   "/uploads",
+  (req, res, next) => {
+    // Express.static doesn't pass the request into setHeaders, so stash the
+    // download-intent flag on res.locals for the static middleware to read.
+    res.locals.forceDownload = req.query.download === "1";
+    next();
+  },
   express.static(path.resolve(process.cwd(), "uploads"), {
     setHeaders: (res, filePath) => {
-      const name = path.basename(filePath);
-      res.setHeader("Content-Disposition", `attachment; filename="${name}"`);
+      if (res.locals.forceDownload) {
+        const name = path.basename(filePath);
+        res.setHeader("Content-Disposition", `attachment; filename="${name}"`);
+      }
     },
   }),
 );

@@ -177,6 +177,7 @@ export default function AdminMaterialsPage() {
   const { tenant } = useTenant();
   const [activeFilter, setActiveFilter] = useState<MaterialType | "all">("all");
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string } | null>(null);
   const searchParams = useSearchParams();
   const searchTerm = (searchParams.get("search") ?? "").trim().toLowerCase();
 
@@ -230,11 +231,12 @@ export default function AdminMaterialsPage() {
     visibilityMutation.mutate({ assetId: id, visible: !current });
   }
 
-  function handleDelete(id: string) {
-    if (typeof window !== "undefined" && !window.confirm("Delete this asset? This cannot be undone.")) {
-      return;
-    }
-    deleteMutation.mutate(id);
+  function confirmDelete() {
+    if (!pendingDelete) return;
+    deleteMutation.mutate(pendingDelete.id, {
+      onSuccess: () => setPendingDelete(null),
+      onError: () => setPendingDelete(null),
+    });
   }
 
   function deriveFilename(fileUrl: string, title: string): string {
@@ -370,7 +372,7 @@ export default function AdminMaterialsPage() {
                   {/* Actions */}
                   <div className="flex items-center gap-[var(--space-2)]">
                     <a
-                      href={mat.fileUrl}
+                      href={`${mat.fileUrl}?download=1`}
                       download={deriveFilename(mat.fileUrl, mat.title)}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -395,7 +397,7 @@ export default function AdminMaterialsPage() {
                     </a>
                     <button
                       type="button"
-                      onClick={() => handleDelete(mat.id)}
+                      onClick={() => setPendingDelete({ id: mat.id, title: mat.title })}
                       disabled={deleteMutation.isPending}
                       aria-label="Delete"
                       className="flex items-center justify-center rounded-[var(--radius)] border bg-transparent p-[var(--space-2)] text-[#EF4444] opacity-[0.35] transition-all hover:bg-[rgba(239,68,68,0.08)] hover:opacity-[0.85] disabled:opacity-40"
@@ -422,6 +424,68 @@ export default function AdminMaterialsPage() {
       </DashboardContainer>
 
       <UploadAssetModal open={uploadOpen} onClose={() => setUploadOpen(false)} />
+
+      {/* Delete confirmation — proper modal instead of browser confirm() */}
+      {pendingDelete && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-asset-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-[var(--space-4)]"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !deleteMutation.isPending) {
+              setPendingDelete(null);
+            }
+          }}
+        >
+          <div className="w-full max-w-[26rem] overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.10)] bg-[#0E0F11] shadow-[0_30px_80px_rgba(0,0,0,0.55)]">
+            <div className="flex items-start gap-[var(--space-4)] px-[var(--space-6)] pt-[var(--space-6)]">
+              <div
+                className="flex size-[2.5rem] shrink-0 items-center justify-center rounded-full"
+                style={{ background: "rgba(239,68,68,0.12)", color: "#EF4444" }}
+                aria-hidden="true"
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10 3v7M10 13v1" />
+                  <circle cx="10" cy="10" r="8" />
+                </svg>
+              </div>
+              <div className="min-w-0">
+                <h2
+                  id="delete-asset-title"
+                  className="font-[var(--font-display)] text-[var(--text-lg)] font-bold tracking-[-0.02em] text-[var(--color-text-primary)]"
+                >
+                  Delete this asset?
+                </h2>
+                <p className="mt-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.5] text-[rgba(255,255,255,0.65)]">
+                  <span className="text-[var(--color-text-primary)]">{pendingDelete.title}</span>{" "}
+                  will be permanently removed from the materials library. This
+                  can&apos;t be undone.
+                </p>
+              </div>
+            </div>
+            <div className="mt-[var(--space-6)] flex items-center justify-end gap-[var(--space-3)] border-t border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] px-[var(--space-6)] py-[var(--space-4)]">
+              <button
+                type="button"
+                onClick={() => setPendingDelete(null)}
+                disabled={deleteMutation.isPending}
+                className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.24)] disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deleteMutation.isPending}
+                className="rounded-[var(--radius)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-semibold text-white transition-colors disabled:opacity-50"
+                style={{ background: "#EF4444" }}
+              >
+                {deleteMutation.isPending ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardStageCanvas>
   );
 }

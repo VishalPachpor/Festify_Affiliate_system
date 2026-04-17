@@ -134,7 +134,7 @@ function AssetCard({ asset, index }: { asset: Asset; index: number }) {
 
         {/* Download button — border #1c4aa6 */}
         <a
-          href={asset.fileUrl}
+          href={`${asset.fileUrl}?download=1`}
           target="_blank"
           rel="noopener noreferrer"
           download
