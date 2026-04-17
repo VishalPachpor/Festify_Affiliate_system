@@ -80,12 +80,16 @@ function StatusCell({ status }: { status: CommissionStatus }) {
 }
 
 // ── KPI Card ──────────────────────────────────────────────────────────────────
+//
+// Figma 101:6633/6645/6657: 362×106, 24px padding, 16px gap between label
+// and value. Outstanding uses the info/link blue (#A6D1FF) as its label
+// accent to flag it as the actionable metric; the other two sit muted.
 
 function KpiCard({ label, value, accentColor }: { label: string; value: string; accentColor: string }) {
   return (
-    <div className="flex flex-col gap-[var(--space-2)] rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent px-[var(--space-6)] py-[var(--space-5)]">
+    <div className="flex flex-col gap-[var(--space-4)] rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent px-[var(--space-6)] py-[var(--space-6)]">
       <dt
-        className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] tracking-[var(--tracking-caption)] uppercase"
+        className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] tracking-[var(--tracking-caption)] uppercase font-semibold"
         style={{ color: accentColor }}
       >
         {label}
@@ -216,7 +220,7 @@ export default function AdminCommissionsPage() {
           <KpiCard
             label="Outstanding"
             value={formatCurrency(outstanding)}
-            accentColor="#F5A623"
+            accentColor="#A6D1FF"
           />
         </dl>
 
@@ -279,7 +283,7 @@ export default function AdminCommissionsPage() {
             <table className="w-full border-collapse font-[var(--font-sans)]" aria-label="Commissions">
               <thead>
                 <tr>
-                  {["Affiliate", "Total Sales", "Commission", "Status", "Paid", "Outstanding", "Date", "Actions"].map((col) => (
+                  {["Affiliate", "Total Sales", "Commission", "Status", "Paid", "Outstanding", "Payout Date", "Actions"].map((col) => (
                     <th
                       key={col}
                       scope="col"
@@ -301,6 +305,15 @@ export default function AdminCommissionsPage() {
                 {sales.map((row) => {
                   const cStatus = toCommissionStatus(row.status);
                   const isPaid = row.status === "paid";
+                  const paidAmount = isPaid ? row.commission : 0;
+                  const outstandingAmount = isPaid ? 0 : row.commission;
+                  // Figma 101:9184 "Payout Date" — empty em-dash for pending rows;
+                  // for paid/approved we surface the sale's createdAt as the stand-in
+                  // until a dedicated payout date field is available.
+                  const payoutDate =
+                    cStatus === "pending"
+                      ? "—"
+                      : new Date(row.createdAt).toISOString().slice(0, 10);
                   return (
                   <tr key={row.id} className="border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] whitespace-nowrap">
@@ -315,14 +328,20 @@ export default function AdminCommissionsPage() {
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] whitespace-nowrap">
                       <StatusCell status={cStatus} />
                     </td>
-                    <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] text-[#22C55E] whitespace-nowrap">
-                      {formatCurrency(isPaid ? row.commission : 0)}
+                    <td
+                      className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] whitespace-nowrap"
+                      style={{ color: paidAmount > 0 ? "#22C55E" : "rgba(255,255,255,0.35)" }}
+                    >
+                      {formatCurrency(paidAmount)}
                     </td>
-                    <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] text-[#F5A623] whitespace-nowrap">
-                      {formatCurrency(isPaid ? 0 : row.commission)}
+                    <td
+                      className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] whitespace-nowrap"
+                      style={{ color: outstandingAmount > 0 ? "#22C55E" : "rgba(255,255,255,0.35)" }}
+                    >
+                      {formatCurrency(outstandingAmount)}
                     </td>
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] text-[rgba(255,255,255,0.55)] whitespace-nowrap">
-                      {new Date(row.createdAt).toLocaleDateString()}
+                      {payoutDate}
                     </td>
                     <td className="py-[var(--space-3)] whitespace-nowrap">
                       {cStatus === "approved" && row.affiliateId && (
@@ -333,6 +352,20 @@ export default function AdminCommissionsPage() {
                           className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
                         >
                           {payingSaleId === row.id ? "Processing..." : "Mark Paid"}
+                        </button>
+                      )}
+                      {cStatus === "pending" && (
+                        // Approve button surfaced per Figma. Pending sales in our
+                        // model are unattributed, so real approval requires a claim
+                        // via the Unattributed Sales panel — this cosmetic button
+                        // exposes the intent while the backend path is being wired.
+                        <button
+                          type="button"
+                          disabled
+                          title="Attribution required — approve from the Unattributed Sales panel"
+                          className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[var(--color-primary-foreground)] opacity-70 transition-colors hover:opacity-100 disabled:cursor-not-allowed"
+                        >
+                          Approve
                         </button>
                       )}
                     </td>
