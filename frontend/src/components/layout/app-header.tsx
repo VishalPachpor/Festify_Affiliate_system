@@ -53,15 +53,18 @@ export function AppHeader() {
   useEffect(() => {
     if (!isSearchable) return;
 
+    const trimmed = searchValue.trim();
+    const currentSearch = searchParams.get("search") ?? "";
+    if (trimmed === currentSearch) return;
+
     const timeout = window.setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString());
-      if (searchValue.trim()) {
-        params.set("search", searchValue.trim());
-        params.set("page", "1");
+      if (trimmed) {
+        params.set("search", trimmed);
       } else {
         params.delete("search");
-        params.delete("page");
       }
+      params.delete("page");
 
       startTransition(() => {
         const qs = params.toString();
