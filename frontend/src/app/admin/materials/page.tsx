@@ -295,9 +295,9 @@ export default function AdminMaterialsPage() {
             return (
               <article
                 key={mat.id}
-                className="flex h-[24.625rem] min-w-0 flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-transparent transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
+                className="flex h-[24rem] min-w-0 flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-transparent transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
               >
-                {/* Thumbnail — Figma 82:9491: 192px band. Gradient token from /styles/gradients.ts */}
+                {/* Thumbnail — Figma 82:9491: 192px band (h-12). Gradient from /styles/gradients.ts */}
                 <div
                   className="relative flex h-[12rem] shrink-0 items-center justify-center overflow-hidden"
                   style={{ background: mat.thumbnailGradient }}
@@ -314,11 +314,11 @@ export default function AdminMaterialsPage() {
                   <ThumbIcon />
                 </div>
 
-                {/* Content — subtle top-down wash gives the body a light lift below the
-                    thumbnail without touching the gradient itself. flex-1 pushes the
-                    footer row flush. */}
+                {/* Content — Figma spec: padding 16px, gap 12px, flex column.
+                    Subtle top-down wash lifts the body below the thumbnail
+                    without touching the gradient itself. */}
                 <div
-                  className="flex flex-1 flex-col px-[var(--space-4)] py-[var(--space-4)]"
+                  className="flex flex-1 flex-col gap-[var(--space-3)] p-[var(--space-4)]"
                   style={{
                     background:
                       "linear-gradient(to bottom, rgba(255,255,255,0.015), transparent 40%)",
@@ -330,7 +330,7 @@ export default function AdminMaterialsPage() {
                   </h3>
 
                   {/* Type badge + size */}
-                  <div className="mt-[var(--space-2)] flex items-center gap-[var(--space-2)]">
+                  <div className="flex items-center gap-[var(--space-2)]">
                     <span
                       className="inline-block rounded-[var(--radius-sm)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium capitalize"
                       style={{ background: TYPE_BADGE_STYLE.bg, color: TYPE_BADGE_STYLE.text }}
@@ -343,7 +343,7 @@ export default function AdminMaterialsPage() {
                   </div>
 
                   {/* Visible toggle */}
-                  <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-3)]">
+                  <div className="flex items-center gap-[var(--space-3)]">
                     <span className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
                       Visible to affiliates
                     </span>
@@ -353,11 +353,8 @@ export default function AdminMaterialsPage() {
                     />
                   </div>
 
-                  {/* Spacer — pushes actions + date to the bottom so every card has a matching baseline */}
-                  <div className="flex-1" />
-
                   {/* Actions */}
-                  <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)]">
+                  <div className="flex items-center gap-[var(--space-2)]">
                     <button
                       type="button"
                       onClick={() => handleDownload(mat.fileUrl)}
@@ -392,7 +389,7 @@ export default function AdminMaterialsPage() {
                   </div>
 
                   {/* Date */}
-                  <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)]">
+                  <div className="flex items-center gap-[var(--space-2)]">
                     <span className="text-[rgba(255,255,255,0.35)]">
                       <IconCalendar />
                     </span>
