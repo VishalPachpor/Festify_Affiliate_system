@@ -73,6 +73,6 @@ export const mockAssets: Asset[] = [
     mimeType: "image/png",
     visible: true,
     addedAt: "2026-03-25T10:00:00.000Z",
-    thumbnailBg: "social",
+    thumbnailBg: "story",
   },
 ];

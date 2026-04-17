@@ -94,9 +94,10 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function thumbnailBgFor(type: AssetType): string {
-  // Maps to existing UI gradients in admin/materials/page.tsx so the cards
-  // render consistently without the page needing a per-asset palette field.
+function thumbnailBgFor(type: AssetType, title: string): string {
+  // Figma parity: Instagram Story Template uses the "story" palette even
+  // though the underlying AssetType is "social" (story isn't a DB enum value).
+  if (title === "Instagram Story Template") return "story";
   return type;
 }
 
@@ -120,7 +121,7 @@ function serializeAsset(asset: {
     mimeType: asset.mimeType,
     visible: asset.visible,
     addedAt: asset.createdAt.toISOString(),
-    thumbnailBg: thumbnailBgFor(asset.type),
+    thumbnailBg: thumbnailBgFor(asset.type, asset.title),
   };
 }
 

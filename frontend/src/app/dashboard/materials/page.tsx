@@ -108,7 +108,7 @@ function AssetCard({ asset }: { asset: Asset }) {
           when an image fails to load. */}
       <div
         className="relative flex h-[192px] items-center justify-center overflow-hidden text-[rgba(255,255,255,0.45)]"
-        style={{ background: getMaterialGradient(asset.type) }}
+        style={{ background: getMaterialGradient(asset.thumbnailBg) }}
         aria-hidden="true"
       >
         {isImage ? (
@@ -187,10 +187,12 @@ export default function MaterialsPage() {
     { visibleOnly: true }, // affiliates only see what the organizer flagged visible
   );
 
-  // Sort to match Figma layout: banner → email → social → copy → guide → social
-  const FIGMA_TYPE_ORDER: Record<string, number> = { banner: 0, email: 1, social: 2, copy: 3, guide: 4 };
+  // Sort to match Figma layout: banner → email → social → copy → guide → story.
+  // Keyed on thumbnailBg because Instagram Story Template shares the "social"
+  // AssetType but renders under the "story" palette for Figma parity.
+  const FIGMA_ORDER: Record<string, number> = { banner: 0, email: 1, social: 2, copy: 3, guide: 4, story: 5 };
   const assets = [...(data?.assets ?? [])]
-    .sort((a, b) => (FIGMA_TYPE_ORDER[a.type] ?? 5) - (FIGMA_TYPE_ORDER[b.type] ?? 5))
+    .sort((a, b) => (FIGMA_ORDER[a.thumbnailBg] ?? 6) - (FIGMA_ORDER[b.thumbnailBg] ?? 6))
     .slice(0, 6);
   const eventName = tenant?.name?.split(" ")[0] ?? "TOKEN2049";
 

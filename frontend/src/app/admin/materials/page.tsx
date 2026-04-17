@@ -214,7 +214,7 @@ export default function AdminMaterialsPage() {
       fileUrl: a.fileUrl,
       mimeType: a.mimeType,
       addedAt: formatAddedAt(a.addedAt),
-      thumbnailGradient: getMaterialGradient(a.type),
+      thumbnailGradient: getMaterialGradient(a.thumbnailBg),
       icon: TYPE_TO_ICON[a.type] ?? ("image" as ThumbIcon),
       isImage: a.mimeType.startsWith("image/"),
     }));
