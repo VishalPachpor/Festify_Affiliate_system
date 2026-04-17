@@ -424,11 +424,11 @@ export default function AdminMilestonesPage() {
             return (
               <article
                 key={m.id}
-                className="group rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.06)] bg-[linear-gradient(180deg,rgba(255,255,255,0.015),transparent)] p-[var(--space-4)] transition-colors hover:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.02)]"
+                className="group rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.04)] bg-[linear-gradient(180deg,rgba(255,255,255,0.015),transparent)] p-[var(--space-3)] transition-all hover:border-[rgba(255,255,255,0.10)] hover:bg-[rgba(255,255,255,0.02)]"
               >
-                <div className="flex items-center justify-between gap-[var(--space-5)]">
+                <div className="flex items-center justify-between gap-[var(--space-4)]">
                   {/* LEFT — tile + content (text or inline form) */}
-                  <div className="flex min-w-0 flex-1 items-center gap-[var(--space-4)]">
+                  <div className="flex min-w-0 flex-1 items-center gap-[var(--space-3)]">
                     <TierTile
                       letter={m.letter}
                       tileText={m.tileText}
@@ -437,8 +437,8 @@ export default function AdminMilestonesPage() {
                     />
 
                     {isEditing ? (
-                      <div className="min-w-0 flex-1">
-                        <div className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.6fr)_minmax(0,1fr)] items-center gap-[var(--space-4)]">
+                      <div className="min-w-0 flex-1 max-w-[900px]">
+                        <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.4fr)_minmax(0,0.8fr)] items-center gap-[var(--space-3)]">
                           <input
                             type="text"
                             placeholder="Tier name"
@@ -463,7 +463,7 @@ export default function AdminMilestonesPage() {
                           />
                         </div>
 
-                        <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)]">
+                        <div className="mt-[var(--space-2)] flex items-center gap-[var(--space-2)]">
                           <button
                             type="button"
                             onClick={() => handleSave(m)}
@@ -483,9 +483,9 @@ export default function AdminMilestonesPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex min-w-0 flex-1 items-center gap-[var(--space-3)]">
+                      <div className="flex min-w-0 flex-1 items-center gap-[var(--space-2)]">
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)]">
+                          <div className="flex items-center gap-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] leading-tight">
                             <span className="font-semibold text-[var(--color-text-primary)]">
                               {m.name}
                             </span>
@@ -494,7 +494,7 @@ export default function AdminMilestonesPage() {
                               Threshold: {formatCurrency(m.threshold)}
                             </span>
                           </div>
-                          <p className="mt-[var(--space-1)] truncate font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
+                          <p className="truncate font-[var(--font-sans)] text-[var(--text-sm)] leading-tight text-[rgba(255,255,255,0.50)]">
                             {m.description}
                           </p>
                         </div>
@@ -502,7 +502,7 @@ export default function AdminMilestonesPage() {
                           type="button"
                           onClick={() => setEditingId(m.id)}
                           aria-label={`Edit ${m.name}`}
-                          className="flex size-[2rem] shrink-0 items-center justify-center rounded-[var(--radius)] text-[rgba(255,255,255,0.35)] opacity-0 transition-all hover:bg-[rgba(255,255,255,0.06)] hover:text-[rgba(255,255,255,0.85)] group-hover:opacity-100 focus-visible:opacity-100"
+                          className="flex size-[1.75rem] shrink-0 items-center justify-center rounded-[var(--radius)] text-[rgba(255,255,255,0.35)] opacity-0 transition-all hover:bg-[rgba(255,255,255,0.06)] hover:text-[rgba(255,255,255,0.85)] group-hover:opacity-100 focus-visible:opacity-100"
                         >
                           <IconPencil />
                         </button>
@@ -510,15 +510,15 @@ export default function AdminMilestonesPage() {
                     )}
                   </div>
 
-                  {/* RIGHT — status + delete (tight cluster) */}
-                  <div className="flex shrink-0 items-center gap-[var(--space-3)]">
+                  {/* RIGHT — status + delete (tight cluster, auto-pushed right) */}
+                  <div className="ml-auto flex shrink-0 items-center gap-[var(--space-2)]">
                     <UnlockBadge type={m.unlockType} />
                     <button
                       type="button"
                       onClick={() => handleDelete(m.id)}
                       aria-label={`Delete ${m.name}`}
                       disabled={m.unlockType !== "Locked" || deleteMutation.isPending}
-                      className="flex size-[2rem] items-center justify-center rounded-[var(--radius)] text-[rgba(239,68,68,0.55)] transition-colors hover:bg-[rgba(239,68,68,0.08)] hover:text-[#EF4444] disabled:cursor-not-allowed disabled:opacity-30"
+                      className="flex size-[1.75rem] items-center justify-center rounded-[var(--radius)] text-[rgba(239,68,68,0.55)] transition-colors hover:bg-[rgba(239,68,68,0.08)] hover:text-[#EF4444] disabled:cursor-not-allowed disabled:opacity-30"
                     >
                       <IconTrash />
                     </button>
