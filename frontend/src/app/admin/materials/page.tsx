@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { DashboardContainer } from "@/modules/dashboard/components/dashboard-layout";
 import { DashboardStageCanvas } from "@/modules/dashboard/components/dashboard-stage-canvas";
 import { useTenant } from "@/modules/tenant-shell";
@@ -176,6 +177,8 @@ export default function AdminMaterialsPage() {
   const { tenant } = useTenant();
   const [activeFilter, setActiveFilter] = useState<MaterialType | "all">("all");
   const [uploadOpen, setUploadOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const searchTerm = (searchParams.get("search") ?? "").trim().toLowerCase();
 
   // Real list. The previous version reached around to apiClient with the wrong
   // URL ("/tenants/<id>/assets") and silently 404'd — useAssets() goes through
@@ -215,9 +218,13 @@ export default function AdminMaterialsPage() {
       isImage: a.mimeType.startsWith("image/"),
     }));
 
-  // Filter is enforced server-side via useAssets(type), so the array is
-  // already narrowed when activeFilter !== "all".
-  const filtered = materials;
+  // Type filter is enforced server-side via useAssets(type). Search narrows
+  // the client array further — matches title + type label.
+  const filtered = searchTerm
+    ? materials.filter((m) =>
+        `${m.title} ${m.type}`.toLowerCase().includes(searchTerm),
+      )
+    : materials;
 
   function handleToggleVisibility(id: string, current: boolean) {
     visibilityMutation.mutate({ assetId: id, visible: !current });

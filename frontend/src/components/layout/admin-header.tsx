@@ -33,6 +33,8 @@ function getTitle(pathname: string): string {
 const SEARCHABLE_PATHS = new Set([
   "/admin/affiliates",
   "/admin/commissions",
+  "/admin/applications",
+  "/admin/materials",
 ]);
 
 export function AdminHeader() {
@@ -80,20 +82,21 @@ export function AdminHeader() {
       </h1>
 
       <div className="flex items-center gap-[var(--space-4)]">
-        <div className="relative flex items-center">
-          <span className="pointer-events-none absolute left-[var(--space-3)] text-[var(--color-text-muted)]">
-            <IconSearch />
-          </span>
-          <input
-            type="search"
-            placeholder={isSearchable ? "Search..." : "Search unavailable"}
-            aria-label="Search"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            disabled={!isSearchable}
-            className="h-[var(--space-8)] w-[9.5rem] rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-input)] pl-[var(--space-8)] pr-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-ring)] transition-colors duration-[var(--duration-normal)] md:w-[11rem] xl:w-[12.5rem]"
-          />
-        </div>
+        {isSearchable && (
+          <div className="relative flex items-center">
+            <span className="pointer-events-none absolute left-[var(--space-3)] text-[var(--color-text-muted)]">
+              <IconSearch />
+            </span>
+            <input
+              type="search"
+              placeholder="Search..."
+              aria-label="Search"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              className="h-[var(--space-8)] w-[9.5rem] rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-input)] pl-[var(--space-8)] pr-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-ring)] transition-colors duration-[var(--duration-normal)] md:w-[11rem] xl:w-[12.5rem]"
+            />
+          </div>
+        )}
 
         <NotificationBell recipient="tenant" />
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/services/api/client";
 
@@ -46,6 +47,8 @@ type ApplicationsListResponse = {
 export default function ApplicationsReviewPage() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<"pending" | "approved" | "rejected" | "all">("pending");
+  const searchParams = useSearchParams();
+  const searchTerm = (searchParams.get("search") ?? "").trim().toLowerCase();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["applications", filter],
@@ -54,6 +57,29 @@ export default function ApplicationsReviewPage() {
         searchParams: filter === "all" ? undefined : { status: filter },
       }),
   });
+
+  // Search runs client-side because the applications list isn't paginated.
+  // Matches firstName / email / companyName / requestedCode (all lower-cased).
+  const filteredApplications = useMemo(() => {
+    if (!data?.applications) return [];
+    if (!searchTerm) return data.applications;
+    return data.applications.filter((a) => {
+      const haystack = [
+        a.firstName,
+        a.email,
+        a.companyName,
+        a.contactPersonName,
+        a.contactPersonEmail,
+        a.signatoryName,
+        a.signatoryEmail,
+        a.requestedCode,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(searchTerm);
+    });
+  }, [data?.applications, searchTerm]);
 
   const reviewMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: "approved" | "rejected" }) =>
@@ -118,13 +144,15 @@ export default function ApplicationsReviewPage() {
           </div>
         )}
 
-        {data && data.applications.length === 0 && (
+        {data && filteredApplications.length === 0 && (
           <div className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-transparent px-[var(--space-6)] py-[var(--space-6)] text-center font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
-            No {filter === "all" ? "" : filter} applications.
+            {searchTerm
+              ? `No applications match "${searchTerm}".`
+              : `No ${filter === "all" ? "" : filter} applications.`}
           </div>
         )}
 
-        {data?.applications.map((app) => (
+        {filteredApplications.map((app) => (
           <article
             key={app.id}
             className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-transparent p-[var(--space-5)]"
