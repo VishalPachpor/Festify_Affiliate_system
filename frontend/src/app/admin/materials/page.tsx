@@ -216,7 +216,6 @@ export default function AdminMaterialsPage() {
       addedAt: formatAddedAt(a.addedAt),
       thumbnailGradient: getMaterialGradient(a.thumbnailBg),
       icon: TYPE_TO_ICON[a.type] ?? ("image" as ThumbIcon),
-      isImage: a.mimeType.startsWith("image/"),
     }));
 
   // Type filter is enforced server-side via useAssets(type). Search narrows
@@ -302,10 +301,10 @@ export default function AdminMaterialsPage() {
           </div>
         )}
 
-        {/* Material cards grid — fixed 329px tracks per Figma. auto-fill (not
-            auto-fit) so 1-2 cards don't stretch to fill the row; extra space
-            is left on the right as intended. */}
-        <div className="grid grid-cols-[repeat(auto-fill,329px)] gap-[var(--space-5)]">
+        {/* Material cards grid — Figma: 3 equal columns filling the content
+            area. grid-cols-3 lets tracks flex with the viewport so the
+            composition matches at 1440px base and scales down cleanly. */}
+        <div className="grid grid-cols-3 gap-[var(--space-5)]">
           {filtered.map((mat) => {
             const ThumbIcon = THUMB_ICONS[mat.icon];
             return (
@@ -313,20 +312,14 @@ export default function AdminMaterialsPage() {
                 key={mat.id}
                 className="flex min-h-[24rem] w-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-transparent transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
               >
-                {/* Thumbnail — Figma 82:9491: 192px band (h-12). Gradient from /styles/gradients.ts */}
+                {/* Thumbnail — Figma: branded gradient band with centered
+                    type icon. Never a file preview — the card is a type-badge
+                    identity, not an image thumbnail. Gradient from
+                    /styles/gradients.ts. */}
                 <div
                   className="relative flex h-[12rem] shrink-0 items-center justify-center overflow-hidden"
                   style={{ background: mat.thumbnailGradient }}
                 >
-                  {mat.isImage ? (
-                    <img
-                      src={mat.fileUrl}
-                      alt={mat.title}
-                      className="absolute inset-0 h-full w-full object-cover"
-                      onError={(e) => { e.currentTarget.style.display = "none"; }}
-                    />
-                  ) : null}
-                  {/* Fallback icon — always rendered behind the image; visible when image fails or for non-image types */}
                   <ThumbIcon />
                 </div>
 
@@ -348,7 +341,7 @@ export default function AdminMaterialsPage() {
                   {/* Type badge + size */}
                   <div className="flex items-center gap-[var(--space-2)]">
                     <span
-                      className="inline-block rounded-[var(--radius-sm)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium capitalize"
+                      className="inline-block rounded-[var(--radius-sm)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
                       style={{ background: TYPE_BADGE_STYLE.bg, color: TYPE_BADGE_STYLE.text }}
                     >
                       {mat.type}
@@ -361,7 +354,7 @@ export default function AdminMaterialsPage() {
                   {/* Visible toggle */}
                   <div className="flex items-center gap-[var(--space-3)]">
                     <span className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
-                      Visible to affiliates
+                      Visible to affiliates:
                     </span>
                     <Toggle
                       checked={mat.visible}
