@@ -17,7 +17,7 @@ export function HeroBanner() {
 
   return (
     <section
-      className="relative flex min-h-[166px] flex-col justify-center overflow-hidden rounded-[16px] border border-[rgba(255,255,255,0.1)] px-[48px] pt-[48px] pb-[40px]"
+      className="relative flex min-h-[166px] flex-col justify-center overflow-hidden rounded-[16px] border border-[rgba(255,255,255,0.1)] px-[48px] pt-[48px] pb-[48px]"
       style={{ backgroundImage: HERO_GRADIENT }}
       aria-label="Welcome banner"
     >
@@ -45,7 +45,7 @@ export function HeroBanner() {
       {/* Subtitle — Figma: 18px Regular, leading 28px */}
       <p
         aria-live="polite"
-        className="relative mt-[8px] max-w-[46rem] font-[var(--font-sans)] text-[18px] leading-[28px] text-[#F0F0F0]"
+        className="relative mt-[8px] max-w-[50rem] font-[var(--font-sans)] text-[18px] leading-[28px] text-[#F0F0F0]"
       >
         Track your performance and grow your earnings with {eventName}
       </p>

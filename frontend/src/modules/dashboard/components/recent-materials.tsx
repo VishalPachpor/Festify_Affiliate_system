@@ -47,7 +47,7 @@ export function RecentMaterials() {
       <div className="flex flex-col">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-[16px] border-b border-[rgba(255,255,255,0.05)] py-[20px] last:border-b-0">
+            <div key={i} className="flex min-h-[81px] items-center gap-[16px] border-b border-[rgba(255,255,255,0.05)] py-[16px] last:border-b-0">
               <div className="size-[48px] shrink-0 animate-pulse rounded-[8px] bg-[rgba(255,255,255,0.08)]" />
               <div className="flex-1 space-y-[4px]">
                 <div className="h-[16px] w-3/4 animate-pulse rounded-[4px] bg-[rgba(255,255,255,0.08)]" />
@@ -63,7 +63,7 @@ export function RecentMaterials() {
           assets.map((item, i) => (
             <div
               key={item.id}
-              className={`flex items-center gap-[16px] py-[20px] pl-[16px] ${
+              className={`flex min-h-[81px] items-center gap-[16px] py-[16px] pl-[16px] ${
                 i < assets.length - 1 ? "border-b border-[rgba(255,255,255,0.05)]" : ""
               }`}
             >
