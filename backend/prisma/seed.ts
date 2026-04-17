@@ -307,14 +307,43 @@ async function main() {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
   const PUBLIC_API_URL = process.env.PUBLIC_API_URL ?? "http://localhost:3001";
 
+  // Minimal valid payloads per mime type. Keeps the download flow honest:
+  //   • Plain-text placeholders masquerading as .png opened to broken images.
+  //   • These bytes are the smallest self-contained valid file for each type,
+  //     so the browser can actually open the download if the user clicks through.
+  const ONE_PX_PNG = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+    "base64",
+  );
+  const MINIMAL_PDF = Buffer.from(
+    "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n" +
+      "2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n" +
+      "3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]>>endobj\n" +
+      "xref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000052 00000 n \n0000000098 00000 n \n" +
+      "trailer<</Size 4/Root 1 0 R>>\nstartxref\n149\n%%EOF\n",
+    "utf8",
+  );
+
+  function placeholderBytes(mimeType: string, title: string): Buffer {
+    if (mimeType === "image/png") return ONE_PX_PNG;
+    if (mimeType === "application/pdf") return MINIMAL_PDF;
+    if (mimeType === "text/html") {
+      return Buffer.from(
+        `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title></head>` +
+          `<body><h1>${title}</h1><p>Placeholder asset for the TOKEN2049 demo tenant.</p></body></html>`,
+        "utf8",
+      );
+    }
+    return Buffer.from(
+      `${title}\n\nPlaceholder asset for the TOKEN2049 demo tenant.\nReplace via Admin → Materials.\n`,
+      "utf8",
+    );
+  }
+
   for (const a of DEMO_ASSETS) {
     const filename = `${a.id}.${a.ext}`;
     const absPath = path.join(UPLOAD_DIR, filename);
-    const placeholder =
-      `${a.title}\n\n` +
-      `This is a placeholder asset for the TOKEN2049 demo tenant.\n` +
-      `Upload a real file from Admin → Materials to replace it.\n`;
-    fs.writeFileSync(absPath, placeholder, "utf8");
+    fs.writeFileSync(absPath, placeholderBytes(a.mimeType, a.title));
     const sizeBytes = fs.statSync(absPath).size;
     const fileUrl = `${PUBLIC_API_URL}/uploads/${TENANT_ID}/${filename}`;
 

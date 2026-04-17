@@ -115,8 +115,8 @@ function AssetCard({ asset, index }: { asset: Asset; index: number }) {
         <PreviewIcon type={asset.type} />
       </div>
 
-      {/* Card body — p-16, gap-16 for breathing room */}
-      <div className="flex flex-col gap-[16px] p-[16px]">
+      {/* Card body — Figma 60:2003: p-16, gap-12 between title-block / button / date */}
+      <div className="flex flex-col gap-[12px] p-[16px]">
         {/* Title — Oswald Medium 18px, tracking -0.2px */}
         <h3 className="truncate font-[var(--font-display)] text-[18px] font-medium leading-[20px] tracking-[-0.2px] text-white">
           {asset.title}

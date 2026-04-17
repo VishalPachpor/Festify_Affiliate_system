@@ -118,7 +118,20 @@ app.get("/health", (_req, res) => {
 // Static asset serving (no auth) — uploaded marketing materials live under
 // backend/uploads/<tenantId>/<file>. Files are addressed by random ids so
 // listing without auth is fine; affiliates need plain URLs to download.
-app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
+//
+// Content-Disposition: attachment forces a browser download instead of
+// inline rendering. The HTML `download` attribute is ignored for
+// cross-origin URLs (dev: frontend:3000 ↔ backend:3001), so the server has
+// to signal intent itself.
+app.use(
+  "/uploads",
+  express.static(path.resolve(process.cwd(), "uploads"), {
+    setHeaders: (res, filePath) => {
+      const name = path.basename(filePath);
+      res.setHeader("Content-Disposition", `attachment; filename="${name}"`);
+    },
+  }),
+);
 
 // Auth routes (no auth required, rate-limited)
 app.use("/api/auth", authLimiter);
