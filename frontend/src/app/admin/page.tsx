@@ -280,8 +280,8 @@ export default function AdminDashboardPage() {
               </Link>
             </div>
 
-            {/* Table header */}
-            <div className="mt-[var(--space-4)] grid grid-cols-[2.5rem_1fr_7rem_5.5rem_5rem] items-center gap-[var(--space-3)] border-b border-[rgba(255,255,255,0.06)] pb-[var(--space-3)]">
+            {/* Table header — grid sized for breathing room between right-side columns */}
+            <div className="mt-[var(--space-4)] grid grid-cols-[2.5rem_minmax(0,1fr)_8rem_7rem_5.5rem] items-center gap-[var(--space-6)] border-b border-[rgba(255,255,255,0.06)] pb-[var(--space-3)]">
               <span className="font-[var(--font-sans)] text-[var(--text-xs)] tracking-[var(--tracking-caption)] text-[rgba(255,255,255,0.45)]">
                 Rank
               </span>
@@ -291,10 +291,10 @@ export default function AdminDashboardPage() {
               <span className="font-[var(--font-sans)] text-[var(--text-xs)] tracking-[var(--tracking-caption)] text-[rgba(255,255,255,0.45)]">
                 Referral Code
               </span>
-              <span className="font-[var(--font-sans)] text-[var(--text-xs)] tracking-[var(--tracking-caption)] text-[rgba(255,255,255,0.45)]">
+              <span className="text-right font-[var(--font-sans)] text-[var(--text-xs)] tracking-[var(--tracking-caption)] text-[rgba(255,255,255,0.45)]">
                 Revenue
               </span>
-              <span className="font-[var(--font-sans)] text-[var(--text-xs)] tracking-[var(--tracking-caption)] text-[rgba(255,255,255,0.45)]">
+              <span className="text-center font-[var(--font-sans)] text-[var(--text-xs)] tracking-[var(--tracking-caption)] text-[rgba(255,255,255,0.45)]">
                 Tier
               </span>
             </div>
@@ -304,7 +304,7 @@ export default function AdminDashboardPage() {
               {topAffiliates.map((aff, i) => (
                 <div
                   key={aff.id}
-                  className="grid grid-cols-[2.5rem_1fr_7rem_5.5rem_5rem] items-center gap-[var(--space-3)] py-[var(--space-3)]"
+                  className="grid grid-cols-[2.5rem_minmax(0,1fr)_8rem_7rem_5.5rem] items-center gap-[var(--space-6)] py-[var(--space-3)]"
                 >
                   <RankBadge rank={i + 1} />
                   <div className="min-w-0">
@@ -318,15 +318,17 @@ export default function AdminDashboardPage() {
                   <span className="font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.60)]">
                     {aff.referralCode ?? "—"}
                   </span>
-                  <span className="font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">
+                  <span className="text-right tabular-nums font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">
                     {formatCurrency(aff.totalRevenue, currency)}
                   </span>
-                  <TierBadge tier={
-                    aff.totalRevenue >= 250000 ? "platinum" :
-                    aff.totalRevenue >= 100000 ? "gold" :
-                    aff.totalRevenue >= 50000 ? "silver" :
-                    aff.totalRevenue > 0 ? "bronze" : "—"
-                  } />
+                  <div className="flex justify-center">
+                    <TierBadge tier={
+                      aff.totalRevenue >= 250000 ? "platinum" :
+                      aff.totalRevenue >= 100000 ? "gold" :
+                      aff.totalRevenue >= 50000 ? "silver" :
+                      aff.totalRevenue > 0 ? "bronze" : "—"
+                    } />
+                  </div>
                 </div>
               ))}
             </div>
@@ -344,22 +346,22 @@ export default function AdminDashboardPage() {
               Recent Activity
             </h3>
 
-            <div className="mt-[var(--space-4)] flex flex-col gap-[var(--space-5)]">
+            <div className="mt-[var(--space-4)] flex flex-col gap-[20px]">
               {activityItems.slice(0, 5).map((item) => (
                 <div key={item.id} className="flex items-start gap-[var(--space-3)]">
                   <span
-                    className="mt-[var(--space-1)] size-[var(--space-2)] shrink-0 rounded-full"
+                    className="mt-[8px] size-[var(--space-2)] shrink-0 rounded-full"
                     style={{ background: "#F5A623" }}
                     aria-hidden="true"
                   />
-                  <div className="min-w-0">
-                    <p className="font-[var(--font-sans)] text-[var(--text-sm)] font-medium leading-[var(--leading-snug)] text-[var(--color-text-primary)]">
+                  <div className="flex min-w-0 flex-col gap-[4px]">
+                    <p className="font-[var(--font-sans)] text-[var(--text-sm)] font-medium leading-[20px] text-[var(--color-text-primary)]">
                       {item.description}
                     </p>
-                    <p className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] text-[rgba(255,255,255,0.50)]">
+                    <p className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[16px] text-[rgba(255,255,255,0.50)]">
                       {item.affiliateName}
                     </p>
-                    <p className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] text-[rgba(255,255,255,0.35)]">
+                    <p className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[16px] text-[rgba(255,255,255,0.35)]">
                       {timeAgo(item.timestamp)}
                     </p>
                   </div>
