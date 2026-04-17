@@ -243,6 +243,40 @@ export default function AdminCommissionsPage() {
           />
         </dl>
 
+        {/* Active-filter chip — surfaces when the page is deep-linked from
+            the affiliate drawer with ?affiliateId=... so the user understands
+            why the list looks smaller. Clearing the chip drops back to the
+            full tenant-wide view. */}
+        {filters.affiliateId && (
+          <div className="flex items-center gap-[var(--space-3)]">
+            <span
+              className="inline-flex items-center gap-[var(--space-2)] rounded-[var(--radius)] px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)]"
+              style={{
+                background: "rgba(91,141,239,0.12)",
+                border: "1px solid rgba(91,141,239,0.24)",
+                color: "#A6D1FF",
+              }}
+            >
+              <span className="font-semibold">Filtered:</span>
+              <span>
+                {sales[0]?.affiliateName && sales[0]?.affiliateId === filters.affiliateId
+                  ? sales[0].affiliateName
+                  : filters.affiliateId}
+              </span>
+              <button
+                type="button"
+                onClick={() => setFilters({ affiliateId: undefined, page: 1 })}
+                aria-label="Clear affiliate filter"
+                className="ml-[var(--space-1)] transition-colors hover:text-white"
+              >
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 3l8 8M11 3L3 11" />
+                </svg>
+              </button>
+            </span>
+          </div>
+        )}
+
         {/* Search + Filters */}
         <div className="flex items-center gap-[var(--space-3)]">
           <div className="relative flex-1">

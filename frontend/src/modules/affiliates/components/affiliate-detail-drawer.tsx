@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { Affiliate } from "@/modules/affiliates/types";
 import {
   useAffiliateFinancials,
@@ -181,6 +182,7 @@ type Props = {
 
 export function AffiliateDetailDrawer({ affiliate, onClose, currency }: Props) {
   const [codeCopied, setCodeCopied] = useState(false);
+  const router = useRouter();
 
   // Hooks before any early return. The financials query auto-disables when
   // affiliate is null via the `enabled` flag on the underlying useQuery.
@@ -703,6 +705,13 @@ export function AffiliateDetailDrawer({ affiliate, onClose, currency }: Props) {
           ) : affiliate.status === "approved" ? (
             <button
               type="button"
+              onClick={() => {
+                // Deep-link into the Commissions table filtered to this
+                // affiliate. The table reads `affiliateId` from the URL via
+                // useSalesFilters; backend scopes Sale list by the claim.
+                onClose();
+                router.push(`/admin/commissions?affiliateId=${encodeURIComponent(affiliate.id)}`);
+              }}
               className="flex w-full items-center justify-center font-semibold text-white transition-all hover:brightness-110"
               style={{
                 fontFamily: "var(--font-sans)",

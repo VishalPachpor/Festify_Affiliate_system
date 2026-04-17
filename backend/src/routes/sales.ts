@@ -88,6 +88,9 @@ router.get("/api/sales", async (req: Request, res: Response) => {
     const pageSize = Math.min(100, Math.max(1, parseInt(String(req.query.pageSize ?? "20"), 10) || 20));
     const status = req.query.status as string | undefined;
     const search = req.query.search as string | undefined;
+    const affiliateId = typeof req.query.affiliateId === "string" && req.query.affiliateId.trim().length > 0
+      ? req.query.affiliateId.trim()
+      : undefined;
     const dateFilter = createdAtFilter(req);
 
     // Build where clause
@@ -99,6 +102,12 @@ router.get("/api/sales", async (req: Request, res: Response) => {
       where.status = status;
     } else if (status === "confirmed") {
       where.status = "approved";
+    }
+
+    // Scope to a single affiliate (used by the drawer's "View Sales History"
+    // link and the Commissions page's per-affiliate deep-link).
+    if (affiliateId) {
+      where.attributionClaim = { is: { affiliateId } };
     }
 
     // Search by referralCode or externalOrderId
