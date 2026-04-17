@@ -298,6 +298,79 @@ router.get("/api/affiliates", async (req: Request, res: Response) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/affiliates/:id/financials
+//
+// Per-affiliate money snapshot for the admin drawer:
+//   - totalEarnedMinor  = Σ earned ledger entries
+//   - pendingMinor      = Σ entries whose sale isn't paid yet
+//   - paidMinor         = Σ entries whose sale is paid
+//   - payouts           = this affiliate's payouts (id, amount, status, dates)
+//
+// The split matches the Sale.status lifecycle that the Commissions table uses,
+// so numbers stay consistent across screens.
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get("/api/affiliates/:id/financials", async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantId(req);
+    const affiliateId = String(req.params.id);
+
+    const [entries, payouts] = await Promise.all([
+      prisma.commissionLedgerEntry.findMany({
+        where: { tenantId, affiliateId, type: "earned" },
+        select: {
+          amountMinor: true,
+          sale: { select: { status: true } },
+        },
+      }),
+      prisma.payout.findMany({
+        where: { tenantId, affiliateId },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          amountMinor: true,
+          currency: true,
+          status: true,
+          createdAt: true,
+          processedAt: true,
+        },
+      }),
+    ]);
+
+    let totalEarnedMinor = 0;
+    let pendingMinor = 0;
+    let paidMinor = 0;
+    for (const e of entries) {
+      totalEarnedMinor += e.amountMinor;
+      if (e.sale?.status === "paid") {
+        paidMinor += e.amountMinor;
+      } else {
+        pendingMinor += e.amountMinor;
+      }
+    }
+
+    res.status(200).json({
+      affiliateId,
+      currency: "USD",
+      totalEarnedMinor,
+      pendingMinor,
+      paidMinor,
+      payouts: payouts.map((p) => ({
+        id: p.id,
+        amountMinor: p.amountMinor,
+        currency: p.currency,
+        status: p.status,
+        createdAt: p.createdAt.toISOString(),
+        processedAt: p.processedAt?.toISOString() ?? null,
+      })),
+    });
+  } catch (err) {
+    console.error("[affiliates] Financials query failed:", err);
+    res.status(500).json({ error: "Failed to load affiliate financials" });
+  }
+});
+
 router.post("/api/affiliates/invite", async (req: Request, res: Response) => {
   try {
     if (!requireAdmin(req, res)) return;

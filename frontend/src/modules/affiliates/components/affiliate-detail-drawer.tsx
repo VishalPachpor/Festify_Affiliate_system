@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import type { Affiliate } from "@/modules/affiliates/types";
+import {
+  useAffiliateFinancials,
+  usePayAllApproved,
+} from "@/modules/affiliates/hooks/use-affiliate-financials";
+import type { AffiliatePayoutLog } from "@/modules/affiliates/api/get-affiliate-financials";
 
 // ── Tier palette ─────────────────────────────────────────────────────────────
 
@@ -155,6 +160,15 @@ function IconCalendar() {
   );
 }
 
+function IconClock() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="7" cy="7" r="5.5" />
+      <path d="M7 4v3l2 1.5" />
+    </svg>
+  );
+}
+
 // ── Props ────────────────────────────────────────────────────────────────────
 
 type Props = {
@@ -167,6 +181,11 @@ type Props = {
 
 export function AffiliateDetailDrawer({ affiliate, onClose, currency }: Props) {
   const [codeCopied, setCodeCopied] = useState(false);
+
+  // Hooks before any early return. The financials query auto-disables when
+  // affiliate is null via the `enabled` flag on the underlying useQuery.
+  const { data: financials } = useAffiliateFinancials(affiliate?.id ?? null);
+  const payAllMutation = usePayAllApproved(affiliate?.id ?? null);
 
   if (!affiliate) return null;
 
@@ -424,62 +443,87 @@ export function AffiliateDetailDrawer({ affiliate, onClose, currency }: Props) {
             </div>
           </div>
 
-          {/* ── Primary stats ─ Revenue + Commission (hero cards) ── */}
+          {/* ── Financial snapshot: Total Earned / Pending / Paid ──
+              Pulls from /api/affiliates/:id/financials so numbers match the
+              Sale.status lifecycle (the same one /admin/commissions drives).
+              Falls back to the list-level affiliate.totalCommission while the
+              financials query is still in flight. */}
           <div
-            className="grid grid-cols-2"
+            className="grid grid-cols-3"
             style={{
               marginLeft: "var(--space-8)",
               marginRight: "var(--space-8)",
               marginTop: "var(--space-2)",
-              gap: "var(--space-3)",
+              gap: "var(--space-2)",
             }}
           >
-            <StatCardPrimary
-              label="Total Revenue"
-              value={formatCurrency(affiliate.totalRevenue, cur)}
+            <StatCardCompact
+              label="Total Earned"
+              value={formatCurrency(
+                financials?.totalEarnedMinor ?? affiliate.totalCommission,
+                cur,
+              )}
               icon={<IconRevenue />}
               accent="#F0F0F0"
-              iconBg="rgba(255,255,255,0.05)"
-              iconColor="#9CA4B7"
             />
-            <StatCardPrimary
-              label="Total Commission"
-              value={formatCurrency(affiliate.totalCommission, cur)}
-              icon={<IconCommission />}
-              accent="#E5BE52"
-              iconBg="rgba(201,168,76,0.10)"
-              iconColor="#E5BE52"
+            <StatCardCompact
+              label="Pending"
+              value={formatCurrency(financials?.pendingMinor ?? 0, cur)}
+              icon={<IconClock />}
+              accent="#EAB308"
+              highlight
+            />
+            <StatCardCompact
+              label="Paid"
+              value={formatCurrency(financials?.paidMinor ?? 0, cur)}
+              icon={<IconCheck />}
+              accent="#22C55E"
             />
           </div>
 
-          {/* ── Secondary quick-stats row ───────────────────────── */}
-          <div
-            className="grid grid-cols-2"
-            style={{
-              marginLeft: "var(--space-8)",
-              marginRight: "var(--space-8)",
-              marginTop: "var(--space-3)",
-              gap: "var(--space-3)",
-            }}
-          >
-            <StatCardCompact
-              label="Total Sales"
-              value={affiliate.totalSales.toString()}
-              icon={<IconCart />}
-            />
-            <StatCardCompact
-              label="Avg. Sale"
-              value={
-                affiliate.totalSales > 0
-                  ? formatCurrency(
-                      Math.round(affiliate.totalRevenue / affiliate.totalSales),
-                      cur,
-                    )
-                  : "--"
-              }
-              icon={<IconRevenue />}
-            />
-          </div>
+          {/* ── Pay all approved — primary money button. Disabled until
+              financials load and only enabled when pending > 0. ── */}
+          {financials && financials.pendingMinor > 0 && (
+            <div
+              style={{
+                marginLeft: "var(--space-8)",
+                marginRight: "var(--space-8)",
+                marginTop: "var(--space-4)",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => payAllMutation.mutate()}
+                disabled={payAllMutation.isPending}
+                className="group flex h-[2.75rem] w-full items-center justify-center gap-[var(--space-2)] rounded-[var(--radius)] font-[var(--font-sans)] text-[var(--text-sm)] font-semibold text-white transition-all hover:-translate-y-px active:translate-y-0 disabled:opacity-60 disabled:pointer-events-none"
+                style={{
+                  background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)",
+                  boxShadow: "0 10px 30px rgba(34,197,94,0.25), 0 0 0 1px rgba(255,255,255,0.06) inset",
+                }}
+              >
+                {payAllMutation.isPending ? (
+                  "Processing payout…"
+                ) : (
+                  <>
+                    Pay {formatCurrency(financials.pendingMinor, cur)}
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:translate-x-0.5">
+                      <path d="M3 7h8M7 3l4 4-4 4" />
+                    </svg>
+                  </>
+                )}
+              </button>
+              {payAllMutation.isError && (
+                <p
+                  className="mt-[var(--space-2)] font-[var(--font-sans)]"
+                  style={{ fontSize: 12, color: "#FCA5A5" }}
+                >
+                  {payAllMutation.error instanceof Error
+                    ? payAllMutation.error.message
+                    : "Payout failed"}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* ── Recent Sales section ─────────────────────────────── */}
           <div
@@ -498,9 +542,9 @@ export function AffiliateDetailDrawer({ affiliate, onClose, currency }: Props) {
                   letterSpacing: "-0.02em",
                 }}
               >
-                Recent Activity
+                Payout history
               </h3>
-              {affiliate.totalSales > 0 && (
+              {financials && financials.payouts.length > 0 && (
                 <span
                   className="font-medium text-[var(--color-text-secondary)]"
                   style={{
@@ -508,12 +552,12 @@ export function AffiliateDetailDrawer({ affiliate, onClose, currency }: Props) {
                     fontSize: "var(--text-xs)",
                   }}
                 >
-                  {affiliate.totalSales} {affiliate.totalSales === 1 ? "sale" : "sales"}
+                  {financials.payouts.length} {financials.payouts.length === 1 ? "payout" : "payouts"}
                 </span>
               )}
             </div>
 
-            {affiliate.totalSales === 0 ? (
+            {!financials || financials.payouts.length === 0 ? (
               <div
                 className="flex flex-col items-center justify-center"
                 style={{
@@ -521,21 +565,21 @@ export function AffiliateDetailDrawer({ affiliate, onClose, currency }: Props) {
                   borderRadius: "var(--radius-md)",
                   background: "rgba(255,255,255,0.02)",
                   border: "1px dashed var(--color-border)",
-                  padding: "var(--space-8) var(--space-4)",
+                  padding: "var(--space-6) var(--space-4)",
                 }}
               >
                 <div
                   className="flex items-center justify-center"
                   style={{
-                    width: 40,
-                    height: 40,
+                    width: 36,
+                    height: 36,
                     borderRadius: "50%",
                     background: "rgba(255,255,255,0.03)",
                     color: "rgba(255,255,255,0.30)",
-                    marginBottom: "var(--space-3)",
+                    marginBottom: "var(--space-2)",
                   }}
                 >
-                  <IconCart />
+                  <IconRevenue />
                 </div>
                 <p
                   className="font-medium"
@@ -545,78 +589,38 @@ export function AffiliateDetailDrawer({ affiliate, onClose, currency }: Props) {
                     color: "rgba(255,255,255,0.55)",
                   }}
                 >
-                  No sales yet
+                  No payouts yet
                 </p>
                 <p
                   style={{
                     fontFamily: "var(--font-sans)",
                     fontSize: "var(--text-xs)",
                     color: "rgba(255,255,255,0.30)",
-                    marginTop: 4,
+                    marginTop: 2,
                   }}
                 >
-                  Sales will appear here once attributed
+                  Payouts appear here once commissions are settled.
                 </p>
               </div>
             ) : (
               <div
-                className="flex items-center"
+                className="flex flex-col"
                 style={{
                   marginTop: "var(--space-4)",
                   borderRadius: "var(--radius-md)",
                   background: "rgba(255,255,255,0.02)",
                   border: "1px solid var(--color-border)",
-                  padding: "var(--space-4)",
-                  gap: "var(--space-3)",
+                  overflow: "hidden",
                 }}
               >
-                <div
-                  className="flex shrink-0 items-center justify-center"
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: "var(--radius-sm)",
-                    background: "rgba(34,197,94,0.10)",
-                    color: "#22C55E",
-                  }}
-                >
-                  <IconCart />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p
-                    className="font-semibold text-[var(--color-text-primary)]"
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: "var(--text-sm)",
-                    }}
-                  >
-                    {affiliate.totalSales} {affiliate.totalSales === 1 ? "sale" : "sales"} recorded
-                  </p>
-                  <p
-                    className="text-[var(--color-text-secondary)]"
-                    style={{
-                      fontFamily: "var(--font-sans)",
-                      fontSize: "var(--text-xs)",
-                      marginTop: 2,
-                    }}
-                  >
-                    {formatCurrency(affiliate.totalRevenue, cur)} total revenue generated
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="flex shrink-0 items-center transition-colors hover:text-[var(--color-text-primary)]"
-                  style={{
-                    fontFamily: "var(--font-sans)",
-                    fontSize: "var(--text-xs)",
-                    color: "#A6D1FF",
-                    fontWeight: 500,
-                    gap: 4,
-                  }}
-                >
-                  View all
-                  <IconArrowRight />
-                </button>
+                {financials.payouts.slice(0, 8).map((p, i) => (
+                  <PayoutRow
+                    key={p.id}
+                    payout={p}
+                    currency={cur}
+                    isLast={i === Math.min(financials.payouts.length, 8) - 1}
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -808,30 +812,36 @@ function StatCardCompact({
   label,
   value,
   icon,
+  accent,
+  highlight = false,
 }: {
   label: string;
   value: string;
   icon: React.ReactNode;
+  /** Value-text colour. Defaults to primary text. */
+  accent?: string;
+  /** Emphasize the card (used for "Pending" to draw the eye toward action). */
+  highlight?: boolean;
 }) {
   return (
     <div
       className="flex items-center"
       style={{
         borderRadius: "var(--radius-md)",
-        background: "rgba(255,255,255,0.02)",
-        border: "1px solid var(--color-border)",
-        padding: "var(--space-3) var(--space-4)",
-        gap: "var(--space-3)",
+        background: highlight ? "rgba(234,179,8,0.06)" : "rgba(255,255,255,0.02)",
+        border: `1px solid ${highlight ? "rgba(234,179,8,0.18)" : "var(--color-border)"}`,
+        padding: "var(--space-3)",
+        gap: "var(--space-2)",
       }}
     >
       <div
         className="flex items-center justify-center"
         style={{
-          width: 28,
-          height: 28,
+          width: 24,
+          height: 24,
           borderRadius: "var(--radius-sm)",
-          background: "rgba(255,255,255,0.03)",
-          color: "var(--color-text-secondary)",
+          background: highlight ? "rgba(234,179,8,0.14)" : "rgba(255,255,255,0.03)",
+          color: accent ?? "var(--color-text-secondary)",
         }}
       >
         {icon}
@@ -841,7 +851,7 @@ function StatCardCompact({
           className="uppercase"
           style={{
             fontFamily: "var(--font-sans)",
-            fontSize: 10,
+            fontSize: 9,
             color: "var(--color-text-secondary)",
             letterSpacing: "0.06em",
             fontWeight: 500,
@@ -850,10 +860,11 @@ function StatCardCompact({
           {label}
         </p>
         <p
-          className="font-bold text-[var(--color-text-primary)]"
+          className="font-bold"
           style={{
             fontFamily: "var(--font-sans)",
-            fontSize: "var(--text-base)",
+            fontSize: "var(--text-sm)",
+            color: accent ?? "var(--color-text-primary)",
             marginTop: 2,
             letterSpacing: "-0.01em",
           }}
@@ -861,6 +872,92 @@ function StatCardCompact({
           {value}
         </p>
       </div>
+    </div>
+  );
+}
+
+// ─── Payout history row ─────────────────────────────────────────────────────
+
+function PayoutRow({
+  payout,
+  currency,
+  isLast,
+}: {
+  payout: AffiliatePayoutLog;
+  currency: string;
+  isLast: boolean;
+}) {
+  const statusStyle =
+    payout.status === "paid"
+      ? { bg: "rgba(34,197,94,0.10)", fg: "#22C55E", label: "Paid" }
+      : payout.status === "failed"
+        ? { bg: "rgba(239,68,68,0.10)", fg: "#FCA5A5", label: "Failed" }
+        : payout.status === "processing"
+          ? { bg: "rgba(91,141,239,0.14)", fg: "#A6D1FF", label: "Processing" }
+          : { bg: "rgba(234,179,8,0.12)", fg: "#EAB308", label: "Pending" };
+
+  const date = new Date(payout.processedAt ?? payout.createdAt);
+  const when = date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  return (
+    <div
+      className="flex items-center justify-between"
+      style={{
+        padding: "var(--space-3) var(--space-4)",
+        borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.05)",
+      }}
+    >
+      <div className="flex min-w-0 flex-1 items-center gap-[var(--space-3)]">
+        <div
+          className="flex shrink-0 items-center justify-center"
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: "var(--radius-sm)",
+            background: statusStyle.bg,
+            color: statusStyle.fg,
+          }}
+        >
+          <IconCalendar />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p
+            className="font-semibold text-[var(--color-text-primary)]"
+            style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-sm)" }}
+          >
+            {new Intl.NumberFormat("en-US", {
+              style: "currency",
+              currency,
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }).format(payout.amountMinor / 100)}
+          </p>
+          <p
+            className="text-[var(--color-text-secondary)]"
+            style={{ fontFamily: "var(--font-sans)", fontSize: 11, marginTop: 2 }}
+          >
+            {when}
+          </p>
+        </div>
+      </div>
+      <span
+        className="inline-flex shrink-0 items-center"
+        style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: 11,
+          fontWeight: 600,
+          padding: "3px 8px",
+          borderRadius: "var(--radius-sm)",
+          background: statusStyle.bg,
+          color: statusStyle.fg,
+        }}
+      >
+        {statusStyle.label}
+      </span>
     </div>
   );
 }
