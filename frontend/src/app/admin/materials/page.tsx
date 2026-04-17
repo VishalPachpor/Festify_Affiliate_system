@@ -293,10 +293,10 @@ export default function AdminMaterialsPage() {
           </div>
         )}
 
-        {/* Material cards grid — auto-fit with explicit 329px minimum per Figma.
-            Using px (not rem) keeps the min absolute regardless of the
-            viewport-scaled root font-size. */}
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(329px,1fr))] gap-[var(--space-5)]">
+        {/* Material cards grid — fixed 329px tracks per Figma. auto-fill (not
+            auto-fit) so 1-2 cards don't stretch to fill the row; extra space
+            is left on the right as intended. */}
+        <div className="grid grid-cols-[repeat(auto-fill,329px)] gap-[var(--space-5)]">
           {filtered.map((mat) => {
             const ThumbIcon = THUMB_ICONS[mat.icon];
             return (
