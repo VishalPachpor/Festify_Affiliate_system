@@ -142,7 +142,10 @@
   /* ── App shell ───────────────────────────────── */
   --sidebar-w:              239px;       /* Figma 71:3 sidebar width */
   --header-h:               3.6rem;     /* top header */
-  --color-surface-sidebar:  #151A2B;    /* Figma: rgb(21,26,43) sidebar surface */
+  /* Figma sidebar = #151A2B base + #000000 20% overlay. Composited: #111522.
+     Storing the composite keeps bg-[var(--color-surface-sidebar)] valid as a
+     background-color (multi-layer gradients can't live in a color token). */
+  --color-surface-sidebar:  #111522;
   --color-nav-active-bg:    rgba(var(--color-primary-rgb), 0.20); /* Figma 75:28 active row */
   --color-nav-hover-bg:     rgba(var(--color-primary-rgb), 0.10); /* derived: half of active */
   --color-nav-active-text:  #A6D1FF;    /* Figma: active link blue */
