@@ -102,15 +102,11 @@ function IconChevronDown() {
   );
 }
 
-function IconPencil() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M9.5 2l2.5 2.5L5 11.5 2 12l.5-3L9.5 2z" />
-    </svg>
-  );
-}
-
-// ── Tile icon (reused from affiliate milestones) ──────────────────────────────
+// ── Tile icon ─────────────────────────────────────────────────────────────────
+//
+// Figma spec (92:16998): 64×64 tile with 32px letter glyph. The tile keeps
+// its tier-specific border + fill so bronze/silver/gold/platinum stay
+// visually distinct at a glance.
 
 function TierTile({
   letter,
@@ -125,7 +121,7 @@ function TierTile({
 }) {
   return (
     <div
-      className="flex size-[var(--space-12)] shrink-0 items-center justify-center rounded-[var(--radius-md)] border font-[var(--font-sans)] text-[var(--text-xl)] font-semibold"
+      className="flex size-[4rem] shrink-0 items-center justify-center rounded-[var(--radius-md)] border font-[var(--font-sans)] text-[2rem] font-bold leading-none"
       style={{ borderColor: tileBorder, color: tileText, background: tileBg }}
       aria-hidden="true"
     >
@@ -290,7 +286,6 @@ export default function AdminMilestonesPage() {
   const milestones = apiMilestones;
   const [showModal, setShowModal] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, { threshold: string; name: string; description: string }>>({});
-  const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
     setDrafts((prev) => {
@@ -331,7 +326,6 @@ export default function AdminMilestonesPage() {
         body,
       }),
     onSuccess: async () => {
-      setEditingId(null);
       await invalidateMilestones();
     },
   });
@@ -362,35 +356,6 @@ export default function AdminMilestonesPage() {
     setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
   }
 
-  function handleSave(m: Milestone) {
-    const draft = drafts[m.id];
-    if (!draft) return;
-
-    const numericThreshold = Number(draft.threshold.replace(/[^0-9]/g, ""));
-    const body: Record<string, unknown> = {};
-
-    if (draft.name !== m.name) body.name = draft.name;
-    if (draft.description !== m.description) body.description = draft.description;
-    if (Number.isFinite(numericThreshold) && numericThreshold > 0 && numericThreshold !== m.threshold) {
-      body.targetAmount = numericThreshold;
-    }
-
-    if (Object.keys(body).length === 0) {
-      setEditingId(null);
-      return;
-    }
-
-    void updateMutation.mutateAsync({ id: m.id, ...body });
-  }
-
-  function handleCancel(m: Milestone) {
-    setDrafts((prev) => ({
-      ...prev,
-      [m.id]: { threshold: formatCurrency(m.threshold), name: m.name, description: m.description },
-    }));
-    setEditingId(null);
-  }
-
   return (
     <DashboardStageCanvas>
       <DashboardContainer>
@@ -414,114 +379,97 @@ export default function AdminMilestonesPage() {
           </button>
         </div>
 
-        {/* Milestone rows — editable config, not a passive card list.
-            Read state:  [Tile]  Name · Threshold / Description   [Pencil on hover]   [Badge][Delete]
-            Edit state:  [Tile]  3 inputs side-by-side + Save/Cancel                  [Badge][Delete] */}
-        <div className="flex flex-col gap-[var(--space-3)]">
+        {/* Milestone cards — Figma 92:16997 layout.
+            Card: 1136×192, 24px padding. Tile 64×64 (left), content (right).
+            Content: [Name bold · Badge+Delete top-right] / Description / Label / Input.
+            Threshold is the only inline-editable field (saves on blur/Enter). */}
+        <div className="flex flex-col gap-[var(--space-4)]">
           {milestones.map((m) => {
-            const isEditing = editingId === m.id;
             const draft = drafts[m.id];
+            const thresholdValue = draft?.threshold ?? formatCurrency(m.threshold);
+
+            function commitThreshold() {
+              const numeric = Number((draft?.threshold ?? "").replace(/[^0-9]/g, ""));
+              if (!Number.isFinite(numeric) || numeric <= 0 || numeric === m.threshold) {
+                // Nothing to save — snap the visible value back to the server truth
+                setDrafts((prev) => ({
+                  ...prev,
+                  [m.id]: { ...prev[m.id], threshold: formatCurrency(m.threshold) },
+                }));
+                return;
+              }
+              void updateMutation.mutateAsync({ id: m.id, targetAmount: numeric });
+            }
+
             return (
               <article
                 key={m.id}
-                className="group rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.04)] bg-[linear-gradient(180deg,rgba(255,255,255,0.015),transparent)] p-[var(--space-3)] transition-all hover:border-[rgba(255,255,255,0.10)] hover:bg-[rgba(255,255,255,0.02)]"
+                className="rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.06)] bg-[linear-gradient(180deg,rgba(255,255,255,0.015),transparent)] px-[var(--space-6)] py-[var(--space-6)] transition-colors hover:border-[rgba(255,255,255,0.10)]"
               >
-                <div className="flex items-center justify-between gap-[var(--space-4)]">
-                  {/* LEFT — tile + content (text or inline form) */}
-                  <div className="flex min-w-0 flex-1 items-center gap-[var(--space-3)]">
-                    <TierTile
-                      letter={m.letter}
-                      tileText={m.tileText}
-                      tileBorder={m.tileBorder}
-                      tileBg={m.tileBg}
-                    />
+                <div className="flex items-start gap-[var(--space-6)]">
+                  {/* LEFT — 64×64 tier tile */}
+                  <TierTile
+                    letter={m.letter}
+                    tileText={m.tileText}
+                    tileBorder={m.tileBorder}
+                    tileBg={m.tileBg}
+                  />
 
-                    {isEditing ? (
-                      <div className="min-w-0 flex-1 max-w-[900px]">
-                        <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.4fr)_minmax(0,0.8fr)] items-center gap-[var(--space-3)]">
-                          <input
-                            type="text"
-                            placeholder="Tier name"
-                            value={draft?.name ?? m.name}
-                            onChange={(e) => updateDraft(m.id, "name", e.target.value)}
-                            className={INPUT_CLASS}
-                          />
-                          <input
-                            type="text"
-                            placeholder="Reward description"
-                            value={draft?.description ?? m.description}
-                            onChange={(e) => updateDraft(m.id, "description", e.target.value)}
-                            className={INPUT_CLASS}
-                          />
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            placeholder="$ threshold"
-                            value={draft?.threshold ?? formatCurrency(m.threshold)}
-                            onChange={(e) => updateDraft(m.id, "threshold", e.target.value)}
-                            className={INPUT_CLASS}
-                          />
-                        </div>
-
-                        <div className="mt-[var(--space-2)] flex items-center gap-[var(--space-2)]">
-                          <button
-                            type="button"
-                            onClick={() => handleSave(m)}
-                            disabled={updateMutation.isPending}
-                            className="h-[2rem] rounded-[var(--radius)] px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-white transition-colors disabled:opacity-50"
-                            style={{ background: "rgba(28,74,166,0.85)" }}
-                          >
-                            {updateMutation.isPending ? "Saving..." : "Save"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleCancel(m)}
-                            className="h-[2rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-transparent px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[rgba(255,255,255,0.75)] transition-colors hover:bg-[rgba(255,255,255,0.05)]"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex min-w-0 flex-1 items-center gap-[var(--space-2)]">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] leading-tight">
-                            <span className="font-semibold text-[var(--color-text-primary)]">
-                              {m.name}
-                            </span>
-                            <span className="text-[rgba(255,255,255,0.30)]">·</span>
-                            <span className="text-[rgba(255,255,255,0.55)]">
-                              Threshold: {formatCurrency(m.threshold)}
-                            </span>
-                          </div>
-                          <p className="truncate font-[var(--font-sans)] text-[var(--text-sm)] leading-tight text-[rgba(255,255,255,0.50)]">
-                            {m.description}
-                          </p>
-                        </div>
+                  {/* RIGHT — content column fills remaining width */}
+                  <div className="min-w-0 flex-1">
+                    {/* Name row + status + delete (top-right cluster) */}
+                    <div className="flex items-start justify-between gap-[var(--space-4)]">
+                      <h3 className="font-[var(--font-display)] text-[1.375rem] font-bold leading-none tracking-[-0.02em] text-[var(--color-text-primary)]">
+                        {m.name}
+                      </h3>
+                      <div className="flex shrink-0 items-center gap-[var(--space-2)]">
+                        <UnlockBadge type={m.unlockType} />
                         <button
                           type="button"
-                          onClick={() => setEditingId(m.id)}
-                          aria-label={`Edit ${m.name}`}
-                          className="flex size-[1.75rem] shrink-0 items-center justify-center rounded-[var(--radius)] text-[rgba(255,255,255,0.35)] opacity-0 transition-all hover:bg-[rgba(255,255,255,0.06)] hover:text-[rgba(255,255,255,0.85)] group-hover:opacity-100 focus-visible:opacity-100"
+                          onClick={() => handleDelete(m.id)}
+                          aria-label={`Delete ${m.name}`}
+                          disabled={m.unlockType !== "Locked" || deleteMutation.isPending}
+                          className="flex size-[2rem] items-center justify-center rounded-[var(--radius)] text-[rgba(239,68,68,0.55)] transition-colors hover:bg-[rgba(239,68,68,0.08)] hover:text-[#EF4444] disabled:cursor-not-allowed disabled:opacity-30"
                         >
-                          <IconPencil />
+                          <IconTrash />
                         </button>
                       </div>
-                    )}
-                  </div>
+                    </div>
 
-                  {/* RIGHT — status + delete (tight cluster, auto-pushed right) */}
-                  <div className="ml-auto flex shrink-0 items-center gap-[var(--space-2)]">
-                    <UnlockBadge type={m.unlockType} />
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(m.id)}
-                      aria-label={`Delete ${m.name}`}
-                      disabled={m.unlockType !== "Locked" || deleteMutation.isPending}
-                      className="flex size-[1.75rem] items-center justify-center rounded-[var(--radius)] text-[rgba(239,68,68,0.55)] transition-colors hover:bg-[rgba(239,68,68,0.08)] hover:text-[#EF4444] disabled:cursor-not-allowed disabled:opacity-30"
-                    >
-                      <IconTrash />
-                    </button>
+                    {/* Description — ~12px gap below name (Figma: text at y=44 from container top, name is 32 tall → 12px gap) */}
+                    <p className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.4] text-[rgba(255,255,255,0.55)]">
+                      {m.description}
+                    </p>
+
+                    {/* Revenue Threshold — label + always-visible input */}
+                    <div className="mt-[var(--space-4)] flex flex-col gap-[var(--space-2)]">
+                      <label
+                        htmlFor={`threshold-${m.id}`}
+                        className="font-[var(--font-sans)] text-[11px] font-semibold uppercase tracking-[0.08em] text-[rgba(255,255,255,0.45)]"
+                      >
+                        Revenue Threshold ($)
+                      </label>
+                      <input
+                        id={`threshold-${m.id}`}
+                        type="text"
+                        inputMode="numeric"
+                        value={thresholdValue}
+                        onChange={(e) => updateDraft(m.id, "threshold", e.target.value)}
+                        onBlur={commitThreshold}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.currentTarget.blur();
+                          } else if (e.key === "Escape") {
+                            setDrafts((prev) => ({
+                              ...prev,
+                              [m.id]: { ...prev[m.id], threshold: formatCurrency(m.threshold) },
+                            }));
+                            e.currentTarget.blur();
+                          }
+                        }}
+                        className="h-[2.5rem] w-full max-w-[20rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.03)] px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.30)] transition-colors focus:border-[rgba(255,255,255,0.20)] focus:bg-[rgba(255,255,255,0.05)] focus:outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
               </article>
