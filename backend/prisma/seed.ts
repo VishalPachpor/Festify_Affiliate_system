@@ -196,6 +196,16 @@ async function main() {
     { extId: "sale_demo_12", amount: 2050000,  aff: AFFILIATE_ID,       daysAgo: 4  },
   ];
 
+  // Map sale age → commission lifecycle so the demo has all three UI states:
+  //   ≥ 6 days old → paid (payout settled)
+  //   3–5 days    → approved (payout scheduled, Mark Paid available)
+  //   ≤ 2 days    → pending (needs Approve)
+  function statusForDaysAgo(days: number): "pending" | "approved" | "paid" {
+    if (days >= 6) return "paid";
+    if (days >= 3) return "approved";
+    return "pending";
+  }
+
   for (const s of DEMO_SALES) {
     const saleDate = new Date();
     saleDate.setDate(saleDate.getDate() - s.daysAgo);
@@ -207,7 +217,21 @@ async function main() {
     const existing = await prisma.sale.findUnique({
       where: { tenantId_externalOrderId: { tenantId: TENANT_ID, externalOrderId: s.extId } },
     });
+    const commissionMinor = Math.round(s.amount * 0.1);
+    const targetStatus = statusForDaysAgo(s.daysAgo);
+
+    if (existing) {
+      // Backfill status on prior seed runs (column added in a later schema migration).
+      if (existing.status !== targetStatus) {
+        await prisma.sale.update({
+          where: { id: existing.id },
+          data: { status: targetStatus },
+        });
+      }
+    }
+
     if (!existing) {
+
       const sale = await prisma.sale.create({
         data: {
           tenantId: TENANT_ID,
@@ -216,6 +240,7 @@ async function main() {
           amountMinor: s.amount,
           currency: "USD",
           referralCode: refCode,
+          status: targetStatus,
           createdAt: saleDate,
         },
       });
@@ -227,14 +252,36 @@ async function main() {
           method: "referral_code",
         },
       });
+
+      // For approved/paid statuses, create the corresponding payout record
+      // and link the ledger entry to it. Matches what the UI actions would
+      // produce after Approve / Mark Paid clicks.
+      let payoutId: string | null = null;
+      if (targetStatus !== "pending") {
+        const payoutDate = new Date(saleDate);
+        payoutDate.setDate(payoutDate.getDate() + 2); // processed 2 days after sale
+        const payout = await prisma.payout.create({
+          data: {
+            tenantId: TENANT_ID,
+            affiliateId: s.aff,
+            amountMinor: commissionMinor,
+            currency: "USD",
+            status: targetStatus === "paid" ? "paid" : "pending",
+            processedAt: targetStatus === "paid" ? payoutDate : null,
+          },
+        });
+        payoutId = payout.id;
+      }
+
       await prisma.commissionLedgerEntry.create({
         data: {
           tenantId: TENANT_ID,
           affiliateId: s.aff,
           saleId: sale.id,
           type: "earned",
-          amountMinor: Math.round(s.amount * 0.1),
+          amountMinor: commissionMinor,
           currency: "USD",
+          payoutId,
           createdAt: saleDate,
         },
       });

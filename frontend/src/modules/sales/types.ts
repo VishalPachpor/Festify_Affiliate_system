@@ -2,6 +2,10 @@ import { z } from "zod";
 
 // ── Sale ─────────────────────────────────────────────────
 
+// Commission lifecycle on the backend is {pending, approved, paid}. Older
+// payloads use "confirmed" as an alias for "approved"; we accept both so a
+// rolling deploy doesn't reject in-flight responses, but UI code should read
+// "approved".
 export const saleSchema = z.object({
   id: z.string(),
   amount: z.number(),
@@ -10,7 +14,7 @@ export const saleSchema = z.object({
   affiliateId: z.string(),
   affiliateName: z.string(),
   campaignId: z.string(),
-  status: z.enum(["pending", "confirmed", "rejected", "paid"]),
+  status: z.enum(["pending", "approved", "confirmed", "rejected", "paid"]),
   createdAt: z.string(),
   // Latest payout.processedAt across attached payouts (null until a payout lands).
   payoutDate: z.string().nullable().optional(),

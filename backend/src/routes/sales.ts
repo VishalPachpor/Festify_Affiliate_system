@@ -93,11 +93,12 @@ router.get("/api/sales", async (req: Request, res: Response) => {
     // Build where clause
     const where: Record<string, unknown> = { tenantId, ...dateFilter };
 
-    // Filter by attribution status (maps to frontend "confirmed"/"pending")
-    if (status === "confirmed") {
-      where.attributionClaim = { isNot: null };
-    } else if (status === "pending") {
-      where.attributionClaim = { is: null };
+    // Filter by the first-class sale.status enum (pending / approved / paid).
+    // `confirmed` is kept as an alias for backward compat with older clients.
+    if (status === "pending" || status === "approved" || status === "paid") {
+      where.status = status;
+    } else if (status === "confirmed") {
+      where.status = "approved";
     }
 
     // Search by referralCode or externalOrderId
@@ -134,33 +135,14 @@ router.get("/api/sales", async (req: Request, res: Response) => {
 
     // Map to frontend Sale shape.
     //
-    // Commission status has three UI states that must be derived from the
-    // payout graph, not just the presence of a payoutId:
-    //   • pending   – no payout exists yet (Approve creates one)
-    //   • confirmed – payout exists but isn't fully paid yet (Mark Paid flips it)
-    //   • paid      – every earned entry is tied to a payout that reached 'paid'
+    // sale.status is the source of truth. Attribution state is returned
+    // separately so the UI can decide which action to show (approve vs
+    // "attribute first"), but status itself is never derived here.
     const mapped = sales.map((sale) => {
       const entries = sale.commissionLedgerEntries;
       const commission = entries.reduce((sum, entry) => sum + entry.amountMinor, 0);
-      const isAttributed = !!sale.attributionClaim;
 
-      const hasAnyPayout = entries.some((e) => e.payoutId !== null);
-      const allFullyPaid =
-        entries.length > 0 && entries.every((e) => e.payout?.status === "paid");
-
-      let status: "pending" | "confirmed" | "paid";
-      if (!isAttributed) {
-        status = "pending";
-      } else if (allFullyPaid) {
-        status = "paid";
-      } else if (hasAnyPayout) {
-        status = "confirmed";
-      } else {
-        status = "pending";
-      }
-
-      // Payout date: the most recent processedAt across attached payouts,
-      // if any have been processed. Used by the commissions table.
+      // Payout date: most recent processedAt across attached payouts.
       const processedDates = entries
         .map((e) => e.payout?.processedAt)
         .filter((d): d is Date => d !== null && d !== undefined);
@@ -177,7 +159,7 @@ router.get("/api/sales", async (req: Request, res: Response) => {
         affiliateId: sale.attributionClaim?.affiliateId ?? "",
         affiliateName: sale.attributionClaim?.affiliateId ?? "Unattributed",
         campaignId: sale.campaignId,
-        status,
+        status: sale.status,
         createdAt: sale.createdAt.toISOString(),
         payoutDate,
       };
@@ -193,6 +175,92 @@ router.get("/api/sales", async (req: Request, res: Response) => {
   } catch (err) {
     console.error("[sales] List query failed:", err);
     res.status(500).json({ error: "Failed to load sales list" });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/sales/:id/approve
+//
+// Moves a sale from pending → approved. Creates a pending payout for the
+// attributed affiliate so the commission lands on the ledger. Unattributed
+// sales are rejected — attribution has to happen first via the Unattributed
+// Sales panel, otherwise we'd have no affiliate to route the payout to.
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post("/api/sales/:id/approve", async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantId(req);
+    const saleId = String(req.params.id);
+
+    const sale = await prisma.sale.findFirst({
+      where: { id: saleId, tenantId },
+      include: {
+        attributionClaim: { select: { affiliateId: true } },
+        commissionLedgerEntries: {
+          where: { type: "earned" },
+          select: { id: true, amountMinor: true, payoutId: true },
+        },
+      },
+    });
+
+    if (!sale) {
+      res.status(404).json({ error: "Sale not found" });
+      return;
+    }
+
+    if (sale.status !== "pending") {
+      res.status(409).json({
+        error: `Sale is already ${sale.status}; cannot approve`,
+        code: "INVALID_STATE",
+      });
+      return;
+    }
+
+    if (!sale.attributionClaim) {
+      res.status(400).json({
+        error: "Sale is unattributed — attribute an affiliate first",
+        code: "UNATTRIBUTED",
+      });
+      return;
+    }
+
+    const affiliateId = sale.attributionClaim.affiliateId;
+    const entries = sale.commissionLedgerEntries;
+    const commission = entries.reduce((sum, entry) => sum + entry.amountMinor, 0);
+
+    // Atomic: flip status, create pending payout, attach all earned entries.
+    const updated = await prisma.$transaction(async (tx) => {
+      const payout = await tx.payout.create({
+        data: {
+          tenantId,
+          affiliateId,
+          amountMinor: commission,
+          currency: sale.currency,
+          status: "pending",
+        },
+      });
+
+      const unpaidEntries = entries.filter((e) => e.payoutId === null);
+      if (unpaidEntries.length > 0) {
+        await tx.commissionLedgerEntry.updateMany({
+          where: { id: { in: unpaidEntries.map((e) => e.id) } },
+          data: { payoutId: payout.id },
+        });
+      }
+
+      return tx.sale.update({
+        where: { id: saleId },
+        data: { status: "approved" },
+      });
+    });
+
+    res.status(200).json({
+      id: updated.id,
+      status: updated.status,
+    });
+  } catch (err) {
+    console.error("[sales] Approve failed:", err);
+    res.status(500).json({ error: "Failed to approve sale" });
   }
 });
 

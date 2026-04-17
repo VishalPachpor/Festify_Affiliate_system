@@ -22,6 +22,7 @@ function formatDate(dateStr: string): string {
 }
 
 const statusStyles: Record<Sale["status"], string> = {
+  approved: "text-[var(--color-success)]",
   confirmed: "text-[var(--color-success)]",
   pending: "text-[var(--color-warning)]",
   rejected: "text-[var(--color-error)]",

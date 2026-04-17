@@ -173,7 +173,7 @@ router.post("/api/payouts/create", async (req: Request, res: Response) => {
       }
       const unpaidEntries = await tx.commissionLedgerEntry.findMany({
         where: entryWhere,
-        select: { id: true, amountMinor: true },
+        select: { id: true, amountMinor: true, saleId: true },
       });
 
       if (unpaidEntries.length === 0) return null;
@@ -196,6 +196,20 @@ router.post("/api/payouts/create", async (req: Request, res: Response) => {
         where: { id: { in: unpaidEntries.map((e) => e.id) } },
         data: { payoutId: payout.id },
       });
+
+      // Flip sale.status to match the new payout's state so the commissions
+      // UI reads the source-of-truth column instead of deriving it.
+      //   markAsPaid: true  → sale.status = paid
+      //   markAsPaid: false → sale.status = approved
+      const affectedSaleIds = Array.from(
+        new Set(unpaidEntries.map((e) => e.saleId).filter((id): id is string => typeof id === "string")),
+      );
+      if (affectedSaleIds.length > 0) {
+        await tx.sale.updateMany({
+          where: { id: { in: affectedSaleIds }, tenantId },
+          data: { status: markAsPaid ? "paid" : "approved" },
+        });
+      }
 
       // Record idempotency key (DB unique constraint catches concurrent races)
       if (idempotencyKey) {
@@ -274,13 +288,32 @@ router.patch("/api/payouts/:id/status", async (req: Request, res: Response) => {
       return;
     }
 
-    const updated = await prisma.payout.update({
-      where: { id },
-      data: {
-        status: status as "pending" | "processing" | "paid" | "failed",
-        externalReference: externalReference ?? payout.externalReference,
-        processedAt: status === "paid" ? new Date() : payout.processedAt,
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      const up = await tx.payout.update({
+        where: { id },
+        data: {
+          status: status as "pending" | "processing" | "paid" | "failed",
+          externalReference: externalReference ?? payout.externalReference,
+          processedAt: status === "paid" ? new Date() : payout.processedAt,
+        },
+      });
+
+      // Sale.status mirrors the payout when it reaches a terminal state.
+      if (status === "paid") {
+        const entries = await tx.commissionLedgerEntry.findMany({
+          where: { payoutId: id },
+          select: { saleId: true },
+        });
+        const saleIds = Array.from(new Set(entries.map((e) => e.saleId)));
+        if (saleIds.length > 0) {
+          await tx.sale.updateMany({
+            where: { id: { in: saleIds }, tenantId },
+            data: { status: "paid" },
+          });
+        }
+      }
+
+      return up;
     });
 
     await emitEvent("payout.status_changed", {

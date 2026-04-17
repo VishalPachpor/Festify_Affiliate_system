@@ -203,6 +203,16 @@ model InboundEvent {
 
 // ─── Sale ────────────────────────────────────────────────────────────────────
 
+/// Sale commission lifecycle (admin approval flow).
+/// Independent of attribution — a sale can be attributed or unattributed
+/// and still start in `pending`. Admin moves it via Approve → Mark Paid.
+/// Do NOT derive this from payout records on the read path.
+enum SaleStatus {
+  pending
+  approved
+  paid
+}
+
 model Sale {
   id              String @id @default(cuid())
   tenantId        String
@@ -214,6 +224,9 @@ model Sale {
   currency    String
 
   referralCode String?
+
+  /// First-class commission lifecycle — source of truth for the commissions UI.
+  status SaleStatus @default(pending)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -230,6 +243,7 @@ model Sale {
   @@index([tenantId, createdAt])
   @@index([tenantId, campaignId])
   @@index([tenantId, referralCode])
+  @@index([tenantId, status])
 }
 
 // ─── Attribution Claim ───────────────────────────────────────────────────────

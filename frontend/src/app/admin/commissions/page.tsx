@@ -125,9 +125,11 @@ function exportToCsv(sales: Sale[]) {
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
+// Thin pass-through: backend is the source of truth for commission status.
+// "confirmed" is kept as a legacy alias — treat it as "approved".
 function toCommissionStatus(s: Sale["status"]): CommissionStatus {
   if (s === "paid") return "paid";
-  if (s === "confirmed") return "approved";
+  if (s === "approved" || s === "confirmed") return "approved";
   return "pending";
 }
 
@@ -172,14 +174,31 @@ export default function AdminCommissionsPage() {
   const startItem = (currentPage - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(currentPage * PAGE_SIZE, total);
 
-  // Mutation: create payout for a specific sale's commission.
-  // Approve → markAsPaid=false (creates payout in pending state → UI reads "confirmed/approved").
-  // Mark Paid → markAsPaid=true (creates payout already paid out).
-  const createPayoutMutation = useMutation({
-    mutationFn: ({ affiliateId, saleId, markAsPaid }: { affiliateId: string; saleId: string; markAsPaid: boolean }) =>
+  // Mark Paid → /payouts/create with markAsPaid=true.
+  // Backend flips sale.status to paid inside the same transaction.
+  const markPaidMutation = useMutation({
+    mutationFn: ({ affiliateId, saleId }: { affiliateId: string; saleId: string }) =>
       apiClient<{ id: string }>("/payouts/create", {
         method: "POST",
-        body: { affiliateId, saleId, markAsPaid },
+        body: { affiliateId, saleId, markAsPaid: true },
+      }),
+    onSuccess: () => {
+      setPayingSaleId(null);
+      queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["payouts"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+    onError: () => {
+      setPayingSaleId(null);
+    },
+  });
+
+  // Approve → /sales/:id/approve. Backend mutates sale.status to approved,
+  // creates a pending payout, and links the earned ledger entries to it.
+  const approveMutation = useMutation({
+    mutationFn: (saleId: string) =>
+      apiClient<{ id: string; status: string }>(`/sales/${saleId}/approve`, {
+        method: "POST",
       }),
     onSuccess: () => {
       setPayingSaleId(null);
@@ -270,12 +289,12 @@ export default function AdminCommissionsPage() {
           </button>
         </div>
 
-        {/* Mutation feedback */}
-        {createPayoutMutation.isError && (
+        {/* Mutation feedback — surfaces errors from either action */}
+        {(markPaidMutation.isError || approveMutation.isError) && (
           <div className="rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[#FCA5A5]">
-            {createPayoutMutation.error instanceof Error
-              ? createPayoutMutation.error.message
-              : "Failed to create payout"}
+            {(markPaidMutation.error instanceof Error && markPaidMutation.error.message) ||
+              (approveMutation.error instanceof Error && approveMutation.error.message) ||
+              "Action failed"}
           </div>
         )}
 
@@ -353,10 +372,9 @@ export default function AdminCommissionsPage() {
                           type="button"
                           onClick={() => {
                             setPayingSaleId(row.id);
-                            createPayoutMutation.mutate({
+                            markPaidMutation.mutate({
                               affiliateId: row.affiliateId,
                               saleId: row.id,
-                              markAsPaid: true,
                             });
                           }}
                           disabled={payingSaleId !== null}
@@ -366,18 +384,11 @@ export default function AdminCommissionsPage() {
                         </button>
                       )}
                       {cStatus === "pending" && row.affiliateId && (
-                        // Approve creates the payout in pending state so the row
-                        // moves to "approved" (confirmed). A second click on
-                        // "Mark Paid" then flips the payout to paid.
                         <button
                           type="button"
                           onClick={() => {
                             setPayingSaleId(row.id);
-                            createPayoutMutation.mutate({
-                              affiliateId: row.affiliateId,
-                              saleId: row.id,
-                              markAsPaid: false,
-                            });
+                            approveMutation.mutate(row.id);
                           }}
                           disabled={payingSaleId !== null}
                           className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
