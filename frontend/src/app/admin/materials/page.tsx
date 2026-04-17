@@ -25,11 +25,21 @@ const TYPE_TO_ICON: Record<MaterialType, ThumbIcon> = {
 };
 
 const TYPE_TO_GRADIENT: Record<MaterialType, string> = {
-  banner: "linear-gradient(135deg, #4A3728 0%, #6B5D52 50%, #7A6E8A 100%)",
-  email: "linear-gradient(135deg, #1A4A4A 0%, #2B6B6B 50%, #3A7A7A 100%)",
-  social: "linear-gradient(135deg, #5A3A5A 0%, #7A4A6A 50%, #9A6A8A 100%)",
-  copy: "linear-gradient(135deg, #4A3A28 0%, #5A4A38 50%, #6A5A48 100%)",
-  guide: "linear-gradient(135deg, #1A3A4A 0%, #2A5A6A 50%, #3A6A7A 100%)",
+  banner: "linear-gradient(135deg, #6B3E1E 0%, #9B5A3A 45%, #B07BA8 100%)",
+  email: "linear-gradient(135deg, #0F5E5E 0%, #158F8F 50%, #2AA8A8 100%)",
+  social: "linear-gradient(135deg, #7A2B7A 0%, #A14A8C 50%, #D083B6 100%)",
+  copy: "linear-gradient(135deg, #6B4A1E 0%, #9B6E2B 50%, #C08C3E 100%)",
+  guide: "linear-gradient(135deg, #0F3E5E 0%, #1F6A9B 50%, #3A96C8 100%)",
+};
+
+// Design-driven ordering (Figma). Sorted by type priority so row 1/row 2
+// match the layout spec, not backend insertion order.
+const TYPE_ORDER: Record<MaterialType, number> = {
+  banner: 0,
+  email: 1,
+  social: 2,
+  copy: 3,
+  guide: 4,
 };
 
 const FILTER_TABS: { label: string; value: MaterialType | "all" }[] = [
@@ -93,7 +103,7 @@ function IconCalendar() {
 // Thumbnail center icons
 function ThumbIconImage() {
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="3" y="3" width="22" height="22" rx="3" />
       <circle cx="10" cy="10" r="2.5" />
       <path d="M25 19l-5-5-8 8" />
@@ -103,7 +113,7 @@ function ThumbIconImage() {
 
 function ThumbIconEmail() {
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="2" y="5" width="24" height="18" rx="3" />
       <path d="M2 8l12 7 12-7" />
     </svg>
@@ -112,7 +122,7 @@ function ThumbIconEmail() {
 
 function ThumbIconDocument() {
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M7 2h10l6 6v16a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2z" />
       <path d="M17 2v6h6" />
       <path d="M9 13h10M9 17h10M9 21h6" />
@@ -122,7 +132,7 @@ function ThumbIconDocument() {
 
 function ThumbIconDownload() {
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M7 2h10l6 6v16a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2z" />
       <path d="M17 2v6h6" />
       <path d="M14 12v7M14 19l3-3M14 19l-3-3" />
@@ -184,19 +194,25 @@ export default function AdminMaterialsPage() {
 
   const assets = assetsData?.assets ?? [];
 
-  const materials = assets.map((a) => ({
-    id: a.id,
-    title: a.title,
-    type: a.type,
-    size: a.sizeLabel,
-    visible: a.visible,
-    fileUrl: a.fileUrl,
-    mimeType: a.mimeType,
-    addedAt: formatAddedAt(a.addedAt),
-    thumbnailGradient: TYPE_TO_GRADIENT[a.type] ?? TYPE_TO_GRADIENT.banner,
-    icon: TYPE_TO_ICON[a.type] ?? ("image" as ThumbIcon),
-    isImage: a.mimeType.startsWith("image/"),
-  }));
+  const materials = assets
+    .map((a) => ({
+      id: a.id,
+      title: a.title,
+      type: a.type,
+      size: a.sizeLabel,
+      visible: a.visible,
+      fileUrl: a.fileUrl,
+      mimeType: a.mimeType,
+      addedAt: formatAddedAt(a.addedAt),
+      thumbnailGradient: TYPE_TO_GRADIENT[a.type] ?? TYPE_TO_GRADIENT.banner,
+      icon: TYPE_TO_ICON[a.type] ?? ("image" as ThumbIcon),
+      isImage: a.mimeType.startsWith("image/"),
+    }))
+    .sort((a, b) => {
+      const byType = (TYPE_ORDER[a.type] ?? 99) - (TYPE_ORDER[b.type] ?? 99);
+      if (byType !== 0) return byType;
+      return a.title.localeCompare(b.title);
+    });
 
   // Filter is enforced server-side via useAssets(type), so the array is
   // already narrowed when activeFilter !== "all".
@@ -272,17 +288,17 @@ export default function AdminMaterialsPage() {
         )}
 
         {/* Material cards grid */}
-        <div className="grid grid-cols-1 gap-[var(--space-5)] md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-[var(--space-6)] md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((mat) => {
             const ThumbIcon = THUMB_ICONS[mat.icon];
             return (
               <article
                 key={mat.id}
-                className="overflow-hidden rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent"
+                className="flex min-h-[19rem] flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.015)] transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
               >
                 {/* Thumbnail */}
                 <div
-                  className="relative flex h-[10rem] items-center justify-center overflow-hidden"
+                  className="relative flex h-[10rem] shrink-0 items-center justify-center overflow-hidden"
                   style={{ background: mat.thumbnailGradient }}
                 >
                   {mat.isImage ? (
@@ -297,17 +313,17 @@ export default function AdminMaterialsPage() {
                   <ThumbIcon />
                 </div>
 
-                {/* Content */}
-                <div className="px-[var(--space-4)] py-[var(--space-4)]">
+                {/* Content — flex-1 so footer (actions + date) sits flush at the bottom of every card */}
+                <div className="flex flex-1 flex-col px-[var(--space-4)] py-[var(--space-4)]">
                   {/* Title */}
                   <h3 className="font-[var(--font-display)] text-[var(--text-base)] font-bold leading-[var(--leading-snug)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
                     {mat.title}
                   </h3>
 
                   {/* Type badge + size */}
-                  <div className="mt-[var(--space-1)] flex items-center gap-[var(--space-2)]">
+                  <div className="mt-[var(--space-2)] flex items-center gap-[var(--space-2)]">
                     <span
-                      className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
+                      className="inline-block rounded-[var(--radius-sm)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium capitalize"
                       style={{ background: TYPE_BADGE_STYLE.bg, color: TYPE_BADGE_STYLE.text }}
                     >
                       {mat.type}
@@ -318,9 +334,9 @@ export default function AdminMaterialsPage() {
                   </div>
 
                   {/* Visible toggle */}
-                  <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)]">
-                    <span className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.50)]">
-                      Visible to affiliates:
+                  <div className="mt-[var(--space-4)] flex items-center gap-[var(--space-3)]">
+                    <span className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
+                      Visible to affiliates
                     </span>
                     <Toggle
                       checked={mat.visible}
@@ -328,12 +344,16 @@ export default function AdminMaterialsPage() {
                     />
                   </div>
 
+                  {/* Spacer — pushes actions + date to the bottom of the card for consistent grid alignment */}
+                  <div className="flex-1" />
+
                   {/* Actions */}
-                  <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)]">
+                  <div className="mt-[var(--space-4)] flex items-center gap-[var(--space-2)]">
                     <button
                       type="button"
                       onClick={() => handleDownload(mat.fileUrl)}
-                      className="flex flex-1 items-center justify-center gap-[var(--space-2)] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-3)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)] hover:bg-[rgba(255,255,255,0.04)]"
+                      className="flex flex-1 items-center justify-center gap-[var(--space-2)] rounded-[var(--radius)] px-[var(--space-3)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(28,74,166,0.18)]"
+                      style={{ background: "rgba(28,74,166,0.10)" }}
                     >
                       <IconDownload />
                       Download
@@ -342,7 +362,8 @@ export default function AdminMaterialsPage() {
                       type="button"
                       onClick={() => handleDownload(mat.fileUrl)}
                       aria-label="Preview"
-                      className="flex items-center justify-center rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] p-[var(--space-2)] text-[rgba(255,255,255,0.40)] transition-colors hover:text-[rgba(255,255,255,0.80)] hover:border-[rgba(255,255,255,0.20)]"
+                      className="flex items-center justify-center rounded-[var(--radius)] border p-[var(--space-2)] text-[rgba(255,255,255,0.35)] transition-colors hover:border-[rgba(255,255,255,0.12)] hover:text-[rgba(255,255,255,0.70)]"
+                      style={{ borderColor: "rgba(255,255,255,0.06)" }}
                     >
                       <IconEye />
                     </button>
@@ -351,14 +372,15 @@ export default function AdminMaterialsPage() {
                       onClick={() => handleDelete(mat.id)}
                       disabled={deleteMutation.isPending}
                       aria-label="Delete"
-                      className="flex items-center justify-center rounded-[var(--radius)] border border-[rgba(239,68,68,0.25)] p-[var(--space-2)] text-[#EF4444] transition-colors hover:bg-[rgba(239,68,68,0.10)] hover:border-[rgba(239,68,68,0.40)] disabled:opacity-40"
+                      className="flex items-center justify-center rounded-[var(--radius)] border p-[var(--space-2)] text-[rgba(239,68,68,0.55)] transition-colors hover:border-[rgba(239,68,68,0.30)] hover:bg-[rgba(239,68,68,0.08)] hover:text-[#EF4444] disabled:opacity-40"
+                      style={{ borderColor: "rgba(239,68,68,0.14)" }}
                     >
                       <IconTrash />
                     </button>
                   </div>
 
                   {/* Date */}
-                  <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-1)]">
+                  <div className="mt-[var(--space-4)] flex items-center gap-[var(--space-2)]">
                     <span className="text-[rgba(255,255,255,0.35)]">
                       <IconCalendar />
                     </span>
