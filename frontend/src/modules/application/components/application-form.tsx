@@ -25,20 +25,83 @@ const textareaClass = [
   "resize-none",
 ].join(" ");
 
-const selectClass = [
-  "h-[var(--size-input)] w-full rounded-[var(--radius)] border border-[var(--color-border)]",
-  "bg-[var(--color-input)] px-[var(--space-4)]",
-  "font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]",
-  "transition-colors duration-[var(--duration-normal)]",
-  "hover:border-[var(--color-border-hover)]",
-  "focus-visible:border-[var(--color-ring)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-ring)]",
-].join(" ");
+// ─── Channel icons ───────────────────────────────────────────────────────────
 
-const checkboxClass = [
-  "size-[1rem] rounded border border-[var(--color-border)]",
-  "bg-[var(--color-input)] text-[var(--color-primary)]",
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]",
-].join(" ");
+function ChIconEmail() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="4" width="16" height="12" rx="2" />
+      <path d="M2 6l8 5 8-5" />
+    </svg>
+  );
+}
+function ChIconTelegram() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 9.5l14-5-2.5 12-4-3-2 2v-3.5L15 5" />
+    </svg>
+  );
+}
+function ChIconWhatsapp() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 17l1.2-3.5A6.5 6.5 0 1 1 7 16l-4 1z" />
+    </svg>
+  );
+}
+function ChIconX() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <path d="M13.7 2h2.6l-5.7 6.5L17 18h-5.2L7.7 12.5 2.9 18H.3l6.1-7L0 2h5.3l3.8 5.1L13.7 2zm-.9 14.4h1.4L5.3 3.5H3.8l9 12.9z" />
+    </svg>
+  );
+}
+function ChIconReddit() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="10" cy="11" r="6.5" />
+      <circle cx="16.5" cy="5.5" r="1.2" />
+      <path d="M10 5l.7-2.5L13 3" />
+      <circle cx="7.8" cy="10.5" r="0.6" fill="currentColor" />
+      <circle cx="12.2" cy="10.5" r="0.6" fill="currentColor" />
+      <path d="M7.5 13.2c.8.6 1.6.8 2.5.8s1.7-.2 2.5-.8" />
+    </svg>
+  );
+}
+function ChIconLinkedIn() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <path d="M4 2.5A1.5 1.5 0 1 1 4 5.5a1.5 1.5 0 0 1 0-3zM2.8 7h2.4v10H2.8V7zm4.6 0h2.3v1.4h.03c.33-.6 1.1-1.25 2.3-1.25 2.45 0 2.9 1.6 2.9 3.65V17h-2.4v-4.5c0-1.07-.03-2.44-1.5-2.44s-1.73 1.16-1.73 2.37V17H7.4V7z" />
+    </svg>
+  );
+}
+function ChIconInstagram() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2.5" y="2.5" width="15" height="15" rx="4" />
+      <circle cx="10" cy="10" r="3.5" />
+      <circle cx="14.5" cy="5.5" r="0.8" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+function ChIconDiscord() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <path d="M16.5 4.5A13 13 0 0 0 13.2 3.5l-.2.4c1.2.3 2.3.8 3.2 1.5a9 9 0 0 0-11.4 0c.9-.7 2-1.2 3.2-1.5l-.2-.4a13 13 0 0 0-3.3 1A15 15 0 0 0 1.5 13c1.3 1 2.6 1.7 3.9 2l.8-1.1c-.6-.2-1.2-.5-1.7-.9l.3-.2A8.5 8.5 0 0 0 10 14c1.8 0 3.5-.5 5.2-1.3l.3.2c-.5.4-1.1.7-1.7.9l.8 1.1c1.3-.3 2.6-1 3.9-2a15 15 0 0 0-2-8.5zM7.3 11c-.7 0-1.3-.7-1.3-1.5s.6-1.5 1.3-1.5 1.3.7 1.3 1.5S8 11 7.3 11zm5.4 0c-.7 0-1.3-.7-1.3-1.5s.6-1.5 1.3-1.5 1.3.7 1.3 1.5-.6 1.5-1.3 1.5z" />
+    </svg>
+  );
+}
+
+const CHANNEL_ICON: Record<string, () => React.JSX.Element> = {
+  emails_newsletters: ChIconEmail,
+  telegram: ChIconTelegram,
+  whatsapp: ChIconWhatsapp,
+  x: ChIconX,
+  reddit: ChIconReddit,
+  linkedin: ChIconLinkedIn,
+  instagram: ChIconInstagram,
+  discord: ChIconDiscord,
+};
 
 // ─── Types + helpers ─────────────────────────────────────────────────────────
 
@@ -262,55 +325,40 @@ export function ApplicationForm() {
     mutate(parsed.data);
   }
 
-  // Contextual copy per step — drives the right-hand info panel so the form
-  // reads like a guided flow, not a static questionnaire.
-  const CONTEXT_PANEL: Record<1 | 2 | 3, { title: string; items: string[] }> = {
-    1: {
-      title: "Who's applying?",
-      items: [
-        "Pick Individual if you're promoting as yourself. Pick Company if a business is signing the MOU.",
-        "The email you provide here is where we'll send the affiliate MOU once approved.",
-        "Telegram is how our team reaches out during review and for ongoing partner comms.",
-      ],
-    },
-    2: {
-      title: "Where will you promote?",
-      items: [
-        "Top affiliates use 2–3 channels — more isn't always better. Pick the ones you actively post on.",
-        "We'll ask for the exact link or audience size for each channel so we can estimate reach.",
-        "You can add or change channels later once you're approved.",
-      ],
-    },
-    3: {
-      title: "Almost there",
-      items: [
-        "Your preferred referral code is how sales get attributed back to you. 6–20 characters, letters and numbers.",
-        "Codes are case-insensitive and must be unique — we'll suggest an alternative if yours is taken.",
-        "Past event partnerships help us fast-track review. Skip if this is your first time.",
-      ],
-    },
-  };
-
   const ctaLabel =
     step === 1 ? "Continue to Promotion" : step === 2 ? "Review Application" : "Submit Application";
 
   return (
-    <div className="relative z-10 mx-auto max-w-[73rem]">
+    <div className="relative z-10 mx-auto max-w-[48rem]">
       {/* Ambient radial glow — gives the page depth without a heavy overlay */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10"
+        className="pointer-events-none absolute -top-[6rem] left-1/2 -z-10 h-[22rem] w-[36rem] -translate-x-1/2"
         style={{
           background:
-            "radial-gradient(circle at 15% 10%, rgba(91,141,239,0.10), transparent 45%)",
+            "radial-gradient(ellipse at center, rgba(91,141,239,0.14), transparent 65%)",
         }}
       />
 
+      {/* Subtle top-left back link — unobtrusive, keeps the primary action free
+          to live on the right without an awkward mirrored pair at the bottom. */}
+      <button
+        type="button"
+        onClick={handleBack}
+        className={`group -ml-1 mb-[var(--space-4)] inline-flex items-center gap-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.55)] transition-colors hover:text-[var(--color-text-primary)] ${step === 1 ? "pointer-events-none opacity-0" : ""}`}
+        aria-hidden={step === 1 ? true : undefined}
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:-translate-x-0.5">
+          <path d="M8.5 3L4 7l4.5 4" />
+        </svg>
+        Back
+      </button>
+
       <header>
-        <h2 className="font-[var(--font-display)] text-[3rem] font-bold leading-[1.08] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
+        <h2 className="font-[var(--font-display)] text-[2.5rem] font-bold leading-[1.08] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
           Become an Affiliate
         </h2>
-        <p className="mt-[var(--space-3)] max-w-[44rem] font-[var(--font-sans)] text-[var(--text-lg)] leading-[1.6] text-[var(--color-text-secondary)]">
+        <p className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-base)] leading-[1.6] text-[var(--color-text-secondary)]">
           Join the affiliate program and earn 10% commission on every ticket sold.
         </p>
       </header>
@@ -385,34 +433,100 @@ export function ApplicationForm() {
         </p>
       </nav>
 
-      {/* Two-column: form (left) + contextual info panel (right). On narrow
-          screens the panel falls below the form so the flow stays linear. */}
-      <div className="mt-[var(--space-8)] grid gap-[var(--space-8)] lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
       <form
         key={`step-${step}`}
-        className="flex flex-col gap-[var(--space-8)] motion-safe:animate-[step-enter_0.28s_ease-out]"
+        className="mt-[var(--space-8)] flex flex-col gap-[var(--space-8)] motion-safe:animate-[step-enter_0.28s_ease-out]"
         onSubmit={handleSubmit}
       >
         {step === 1 && (
           <fieldset className="flex flex-col gap-[var(--space-6)]">
             <legend className="sr-only">Applicant</legend>
 
-            <FormField label="Applying As" required error={errors.applyingAs}>
-              {(a11y) => (
-                <select
-                  id={a11y.id}
-                  name="applyingAs"
-                  className={selectClass}
-                  value={values.applyingAs}
-                  onChange={(e) =>
-                    setField("applyingAs", e.target.value as "individual" | "company")
-                  }
-                >
-                  <option value="individual">Individual</option>
-                  <option value="company">Company</option>
-                </select>
-              )}
-            </FormField>
+            {/* Big selection cards replace the Applying-as dropdown.
+                Interaction-first: the user picks an identity, then the form
+                reveals the matching detail fields below. */}
+            <div>
+              <p className="font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)]">
+                Who are you applying as?
+                <span className="ml-[var(--space-1)] text-[var(--color-error)]">*</span>
+              </p>
+              <div className="mt-[var(--space-3)] grid grid-cols-2 gap-[var(--space-3)]">
+                {([
+                  {
+                    value: "individual" as const,
+                    title: "Individual",
+                    description: "Applying as yourself. You'll sign the MOU.",
+                    icon: (
+                      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <circle cx="11" cy="8" r="4" />
+                        <path d="M3 19c0-3.5 3.5-6 8-6s8 2.5 8 6" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    value: "company" as const,
+                    title: "Company",
+                    description: "A business is the partner. Signatory signs for it.",
+                    icon: (
+                      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="3" y="4" width="16" height="15" rx="2" />
+                        <path d="M3 9h16M8 13h2M8 16h2M13 13h2M13 16h2" />
+                      </svg>
+                    ),
+                  },
+                ]).map((opt) => {
+                  const selected = values.applyingAs === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setField("applyingAs", opt.value)}
+                      aria-pressed={selected}
+                      className="group relative flex flex-col items-start gap-[var(--space-2)] rounded-[var(--radius-md)] border p-[var(--space-5)] text-left transition-all duration-[var(--duration-normal)] focus-visible:outline-none"
+                      style={{
+                        borderColor: selected ? "rgba(91,141,239,0.50)" : "rgba(255,255,255,0.08)",
+                        background: selected ? "rgba(91,141,239,0.08)" : "var(--color-input)",
+                        boxShadow: selected
+                          ? "0 0 0 1px rgba(91,141,239,0.30), 0 12px 32px rgba(91,141,239,0.12)"
+                          : "none",
+                      }}
+                    >
+                      <span
+                        className="flex size-[2.25rem] items-center justify-center rounded-[var(--radius-sm)] transition-colors"
+                        style={{
+                          background: selected ? "rgba(91,141,239,0.18)" : "rgba(255,255,255,0.04)",
+                          color: selected ? "#A6D1FF" : "rgba(255,255,255,0.55)",
+                        }}
+                      >
+                        {opt.icon}
+                      </span>
+                      <span
+                        className="font-[var(--font-display)] text-[var(--text-base)] font-bold tracking-[-0.01em]"
+                        style={{
+                          color: selected ? "var(--color-text-primary)" : "rgba(255,255,255,0.85)",
+                        }}
+                      >
+                        {opt.title}
+                      </span>
+                      <span className="font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.5] text-[var(--color-text-secondary)]">
+                        {opt.description}
+                      </span>
+                      {selected && (
+                        <span
+                          aria-hidden="true"
+                          className="absolute right-[var(--space-4)] top-[var(--space-4)] flex size-[1.25rem] items-center justify-center rounded-full"
+                          style={{ background: "var(--color-primary)" }}
+                        >
+                          <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 7l3 3 5-6" />
+                          </svg>
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             {values.applyingAs === "individual" ? (
               <div className="grid gap-[var(--space-6)] lg:grid-cols-2">
@@ -599,10 +713,11 @@ export function ApplicationForm() {
                 <div className="grid gap-[var(--space-3)] sm:grid-cols-2">
                   {COMMUNICATION_CHANNEL_OPTIONS.map((channel) => {
                     const selected = selectedChannelSet.has(channel.value);
+                    const Icon = CHANNEL_ICON[channel.value];
                     return (
                       <label
                         key={channel.value}
-                        className="group flex cursor-pointer items-center justify-between gap-[var(--space-3)] rounded-[var(--radius-md)] border px-[var(--space-4)] py-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] transition-all duration-[var(--duration-normal)]"
+                        className="group flex cursor-pointer items-center gap-[var(--space-3)] rounded-[var(--radius-md)] border px-[var(--space-4)] py-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] transition-all duration-[var(--duration-normal)] hover:-translate-y-px"
                         style={{
                           borderColor: selected
                             ? "rgba(91,141,239,0.45)"
@@ -614,7 +729,7 @@ export function ApplicationForm() {
                             ? "var(--color-text-primary)"
                             : "rgba(255,255,255,0.80)",
                           boxShadow: selected
-                            ? "0 0 0 1px rgba(91,141,239,0.25), 0 4px 16px rgba(91,141,239,0.10)"
+                            ? "0 0 0 1px rgba(91,141,239,0.25), 0 8px 24px rgba(91,141,239,0.14)"
                             : "none",
                         }}
                       >
@@ -624,7 +739,18 @@ export function ApplicationForm() {
                           checked={selected}
                           onChange={() => toggleChannel(channel.value)}
                         />
-                        <span className="font-medium">{channel.label}</span>
+                        <span
+                          className="flex size-[2rem] shrink-0 items-center justify-center rounded-[var(--radius-sm)] transition-colors"
+                          style={{
+                            background: selected
+                              ? "rgba(91,141,239,0.18)"
+                              : "rgba(255,255,255,0.04)",
+                            color: selected ? "#A6D1FF" : "rgba(255,255,255,0.60)",
+                          }}
+                        >
+                          {Icon ? <Icon /> : null}
+                        </span>
+                        <span className="flex-1 font-medium">{channel.label}</span>
                         <span
                           aria-hidden="true"
                           className="flex size-[1.125rem] shrink-0 items-center justify-center rounded-full transition-colors duration-[var(--duration-fast)]"
@@ -792,6 +918,34 @@ export function ApplicationForm() {
           <fieldset className="flex flex-col gap-[var(--space-6)]">
             <legend className="sr-only">Finalize</legend>
 
+            {/* Celebration header — reframes the last step from "one more form"
+                to "you're almost done" so submission feels like an arrival. */}
+            <div
+              className="rounded-[var(--radius-lg)] border p-[var(--space-6)] text-center"
+              style={{
+                borderColor: "rgba(91,141,239,0.25)",
+                background:
+                  "linear-gradient(180deg, rgba(91,141,239,0.10) 0%, rgba(91,141,239,0.02) 100%)",
+              }}
+            >
+              <div
+                aria-hidden="true"
+                className="mx-auto flex size-[3rem] items-center justify-center rounded-full"
+                style={{ background: "rgba(91,141,239,0.16)", color: "#A6D1FF" }}
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2l2.4 6.2L21 9l-5 4.4L17.6 20 12 16.8 6.4 20 8 13.4 3 9l6.6-.8L12 2z" />
+                </svg>
+              </div>
+              <h3 className="mt-[var(--space-3)] font-[var(--font-display)] text-[var(--text-xl)] font-bold tracking-[-0.02em] text-[var(--color-text-primary)]">
+                Almost there
+              </h3>
+              <p className="mx-auto mt-[var(--space-2)] max-w-[28rem] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.55] text-[var(--color-text-secondary)]">
+                You&apos;re about to join the TOKEN2049 affiliates. Two more
+                details and we&apos;ll get your application in front of the team.
+              </p>
+            </div>
+
             <FormField
               label="Previous Affiliate Partnership Experience at events (if any)"
               error={errors.experience}
@@ -838,18 +992,9 @@ export function ApplicationForm() {
           </fieldset>
         )}
 
-        {/* Step navigation — Back stays left, primary action lives on the right */}
-        <div className="flex items-center justify-between gap-[var(--space-4)]">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={handleBack}
-            disabled={step === 1}
-            className={step === 1 ? "invisible" : ""}
-          >
-            Back
-          </Button>
-
+        {/* Primary action anchors to the right. Back lives at the top-left of
+            the page as a subtle text link so the action row stays uncluttered. */}
+        <div className="flex items-center justify-end gap-[var(--space-4)]">
           {step < 3 ? (
             <Button type="button" variant="primary" onClick={handleNext}>
               {ctaLabel}
@@ -861,48 +1006,6 @@ export function ApplicationForm() {
           )}
         </div>
       </form>
-
-      {/* Contextual info panel — updates per step. Gives the right column a
-          purpose beyond dead space and quietly teaches the user what we're
-          asking for and why. */}
-      <aside
-        key={`panel-${step}`}
-        className="self-start rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent)] p-[var(--space-6)] motion-safe:animate-[step-enter_0.28s_ease-out]"
-      >
-        <p className="font-[var(--font-sans)] text-[var(--text-xs)] font-semibold uppercase tracking-[0.08em] text-[#A6D1FF]">
-          Step {step} of {STEPS.length}
-        </p>
-        <h3 className="mt-[var(--space-2)] font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-tight tracking-[-0.02em] text-[var(--color-text-primary)]">
-          {CONTEXT_PANEL[step].title}
-        </h3>
-        <ul className="mt-[var(--space-4)] flex flex-col gap-[var(--space-3)]">
-          {CONTEXT_PANEL[step].items.map((item, i) => (
-            <li
-              key={i}
-              className="relative pl-[var(--space-5)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.55] text-[var(--color-text-secondary)]"
-            >
-              <span
-                aria-hidden="true"
-                className="absolute left-0 top-[0.55rem] size-[0.375rem] rounded-full"
-                style={{ background: "rgba(91,141,239,0.55)" }}
-              />
-              {item}
-            </li>
-          ))}
-        </ul>
-        <div
-          className="mt-[var(--space-6)] rounded-[var(--radius-md)] border border-[rgba(91,141,239,0.20)] bg-[rgba(91,141,239,0.06)] p-[var(--space-4)]"
-        >
-          <p className="font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[#A6D1FF]">
-            What happens next
-          </p>
-          <p className="mt-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.6] text-[var(--color-text-secondary)]">
-            Once you submit, the team reviews within 24 hours and emails the
-            MOU. You&apos;ll see your status update inside this dashboard.
-          </p>
-        </div>
-      </aside>
-      </div>
     </div>
   );
 }
