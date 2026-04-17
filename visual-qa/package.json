@@ -1,0 +1,21 @@
+{
+  "name": "festify-visual-qa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright visual regression suite for Festify Affiliates",
+  "scripts": {
+    "install:browsers": "playwright install chromium",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "update": "playwright test --update-snapshots",
+    "update:component": "playwright test --update-snapshots component.spec.ts",
+    "update:dashboard": "playwright test --update-snapshots dashboard.spec.ts",
+    "update:admin": "playwright test --update-snapshots admin.spec.ts",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "typescript": "^5.7.0"
+  }
+}
