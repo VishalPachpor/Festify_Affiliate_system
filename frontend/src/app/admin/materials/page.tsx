@@ -301,10 +301,11 @@ export default function AdminMaterialsPage() {
           </div>
         )}
 
-        {/* Material cards grid — Figma: 3 equal columns filling the content
-            area. grid-cols-3 lets tracks flex with the viewport so the
-            composition matches at 1440px base and scales down cleanly. */}
-        <div className="grid grid-cols-3 gap-[var(--space-5)]">
+        {/* Material cards grid — Figma: 3 equal columns at xl+ filling the
+            content area. Mirrors the affiliate /dashboard/materials grid so
+            both sides of the app collapse to 2/1 columns identically on
+            tablet/mobile and stay pixel-consistent at desktop. */}
+        <div className="grid w-full grid-cols-1 items-stretch gap-[var(--space-6)] md:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))]">
           {filtered.map((mat) => {
             const ThumbIcon = THUMB_ICONS[mat.icon];
             return (
