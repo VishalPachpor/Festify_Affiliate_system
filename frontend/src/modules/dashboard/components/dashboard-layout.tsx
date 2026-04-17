@@ -1,11 +1,26 @@
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
-export function DashboardContainer({ children }: { children: ReactNode }) {
+export function DashboardContainer({
+  children,
+  fluid = false,
+  className,
+}: {
+  children: ReactNode;
+  fluid?: boolean;
+  className?: string;
+}) {
   // Cap the working frame on very wide monitors (max-w 90rem ~= 1440px)
   // while keeping content flush-left within the main area — prevents the
   // grid from inflating on 4K screens without visually centring the column.
   return (
-    <div className="flex w-full max-w-[90rem] flex-col gap-[var(--space-8)] px-[var(--space-8)] py-[var(--space-8)]">
+    <div
+      className={cn(
+        "flex w-full flex-col gap-[var(--space-8)] px-[var(--space-8)] py-[var(--space-8)]",
+        !fluid && "max-w-[90rem]",
+        className,
+      )}
+    >
       {children}
     </div>
   );

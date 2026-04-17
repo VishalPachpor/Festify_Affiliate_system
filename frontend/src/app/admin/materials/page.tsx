@@ -236,7 +236,7 @@ export default function AdminMaterialsPage() {
 
   return (
     <DashboardStageCanvas>
-      <DashboardContainer>
+      <DashboardContainer fluid>
         {/* Page header */}
         <div className="flex items-start justify-between">
           <div>
@@ -288,15 +288,15 @@ export default function AdminMaterialsPage() {
           </div>
         )}
 
-        {/* Material cards grid — flex-wrap with fixed 329px cards matches
-            Figma's auto-layout frame. Flush-left, no centering on wide screens. */}
-        <div className="flex flex-wrap justify-start gap-[var(--space-5)]">
+        {/* Material cards grid — fluid auto-fit columns so the admin screen
+            uses the full content pane instead of capping at three cards. */}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(20.5rem,1fr))] gap-[var(--space-5)]">
           {filtered.map((mat) => {
             const ThumbIcon = THUMB_ICONS[mat.icon];
             return (
               <article
                 key={mat.id}
-                className="flex min-h-[24rem] w-[329px] shrink-0 flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-transparent transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
+                className="flex min-h-[24rem] w-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-transparent transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
               >
                 {/* Thumbnail — Figma 82:9491: 192px band (h-12). Gradient from /styles/gradients.ts */}
                 <div
