@@ -10,14 +10,15 @@ export function DashboardContainer({
   fluid?: boolean;
   className?: string;
 }) {
-  // Cap the working frame on very wide monitors (max-w 90rem ~= 1440px)
-  // while keeping content flush-left within the main area — prevents the
-  // grid from inflating on 4K screens without visually centring the column.
+  // Cap the working frame at 1440px (90rem) and centre it on ultra-wide
+  // screens so content doesn't drift hard-left on 4K monitors. Inside the
+  // container, grids still layout flush-left — the container is centred,
+  // not the grid.
   return (
     <div
       className={cn(
         "flex w-full flex-col gap-[var(--space-8)] px-[var(--space-8)] py-[var(--space-8)]",
-        !fluid && "max-w-[90rem]",
+        !fluid && "mx-auto max-w-[90rem]",
         className,
       )}
     >

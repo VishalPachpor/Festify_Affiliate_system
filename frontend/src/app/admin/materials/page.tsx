@@ -288,9 +288,10 @@ export default function AdminMaterialsPage() {
           </div>
         )}
 
-        {/* Material cards grid — fluid auto-fit columns so the admin screen
-            uses the full content pane instead of capping at three cards. */}
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(20.5rem,1fr))] gap-[var(--space-5)]">
+        {/* Material cards grid — auto-fit with explicit 329px minimum per Figma.
+            Using px (not rem) keeps the min absolute regardless of the
+            viewport-scaled root font-size. */}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(329px,1fr))] gap-[var(--space-5)]">
           {filtered.map((mat) => {
             const ThumbIcon = THUMB_ICONS[mat.icon];
             return (
