@@ -3,22 +3,22 @@ import { cn } from "@/lib/utils";
 
 export function DashboardContainer({
   children,
-  fluid = false,
+  fluid: _fluid = false,
   className,
 }: {
   children: ReactNode;
+  /** @deprecated kept for API compatibility — the container is always fluid now */
   fluid?: boolean;
   className?: string;
 }) {
-  // Cap the working frame at 1440px (90rem) and centre it on ultra-wide
-  // screens so content doesn't drift hard-left on 4K monitors. Inside the
-  // container, grids still layout flush-left — the container is centred,
-  // not the grid.
+  // App-shell layout: the sidebar is a flex sibling in admin/layout.tsx, so
+  // this container should stretch to fill the remaining flex-1 area. The old
+  // mx-auto + max-w-[90rem] cap produced floating-island margins on ultra-wide
+  // screens — Figma's design is app-style full-width, not Bootstrap-centered.
   return (
     <div
       className={cn(
         "flex w-full flex-col gap-[var(--space-8)] px-[var(--space-8)] py-[var(--space-8)]",
-        !fluid && "mx-auto max-w-[90rem]",
         className,
       )}
     >
