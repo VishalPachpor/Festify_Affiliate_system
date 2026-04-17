@@ -124,23 +124,19 @@ app.get("/health", (_req, res) => {
 // the Preview/eye button can show images/PDFs in a new tab. The HTML
 // `download` attribute alone is ignored cross-origin (dev:3000 ↔ :3001),
 // so the attachment intent has to be signalled by the server.
-app.use(
-  "/uploads",
-  (req, res, next) => {
-    // Express.static doesn't pass the request into setHeaders, so stash the
-    // download-intent flag on res.locals for the static middleware to read.
-    res.locals.forceDownload = req.query.download === "1";
-    next();
-  },
-  express.static(path.resolve(process.cwd(), "uploads"), {
-    setHeaders: (res, filePath) => {
-      if (res.locals.forceDownload) {
-        const name = path.basename(filePath);
-        res.setHeader("Content-Disposition", `attachment; filename="${name}"`);
-      }
-    },
-  }),
-);
+// Mount a tiny pre-middleware that sets Content-Disposition: attachment when
+// the caller passes ?download=1. Express.static then serves the file with
+// that header intact. Using express.static's own setHeaders hook with
+// res.locals wasn't reliable in practice — setting the header directly on
+// the response before static runs is simpler and works.
+app.use("/uploads", (req, res, next) => {
+  if (req.query.download === "1") {
+    const filename = path.basename(req.path);
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  }
+  next();
+});
+app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 
 // Auth routes (no auth required, rate-limited)
 app.use("/api/auth", authLimiter);
