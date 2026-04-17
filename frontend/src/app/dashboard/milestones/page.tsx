@@ -90,7 +90,7 @@ function TierTile({
 function MilestoneCardSkeleton() {
   return (
     <article
-      className="rounded-[8px] p-[28px]"
+      className="rounded-[8px] p-[24px]"
       style={{
         background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)",
         boxShadow: "0 0 0 1px rgba(255,255,255,0.10), 0 8px 24px rgba(0,0,0,0.18)",
@@ -140,7 +140,7 @@ function MilestoneCard({
 
   return (
     <article
-      className="rounded-[8px] p-[28px]"
+      className="rounded-[8px] p-[24px]"
       style={{
         background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)",
         boxShadow: "0 0 0 1px rgba(255,255,255,0.10), 0 8px 24px rgba(0,0,0,0.18)",
@@ -172,7 +172,7 @@ function MilestoneCard({
           </p>
 
           {/* Progress section */}
-          <div className="mt-[16px] flex flex-col gap-[10px]">
+          <div className="mt-[12px] flex flex-col gap-[8px]">
             <div className="flex items-center justify-between">
               <p className="font-[var(--font-sans)] text-[12px] leading-[14px] text-[#9CA4B7]">
                 {formatCurrency(effectiveCurrent, currency)} / {formatCurrency(targetAmount, currency)} ({Math.round(pct)}%)
