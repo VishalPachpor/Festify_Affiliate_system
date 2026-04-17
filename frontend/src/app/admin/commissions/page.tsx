@@ -141,8 +141,11 @@ export default function AdminCommissionsPage() {
   const { tenant } = useTenant();
   const { filters, setFilters } = useSalesFilters();
   const [statusFilter, setStatusFilter] = useState("");
-  const [dateFilter, setDateFilter] = useState("");
   const [payingSaleId, setPayingSaleId] = useState<string | null>(null);
+  // Date filter is URL-driven via the shared useSalesFilters hook so it
+  // round-trips into /sales as ?from=&to= — the server paginates the filtered
+  // set, and the footer/next-prev stay in sync with what's visible.
+  const dateFilter = filters.from ?? "";
 
   const { data: salesData } = useSalesList(tenant?.id, {
     ...filters,
@@ -152,13 +155,7 @@ export default function AdminCommissionsPage() {
   const { data: payoutData } = usePayoutSummary(tenant?.id);
   const { data: salesSummary } = useSalesSummary(tenant?.id);
 
-  const allSales: Sale[] = salesData?.sales ?? [];
-  // Date filter runs client-side against the sale's createdAt — server-side
-  // date params aren't wired into useSalesList yet, but the UI control needs
-  // to behave.
-  const sales: Sale[] = dateFilter
-    ? allSales.filter((s) => s.createdAt.slice(0, 10) === dateFilter)
-    : allSales;
+  const sales: Sale[] = salesData?.sales ?? [];
   const total = salesData?.total ?? 0;
   const totalPages = salesData?.totalPages ?? 1;
   const currentPage = filters.page;
@@ -263,7 +260,12 @@ export default function AdminCommissionsPage() {
           <input
             type="date"
             value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
+            onChange={(e) => {
+              const v = e.target.value || undefined;
+              // from/to bracket a single day so server-side pagination filters
+              // the set the footer/pager reflect — no client-side divergence.
+              setFilters({ from: v, to: v, page: 1 });
+            }}
             aria-label="Filter by date"
             className="h-[2.5rem] rounded-[var(--radius)] bg-[rgba(255,255,255,0.06)] px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.10)] border-none focus:outline-none"
           />

@@ -152,7 +152,7 @@ export function AppSidebar() {
       <div className="border-t border-[var(--color-border)] px-[16px] pt-[17px] pb-[16px]">
         <Link
           href="/dashboard/profile"
-          className="flex h-[64px] items-center gap-[12px] rounded-[8px] px-[12px] transition-colors duration-[var(--duration-normal)] hover:bg-[var(--color-surface-ghost-hover)]"
+          className="flex h-[64px] items-center gap-[12px] rounded-[8px] px-[12px] transition-colors duration-[var(--duration-normal)] hover:bg-[var(--color-nav-hover-bg)]"
         >
           {/* Avatar — Figma 71:53: 40px circle, bg #161616, border rgba(166,209,255,0.3) */}
           <div

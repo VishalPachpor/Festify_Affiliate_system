@@ -161,7 +161,7 @@ export function AdminSidebar() {
       <div className="border-t border-[var(--color-border)] px-[16px] pt-[17px] pb-[16px]">
         <Link
           href="/admin/settings"
-          className="flex h-[64px] items-center gap-[12px] rounded-[8px] px-[12px] transition-colors duration-[var(--duration-normal)] hover:bg-[var(--color-surface-ghost-hover)]"
+          className="flex h-[64px] items-center gap-[12px] rounded-[8px] px-[12px] transition-colors duration-[var(--duration-normal)] hover:bg-[var(--color-nav-hover-bg)]"
         >
           <div
             className="flex size-[40px] shrink-0 items-center justify-center rounded-full bg-[var(--color-avatar-bg)] border border-[var(--color-avatar-border)]"
