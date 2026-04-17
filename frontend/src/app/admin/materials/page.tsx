@@ -288,14 +288,15 @@ export default function AdminMaterialsPage() {
           </div>
         )}
 
-        {/* Material cards grid */}
-        <div className="grid grid-cols-1 gap-[var(--space-6)] md:grid-cols-2 lg:grid-cols-3">
+        {/* Material cards grid — flex-wrap with fixed 329px cards matches
+            Figma's auto-layout frame. Flush-left, no centering on wide screens. */}
+        <div className="flex flex-wrap justify-start gap-[var(--space-5)]">
           {filtered.map((mat) => {
             const ThumbIcon = THUMB_ICONS[mat.icon];
             return (
               <article
                 key={mat.id}
-                className="flex min-h-[24rem] min-w-0 flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-transparent transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
+                className="flex min-h-[24rem] w-[329px] shrink-0 flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-transparent transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
               >
                 {/* Thumbnail — Figma 82:9491: 192px band (h-12). Gradient from /styles/gradients.ts */}
                 <div

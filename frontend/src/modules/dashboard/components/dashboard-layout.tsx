@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 
 export function DashboardContainer({ children }: { children: ReactNode }) {
-  // Figma designs against a 1440px viewport with a 240px sidebar — 1200px
-  // content frame. Capping here keeps cards and grids at spec-size on wider
-  // monitors instead of inflating with the viewport.
+  // Cap the working frame on very wide monitors (max-w 90rem ~= 1440px)
+  // while keeping content flush-left within the main area — prevents the
+  // grid from inflating on 4K screens without visually centring the column.
   return (
-    <div className="mx-auto flex w-full max-w-[75rem] flex-col gap-[var(--space-8)] px-[var(--space-8)] py-[var(--space-8)]">
+    <div className="flex w-full max-w-[90rem] flex-col gap-[var(--space-8)] px-[var(--space-8)] py-[var(--space-8)]">
       {children}
     </div>
   );
