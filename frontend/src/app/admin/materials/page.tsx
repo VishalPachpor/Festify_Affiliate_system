@@ -295,7 +295,7 @@ export default function AdminMaterialsPage() {
             return (
               <article
                 key={mat.id}
-                className="flex h-[24rem] min-w-0 flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-transparent transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
+                className="flex min-h-[24rem] min-w-0 flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-transparent transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
               >
                 {/* Thumbnail — Figma 82:9491: 192px band (h-12). Gradient from /styles/gradients.ts */}
                 <div
