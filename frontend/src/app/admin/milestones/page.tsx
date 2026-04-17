@@ -102,6 +102,14 @@ function IconChevronDown() {
   );
 }
 
+function IconPencil() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9.5 2l2.5 2.5L5 11.5 2 12l.5-3L9.5 2z" />
+    </svg>
+  );
+}
+
 // ── Tile icon (reused from affiliate milestones) ──────────────────────────────
 
 function TierTile({
@@ -148,9 +156,10 @@ function UnlockBadge({ type }: { type: UnlockType }) {
 //
 // Glass-like: softer fill than the old 0.04 wash, 0.10 resting border lifting
 // to 0.20 on focus — reads as "editable" without the heavy outlined look.
+// 32px tall to keep edit rows compact enough to align with the tier tile.
 
 const INPUT_CLASS =
-  "h-[2.25rem] w-full rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.03)] px-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.30)] transition-colors focus:border-[rgba(255,255,255,0.20)] focus:bg-[rgba(255,255,255,0.05)] focus:outline-none";
+  "h-[2rem] w-full rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.03)] px-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.30)] transition-colors focus:border-[rgba(255,255,255,0.20)] focus:bg-[rgba(255,255,255,0.05)] focus:outline-none";
 
 const LABEL_CLASS =
   "font-[var(--font-sans)] text-[10px] leading-[1] tracking-[0.08em] uppercase text-[rgba(255,255,255,0.45)] font-semibold";
@@ -406,8 +415,8 @@ export default function AdminMilestonesPage() {
         </div>
 
         {/* Milestone rows — editable config, not a passive card list.
-            Read state: Icon · Text · Badge+Delete.
-            Edit state: Icon · 3 horizontal inputs + Save/Cancel · Badge+Delete. */}
+            Read state:  [Tile]  Name · Threshold / Description   [Pencil on hover]   [Badge][Delete]
+            Edit state:  [Tile]  3 inputs side-by-side + Save/Cancel                  [Badge][Delete] */}
         <div className="flex flex-col gap-[var(--space-3)]">
           {milestones.map((m) => {
             const isEditing = editingId === m.id;
@@ -415,11 +424,11 @@ export default function AdminMilestonesPage() {
             return (
               <article
                 key={m.id}
-                className="rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.06)] bg-[linear-gradient(180deg,rgba(255,255,255,0.015),transparent)] px-[var(--space-5)] py-[var(--space-4)] transition-colors hover:border-[rgba(255,255,255,0.12)]"
+                className="group rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.06)] bg-[linear-gradient(180deg,rgba(255,255,255,0.015),transparent)] p-[var(--space-4)] transition-colors hover:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.02)]"
               >
-                <div className="flex items-start justify-between gap-[var(--space-5)]">
+                <div className="flex items-center justify-between gap-[var(--space-5)]">
                   {/* LEFT — tile + content (text or inline form) */}
-                  <div className="flex min-w-0 flex-1 items-start gap-[var(--space-4)]">
+                  <div className="flex min-w-0 flex-1 items-center gap-[var(--space-4)]">
                     <TierTile
                       letter={m.letter}
                       tileText={m.tileText}
@@ -429,35 +438,29 @@ export default function AdminMilestonesPage() {
 
                     {isEditing ? (
                       <div className="min-w-0 flex-1">
-                        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)] gap-[var(--space-4)]">
-                          <div className="flex flex-col gap-[var(--space-1)]">
-                            <label className={LABEL_CLASS}>Tier name</label>
-                            <input
-                              type="text"
-                              value={draft?.name ?? m.name}
-                              onChange={(e) => updateDraft(m.id, "name", e.target.value)}
-                              className={INPUT_CLASS}
-                            />
-                          </div>
-                          <div className="flex flex-col gap-[var(--space-1)]">
-                            <label className={LABEL_CLASS}>Reward description</label>
-                            <input
-                              type="text"
-                              value={draft?.description ?? m.description}
-                              onChange={(e) => updateDraft(m.id, "description", e.target.value)}
-                              className={INPUT_CLASS}
-                            />
-                          </div>
-                          <div className="flex flex-col gap-[var(--space-1)]">
-                            <label className={LABEL_CLASS}>Revenue threshold ($)</label>
-                            <input
-                              type="text"
-                              inputMode="numeric"
-                              value={draft?.threshold ?? formatCurrency(m.threshold)}
-                              onChange={(e) => updateDraft(m.id, "threshold", e.target.value)}
-                              className={INPUT_CLASS}
-                            />
-                          </div>
+                        <div className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.6fr)_minmax(0,1fr)] items-center gap-[var(--space-4)]">
+                          <input
+                            type="text"
+                            placeholder="Tier name"
+                            value={draft?.name ?? m.name}
+                            onChange={(e) => updateDraft(m.id, "name", e.target.value)}
+                            className={INPUT_CLASS}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Reward description"
+                            value={draft?.description ?? m.description}
+                            onChange={(e) => updateDraft(m.id, "description", e.target.value)}
+                            className={INPUT_CLASS}
+                          />
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="$ threshold"
+                            value={draft?.threshold ?? formatCurrency(m.threshold)}
+                            onChange={(e) => updateDraft(m.id, "threshold", e.target.value)}
+                            className={INPUT_CLASS}
+                          />
                         </div>
 
                         <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)]">
@@ -465,7 +468,7 @@ export default function AdminMilestonesPage() {
                             type="button"
                             onClick={() => handleSave(m)}
                             disabled={updateMutation.isPending}
-                            className="h-[2.25rem] rounded-[var(--radius)] px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-white transition-colors hover:opacity-100 disabled:opacity-50"
+                            className="h-[2rem] rounded-[var(--radius)] px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-white transition-colors disabled:opacity-50"
                             style={{ background: "rgba(28,74,166,0.85)" }}
                           >
                             {updateMutation.isPending ? "Saving..." : "Save"}
@@ -473,31 +476,35 @@ export default function AdminMilestonesPage() {
                           <button
                             type="button"
                             onClick={() => handleCancel(m)}
-                            className="h-[2.25rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-transparent px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[rgba(255,255,255,0.75)] transition-colors hover:bg-[rgba(255,255,255,0.05)]"
+                            className="h-[2rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-transparent px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[rgba(255,255,255,0.75)] transition-colors hover:bg-[rgba(255,255,255,0.05)]"
                           >
                             Cancel
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline gap-[var(--space-3)]">
-                          <h3 className="font-[var(--font-display)] text-[var(--text-lg)] font-bold leading-none tracking-[-0.02em] text-[var(--color-text-primary)]">
-                            {m.name}
-                          </h3>
-                          <span className="font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.55)]">
-                            Threshold: {formatCurrency(m.threshold)}
-                          </span>
+                      <div className="flex min-w-0 flex-1 items-center gap-[var(--space-3)]">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)]">
+                            <span className="font-semibold text-[var(--color-text-primary)]">
+                              {m.name}
+                            </span>
+                            <span className="text-[rgba(255,255,255,0.30)]">·</span>
+                            <span className="text-[rgba(255,255,255,0.55)]">
+                              Threshold: {formatCurrency(m.threshold)}
+                            </span>
+                          </div>
+                          <p className="mt-[var(--space-1)] truncate font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
+                            {m.description}
+                          </p>
                         </div>
-                        <p className="mt-[var(--space-1)] truncate font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
-                          {m.description}
-                        </p>
                         <button
                           type="button"
                           onClick={() => setEditingId(m.id)}
-                          className="mt-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)] transition-colors hover:text-[var(--color-text-primary)]"
+                          aria-label={`Edit ${m.name}`}
+                          className="flex size-[2rem] shrink-0 items-center justify-center rounded-[var(--radius)] text-[rgba(255,255,255,0.35)] opacity-0 transition-all hover:bg-[rgba(255,255,255,0.06)] hover:text-[rgba(255,255,255,0.85)] group-hover:opacity-100 focus-visible:opacity-100"
                         >
-                          Click to edit
+                          <IconPencil />
                         </button>
                       </div>
                     )}
