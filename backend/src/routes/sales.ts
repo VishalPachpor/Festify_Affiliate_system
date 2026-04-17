@@ -115,7 +115,14 @@ router.get("/api/sales", async (req: Request, res: Response) => {
           attributionClaim: { select: { affiliateId: true } },
           commissionLedgerEntries: {
             where: { type: "earned" },
-            select: { amountMinor: true, payoutId: true },
+            select: {
+              amountMinor: true,
+              payoutId: true,
+              // Payout status is the source of truth for "paid" vs "has payout
+              // record but still pending". Without this, a just-approved
+              // commission (payout.status = pending) collapsed into "paid".
+              payout: { select: { status: true, processedAt: true } },
+            },
           },
         },
         orderBy: { createdAt: "desc" },
@@ -125,14 +132,42 @@ router.get("/api/sales", async (req: Request, res: Response) => {
       prisma.sale.count({ where }),
     ]);
 
-    // Map to frontend Sale shape
+    // Map to frontend Sale shape.
+    //
+    // Commission status has three UI states that must be derived from the
+    // payout graph, not just the presence of a payoutId:
+    //   • pending   – no payout exists yet (Approve creates one)
+    //   • confirmed – payout exists but isn't fully paid yet (Mark Paid flips it)
+    //   • paid      – every earned entry is tied to a payout that reached 'paid'
     const mapped = sales.map((sale) => {
-      const commission = sale.commissionLedgerEntries.reduce(
-        (sum, entry) => sum + entry.amountMinor, 0
-      );
+      const entries = sale.commissionLedgerEntries;
+      const commission = entries.reduce((sum, entry) => sum + entry.amountMinor, 0);
       const isAttributed = !!sale.attributionClaim;
-      const isPaidOut = sale.commissionLedgerEntries.length > 0 &&
-        sale.commissionLedgerEntries.every((e) => e.payoutId !== null);
+
+      const hasAnyPayout = entries.some((e) => e.payoutId !== null);
+      const allFullyPaid =
+        entries.length > 0 && entries.every((e) => e.payout?.status === "paid");
+
+      let status: "pending" | "confirmed" | "paid";
+      if (!isAttributed) {
+        status = "pending";
+      } else if (allFullyPaid) {
+        status = "paid";
+      } else if (hasAnyPayout) {
+        status = "confirmed";
+      } else {
+        status = "pending";
+      }
+
+      // Payout date: the most recent processedAt across attached payouts,
+      // if any have been processed. Used by the commissions table.
+      const processedDates = entries
+        .map((e) => e.payout?.processedAt)
+        .filter((d): d is Date => d !== null && d !== undefined);
+      const payoutDate =
+        processedDates.length > 0
+          ? new Date(Math.max(...processedDates.map((d) => d.getTime()))).toISOString()
+          : null;
 
       return {
         id: sale.id,
@@ -142,12 +177,9 @@ router.get("/api/sales", async (req: Request, res: Response) => {
         affiliateId: sale.attributionClaim?.affiliateId ?? "",
         affiliateName: sale.attributionClaim?.affiliateId ?? "Unattributed",
         campaignId: sale.campaignId,
-        status: isPaidOut
-          ? ("paid" as const)
-          : isAttributed
-            ? ("confirmed" as const)
-            : ("pending" as const),
+        status,
         createdAt: sale.createdAt.toISOString(),
+        payoutDate,
       };
     });
 

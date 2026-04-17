@@ -172,12 +172,14 @@ export default function AdminCommissionsPage() {
   const startItem = (currentPage - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(currentPage * PAGE_SIZE, total);
 
-  // Mutation: create payout for a specific sale's commission
+  // Mutation: create payout for a specific sale's commission.
+  // Approve → markAsPaid=false (creates payout in pending state → UI reads "confirmed/approved").
+  // Mark Paid → markAsPaid=true (creates payout already paid out).
   const createPayoutMutation = useMutation({
-    mutationFn: ({ affiliateId, saleId }: { affiliateId: string; saleId: string }) =>
+    mutationFn: ({ affiliateId, saleId, markAsPaid }: { affiliateId: string; saleId: string; markAsPaid: boolean }) =>
       apiClient<{ id: string }>("/payouts/create", {
         method: "POST",
-        body: { affiliateId, saleId, markAsPaid: true },
+        body: { affiliateId, saleId, markAsPaid },
       }),
     onSuccess: () => {
       setPayingSaleId(null);
@@ -310,10 +312,12 @@ export default function AdminCommissionsPage() {
                   // Figma 101:9184 "Payout Date" — empty em-dash for pending rows;
                   // for paid/approved we surface the sale's createdAt as the stand-in
                   // until a dedicated payout date field is available.
+                  // Use the real payout processedAt when the backend has one,
+                  // otherwise fall back to an em-dash. Pending rows never have one.
                   const payoutDate =
-                    cStatus === "pending"
-                      ? "—"
-                      : new Date(row.createdAt).toISOString().slice(0, 10);
+                    row.payoutDate
+                      ? new Date(row.payoutDate).toISOString().slice(0, 10)
+                      : "—";
                   return (
                   <tr key={row.id} className="border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] whitespace-nowrap">
@@ -347,25 +351,51 @@ export default function AdminCommissionsPage() {
                       {cStatus === "approved" && row.affiliateId && (
                         <button
                           type="button"
-                          onClick={() => { setPayingSaleId(row.id); createPayoutMutation.mutate({ affiliateId: row.affiliateId, saleId: row.id }); }}
+                          onClick={() => {
+                            setPayingSaleId(row.id);
+                            createPayoutMutation.mutate({
+                              affiliateId: row.affiliateId,
+                              saleId: row.id,
+                              markAsPaid: true,
+                            });
+                          }}
                           disabled={payingSaleId !== null}
                           className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
                         >
                           {payingSaleId === row.id ? "Processing..." : "Mark Paid"}
                         </button>
                       )}
-                      {cStatus === "pending" && (
-                        // Approve button surfaced per Figma. Pending sales in our
-                        // model are unattributed, so real approval requires a claim
-                        // via the Unattributed Sales panel — this cosmetic button
-                        // exposes the intent while the backend path is being wired.
+                      {cStatus === "pending" && row.affiliateId && (
+                        // Approve creates the payout in pending state so the row
+                        // moves to "approved" (confirmed). A second click on
+                        // "Mark Paid" then flips the payout to paid.
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPayingSaleId(row.id);
+                            createPayoutMutation.mutate({
+                              affiliateId: row.affiliateId,
+                              saleId: row.id,
+                              markAsPaid: false,
+                            });
+                          }}
+                          disabled={payingSaleId !== null}
+                          className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+                        >
+                          {payingSaleId === row.id ? "Approving..." : "Approve"}
+                        </button>
+                      )}
+                      {cStatus === "pending" && !row.affiliateId && (
+                        // Unattributed sales can't be approved inline — they need
+                        // an AttributionClaim first, which happens in the
+                        // Unattributed Sales panel.
                         <button
                           type="button"
                           disabled
-                          title="Attribution required — approve from the Unattributed Sales panel"
-                          className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-4)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[var(--color-primary-foreground)] opacity-70 transition-colors hover:opacity-100 disabled:cursor-not-allowed"
+                          title="Unattributed — assign an affiliate in the Unattributed Sales panel first"
+                          className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-4)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[rgba(255,255,255,0.50)] disabled:cursor-not-allowed"
                         >
-                          Approve
+                          Attribute first
                         </button>
                       )}
                     </td>
