@@ -176,7 +176,59 @@ router.post("/api/payouts/create", async (req: Request, res: Response) => {
         select: { id: true, amountMinor: true, saleId: true },
       });
 
-      if (unpaidEntries.length === 0) return null;
+      // Nothing fresh to claim. If markAsPaid=true, fall back to promoting any
+      // already-pending payouts for this affiliate (or sale) to `paid`. This
+      // is what Mark Paid after Approve needs — the Approve step already
+      // linked the entries to a pending payout, so a strict "find unpaid"
+      // lookup comes back empty even though there's clearly money to move.
+      if (unpaidEntries.length === 0) {
+        if (!markAsPaid) return null;
+
+        const pendingPayoutsWhere: Record<string, unknown> = {
+          tenantId,
+          affiliateId,
+          status: "pending",
+        };
+        if (typeof saleId === "string" && saleId) {
+          pendingPayoutsWhere.commissionEntries = {
+            some: { saleId, tenantId },
+          };
+        }
+        const pendingPayouts = await tx.payout.findMany({
+          where: pendingPayoutsWhere,
+          select: { id: true, amountMinor: true, commissionEntries: { select: { saleId: true } } },
+        });
+
+        if (pendingPayouts.length === 0) return null;
+
+        const now = new Date();
+        await tx.payout.updateMany({
+          where: { id: { in: pendingPayouts.map((p) => p.id) } },
+          data: { status: "paid", processedAt: now },
+        });
+
+        const affectedSaleIds = Array.from(
+          new Set(pendingPayouts.flatMap((p) => p.commissionEntries.map((e) => e.saleId))),
+        );
+        if (affectedSaleIds.length > 0) {
+          await tx.sale.updateMany({
+            where: { id: { in: affectedSaleIds }, tenantId },
+            data: { status: "paid" },
+          });
+        }
+
+        if (idempotencyKey) {
+          await tx.payoutIdempotencyKey.create({
+            data: { tenantId, key: idempotencyKey, payoutId: pendingPayouts[0].id },
+          });
+        }
+
+        // Return the first promoted payout as the "result" shape the response
+        // layer expects. The caller used a single click; returning one id is
+        // fine even if multiple payouts got promoted in one go.
+        const totalAmount = pendingPayouts.reduce((sum, p) => sum + p.amountMinor, 0);
+        return { id: pendingPayouts[0].id, status: "paid", amountMinor: totalAmount };
+      }
 
       const amount = unpaidEntries.reduce((sum, e) => sum + e.amountMinor, 0);
 
@@ -226,10 +278,20 @@ router.post("/api/payouts/create", async (req: Request, res: Response) => {
       return;
     }
 
-    // Emit event AFTER transaction commits (with await — never lose events)
+    // Post-commit side-effects: emit event + bust cache. These must NOT fail
+    // the request — the payout is already committed to the DB, the user gets
+    // confused seeing a 500 when their money actually moved. Log and swallow.
     if (!alreadyExisted) {
-      await emitEvent("payout.created", { tenantId, amountMinor: result.amountMinor });
-      await invalidateCache(tenantId, "payouts:summary", "dashboard:summary");
+      try {
+        await emitEvent("payout.created", { tenantId, amountMinor: result.amountMinor });
+      } catch (e) {
+        console.warn("[payouts] emit event failed (non-fatal):", e);
+      }
+      try {
+        await invalidateCache(tenantId, "payouts:summary", "dashboard:summary");
+      } catch (e) {
+        console.warn("[payouts] cache invalidate failed (non-fatal):", e);
+      }
     }
 
     res.status(alreadyExisted ? 200 : 201).json({
