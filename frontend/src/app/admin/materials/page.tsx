@@ -11,6 +11,7 @@ import {
 } from "@/modules/assets";
 import type { AssetType } from "@/modules/assets";
 import { UploadAssetModal } from "@/modules/assets/components/upload-asset-modal";
+import { getMaterialGradient } from "@/styles/gradients";
 
 type MaterialType = AssetType;
 
@@ -24,23 +25,17 @@ const TYPE_TO_ICON: Record<MaterialType, ThumbIcon> = {
   guide: "download",
 };
 
-const TYPE_TO_GRADIENT: Record<MaterialType, string> = {
-  banner: "linear-gradient(135deg, #6B3E1E 0%, #9B5A3A 45%, #B07BA8 100%)",
-  email: "linear-gradient(135deg, #0F5E5E 0%, #158F8F 50%, #2AA8A8 100%)",
-  social: "linear-gradient(135deg, #7A2B7A 0%, #A14A8C 50%, #D083B6 100%)",
-  copy: "linear-gradient(135deg, #6B4A1E 0%, #9B6E2B 50%, #C08C3E 100%)",
-  guide: "linear-gradient(135deg, #0F3E5E 0%, #1F6A9B 50%, #3A96C8 100%)",
-};
-
-// Design-driven ordering (Figma). Sorted by type priority so row 1/row 2
-// match the layout spec, not backend insertion order.
-const TYPE_ORDER: Record<MaterialType, number> = {
-  banner: 0,
-  email: 1,
-  social: 2,
-  copy: 3,
-  guide: 4,
-};
+// Design-driven ordering (Figma). Explicit title priority — curated layout
+// wins over any time/type sort so seeded assets always land in Figma's slots.
+// Unknown titles (e.g. user test uploads) fall through to the bottom.
+const PRIORITY_ORDER: string[] = [
+  "TOKEN2049 Hero Banner",
+  "Email Invite Template",
+  "Social Media Square",
+  "Promo Copy Snippets",
+  "Affiliate Best Practices",
+  "Instagram Story Template",
+];
 
 const FILTER_TABS: { label: string; value: MaterialType | "all" }[] = [
   { label: "All", value: "all" },
@@ -194,17 +189,17 @@ export default function AdminMaterialsPage() {
 
   const assets = assetsData?.assets ?? [];
 
-  // Sort on raw assets (so we can use the ISO addedAt as secondary key)
-  // then map to the view model. Unknown types get pushed to the bottom
-  // via the ?? 99 fallback, and within the same type older items come
-  // first — seeded design content naturally outranks newer test uploads.
+  // Title-driven priority order keeps the grid matching Figma's curated
+  // layout. Items not in the priority list (e.g. user uploads) fall through
+  // to the bottom in insertion order.
   const materials = [...assets]
     .sort((a, b) => {
-      const byType = (TYPE_ORDER[a.type] ?? 99) - (TYPE_ORDER[b.type] ?? 99);
-      if (byType !== 0) return byType;
-      const ta = new Date(a.addedAt).getTime();
-      const tb = new Date(b.addedAt).getTime();
-      return ta - tb;
+      const ai = PRIORITY_ORDER.indexOf(a.title);
+      const bi = PRIORITY_ORDER.indexOf(b.title);
+      if (ai !== -1 && bi !== -1) return ai - bi;
+      if (ai !== -1) return -1;
+      if (bi !== -1) return 1;
+      return 0;
     })
     .map((a) => ({
       id: a.id,
@@ -215,7 +210,7 @@ export default function AdminMaterialsPage() {
       fileUrl: a.fileUrl,
       mimeType: a.mimeType,
       addedAt: formatAddedAt(a.addedAt),
-      thumbnailGradient: TYPE_TO_GRADIENT[a.type] ?? TYPE_TO_GRADIENT.banner,
+      thumbnailGradient: getMaterialGradient(a.type),
       icon: TYPE_TO_ICON[a.type] ?? ("image" as ThumbIcon),
       isImage: a.mimeType.startsWith("image/"),
     }));
@@ -302,9 +297,9 @@ export default function AdminMaterialsPage() {
                 key={mat.id}
                 className="flex min-h-[19rem] flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-transparent transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
               >
-                {/* Thumbnail — compact top band; stays pure by avoiding any overlay wash behind it */}
+                {/* Thumbnail — balanced visual weight, gradient token from /styles/gradients.ts */}
                 <div
-                  className="relative flex h-[7rem] shrink-0 items-center justify-center overflow-hidden"
+                  className="relative flex h-[7.5rem] shrink-0 items-center justify-center overflow-hidden"
                   style={{ background: mat.thumbnailGradient }}
                 >
                   {mat.isImage ? (
@@ -344,7 +339,7 @@ export default function AdminMaterialsPage() {
                   </div>
 
                   {/* Visible toggle */}
-                  <div className="mt-[var(--space-5)] flex items-center gap-[var(--space-3)]">
+                  <div className="mt-[var(--space-4)] flex items-center gap-[var(--space-3)]">
                     <span className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
                       Visible to affiliates
                     </span>
@@ -358,14 +353,14 @@ export default function AdminMaterialsPage() {
                   <div className="flex-1" />
 
                   {/* Actions */}
-                  <div className="mt-[var(--space-5)] flex items-center gap-[var(--space-2)]">
+                  <div className="mt-[var(--space-4)] flex items-center gap-[var(--space-2)]">
                     <button
                       type="button"
                       onClick={() => handleDownload(mat.fileUrl)}
                       className="flex flex-1 items-center justify-center gap-[var(--space-2)] rounded-[var(--radius)] border px-[var(--space-3)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(28,74,166,0.14)]"
                       style={{
                         background: "rgba(28,74,166,0.08)",
-                        borderColor: "rgba(255,255,255,0.06)",
+                        borderColor: "rgba(255,255,255,0.08)",
                       }}
                     >
                       <IconDownload />
@@ -393,7 +388,7 @@ export default function AdminMaterialsPage() {
                   </div>
 
                   {/* Date */}
-                  <div className="mt-[var(--space-5)] flex items-center gap-[var(--space-2)]">
+                  <div className="mt-[var(--space-4)] flex items-center gap-[var(--space-2)]">
                     <span className="text-[rgba(255,255,255,0.35)]">
                       <IconCalendar />
                     </span>
