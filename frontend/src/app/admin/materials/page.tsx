@@ -289,7 +289,7 @@ export default function AdminMaterialsPage() {
         )}
 
         {/* Material cards grid */}
-        <div className="grid grid-cols-1 gap-[var(--space-6)] md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-[var(--space-5)] md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((mat) => {
             const ThumbIcon = THUMB_ICONS[mat.icon];
             return (
@@ -299,7 +299,7 @@ export default function AdminMaterialsPage() {
               >
                 {/* Thumbnail — balanced visual weight, gradient token from /styles/gradients.ts */}
                 <div
-                  className="relative flex h-[7.5rem] shrink-0 items-center justify-center overflow-hidden"
+                  className="relative flex h-[6.5rem] shrink-0 items-center justify-center overflow-hidden"
                   style={{ background: mat.thumbnailGradient }}
                 >
                   {mat.isImage ? (
@@ -314,11 +314,15 @@ export default function AdminMaterialsPage() {
                   <ThumbIcon />
                 </div>
 
-                {/* Content — subtle wash lives on the body only, never behind the thumbnail,
-                    so the gradient top reads pure. flex-1 pushes the footer row flush. */}
+                {/* Content — subtle top-down wash gives the body a light lift below the
+                    thumbnail without touching the gradient itself. flex-1 pushes the
+                    footer row flush. */}
                 <div
                   className="flex flex-1 flex-col px-[var(--space-4)] py-[var(--space-4)]"
-                  style={{ background: "rgba(255,255,255,0.008)" }}
+                  style={{
+                    background:
+                      "linear-gradient(to bottom, rgba(255,255,255,0.015), transparent 40%)",
+                  }}
                 >
                   {/* Title */}
                   <h3 className="font-[var(--font-display)] text-[var(--text-base)] font-bold leading-[var(--leading-snug)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
@@ -359,8 +363,8 @@ export default function AdminMaterialsPage() {
                       onClick={() => handleDownload(mat.fileUrl)}
                       className="flex flex-1 items-center justify-center gap-[var(--space-2)] rounded-[var(--radius)] border px-[var(--space-3)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(28,74,166,0.14)]"
                       style={{
-                        background: "rgba(28,74,166,0.08)",
-                        borderColor: "rgba(255,255,255,0.08)",
+                        background: "rgba(28,74,166,0.06)",
+                        borderColor: "rgba(255,255,255,0.05)",
                       }}
                     >
                       <IconDownload />
@@ -370,7 +374,7 @@ export default function AdminMaterialsPage() {
                       type="button"
                       onClick={() => handleDownload(mat.fileUrl)}
                       aria-label="Preview"
-                      className="flex items-center justify-center rounded-[var(--radius)] border bg-transparent p-[var(--space-2)] text-[rgba(255,255,255,0.35)] transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-[rgba(255,255,255,0.75)]"
+                      className="flex items-center justify-center rounded-[var(--radius)] border bg-transparent p-[var(--space-2)] text-[rgba(255,255,255,0.35)] opacity-[0.35] transition-all hover:bg-[rgba(255,255,255,0.05)] hover:opacity-[0.7] hover:text-[rgba(255,255,255,0.75)]"
                       style={{ borderColor: "rgba(255,255,255,0.04)" }}
                     >
                       <IconEye />
@@ -380,8 +384,8 @@ export default function AdminMaterialsPage() {
                       onClick={() => handleDelete(mat.id)}
                       disabled={deleteMutation.isPending}
                       aria-label="Delete"
-                      className="flex items-center justify-center rounded-[var(--radius)] border bg-transparent p-[var(--space-2)] text-[rgba(239,68,68,0.55)] transition-colors hover:bg-[rgba(239,68,68,0.08)] hover:text-[#EF4444] disabled:opacity-40"
-                      style={{ borderColor: "rgba(239,68,68,0.10)" }}
+                      className="flex items-center justify-center rounded-[var(--radius)] border bg-transparent p-[var(--space-2)] text-[#EF4444] opacity-[0.35] transition-all hover:bg-[rgba(239,68,68,0.08)] hover:opacity-[0.85] disabled:opacity-40"
+                      style={{ borderColor: "rgba(239,68,68,0.08)" }}
                     >
                       <IconTrash />
                     </button>
