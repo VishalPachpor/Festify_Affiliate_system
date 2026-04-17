@@ -40,10 +40,14 @@ export function FormField({
   const errorId = `${id}-error`;
   const hintId = `${id}-hint`;
 
+  // Reserve 2 lines of height on uppercase labels so that in a 2-col grid,
+  // long labels ("CONTACT PERSON EMAIL ADDRESS") wrapping to two lines don't
+  // push their input down past a single-line neighbor. Inputs then align
+  // across the row regardless of label length.
   const labelClass =
     labelCase === "normal"
       ? "font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.3] font-medium text-[var(--color-text-primary)]"
-      : "font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-label)] font-medium uppercase tracking-[var(--tracking-label)] text-[var(--color-text-primary)]";
+      : "flex items-start min-h-[calc(var(--leading-label)*2)] font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-label)] font-medium uppercase tracking-[var(--tracking-label)] text-[var(--color-text-primary)]";
 
   const describedBy =
     [error ? errorId : null, hint ? hintId : null].filter(Boolean).join(" ") || undefined;
