@@ -98,7 +98,7 @@ function IconCalendar() {
 // Thumbnail center icons
 function ThumbIconImage() {
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="32" height="32" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="3" y="3" width="22" height="22" rx="3" />
       <circle cx="10" cy="10" r="2.5" />
       <path d="M25 19l-5-5-8 8" />
@@ -108,7 +108,7 @@ function ThumbIconImage() {
 
 function ThumbIconEmail() {
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="32" height="32" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="2" y="5" width="24" height="18" rx="3" />
       <path d="M2 8l12 7 12-7" />
     </svg>
@@ -117,7 +117,7 @@ function ThumbIconEmail() {
 
 function ThumbIconDocument() {
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="32" height="32" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M7 2h10l6 6v16a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2z" />
       <path d="M17 2v6h6" />
       <path d="M9 13h10M9 17h10M9 21h6" />
@@ -127,7 +127,7 @@ function ThumbIconDocument() {
 
 function ThumbIconDownload() {
   return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="32" height="32" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M7 2h10l6 6v16a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2z" />
       <path d="M17 2v6h6" />
       <path d="M14 12v7M14 19l3-3M14 19l-3-3" />
@@ -289,17 +289,17 @@ export default function AdminMaterialsPage() {
         )}
 
         {/* Material cards grid */}
-        <div className="grid grid-cols-1 gap-[var(--space-5)] md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-[var(--space-6)] md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((mat) => {
             const ThumbIcon = THUMB_ICONS[mat.icon];
             return (
               <article
                 key={mat.id}
-                className="flex min-h-[16.25rem] min-w-0 flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-transparent transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
+                className="flex h-[24.625rem] min-w-0 flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-transparent transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
               >
-                {/* Thumbnail — compact 96px band, gradient token from /styles/gradients.ts */}
+                {/* Thumbnail — Figma 82:9491: 192px band. Gradient token from /styles/gradients.ts */}
                 <div
-                  className="relative flex h-[6rem] shrink-0 items-center justify-center overflow-hidden"
+                  className="relative flex h-[12rem] shrink-0 items-center justify-center overflow-hidden"
                   style={{ background: mat.thumbnailGradient }}
                 >
                   {mat.isImage ? (
