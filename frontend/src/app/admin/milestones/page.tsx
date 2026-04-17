@@ -34,15 +34,22 @@ const TIER_PRESETS: Record<string, { tileText: string; tileBorder: string; tileB
   platinum: { tileText: "#E2E4EB", tileBorder: "#8C909D", tileBg: "rgba(226,228,235,0.12)" },
 };
 
+// Figma treats the entry tiers (bronze / silver) as auto-unlocking —
+// they trigger from sales thresholds alone. Higher tiers (gold / platinum)
+// require an admin to release the reward, so they stay Locked by default.
+const AUTO_UNLOCK_TIERS = new Set(["bronze", "silver"]);
+
 function tierToMilestone(tier: MilestoneTier): Milestone {
-  const preset = TIER_PRESETS[tier.name.toLowerCase()] ?? TIER_PRESETS.bronze;
+  const key = tier.name.toLowerCase();
+  const preset = TIER_PRESETS[key] ?? TIER_PRESETS.bronze;
+  const unlockType: UnlockType = AUTO_UNLOCK_TIERS.has(key) ? "Auto-unlock" : "Locked";
   return {
     id: tier.id,
     letter: tier.letter,
     name: tier.name,
     description: tier.description,
     threshold: tier.targetAmount,
-    unlockType: tier.unlocked ? "Auto-unlock" : "Locked",
+    unlockType,
     ...preset,
   };
 }
@@ -123,26 +130,30 @@ function TierTile({
 
 function UnlockBadge({ type }: { type: UnlockType }) {
   if (type === "Auto-unlock") {
+    // Figma uses a subtle blue chip, not green — signals "configured", not "success".
     return (
-      <span className="inline-block rounded-[var(--space-1)] bg-[rgba(34,197,94,0.14)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[#22C55E]">
+      <span className="inline-flex items-center rounded-[var(--radius-sm)] bg-[rgba(91,141,239,0.10)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[#A6D1FF]">
         Auto-unlock
       </span>
     );
   }
   return (
-    <span className="inline-block rounded-[var(--space-1)] bg-[rgba(239,68,68,0.14)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[#EF4444]">
+    <span className="inline-flex items-center rounded-[var(--radius-sm)] bg-[rgba(239,68,68,0.10)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[#EF8A8A]">
       Locked
     </span>
   );
 }
 
 // ── Input field styling ───────────────────────────────────────────────────────
+//
+// Glass-like: softer fill than the old 0.04 wash, 0.10 resting border lifting
+// to 0.20 on focus — reads as "editable" without the heavy outlined look.
 
 const INPUT_CLASS =
-  "h-[2.5rem] w-full rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.04)] px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.30)] focus:border-[var(--color-ring)] focus:outline-none transition-colors";
+  "h-[2.25rem] w-full rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.03)] px-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.30)] transition-colors focus:border-[rgba(255,255,255,0.20)] focus:bg-[rgba(255,255,255,0.05)] focus:outline-none";
 
 const LABEL_CLASS =
-  "font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] tracking-[0.08em] uppercase text-[rgba(255,255,255,0.50)] font-semibold";
+  "font-[var(--font-sans)] text-[10px] leading-[1] tracking-[0.08em] uppercase text-[rgba(255,255,255,0.45)] font-semibold";
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 
@@ -394,115 +405,119 @@ export default function AdminMilestonesPage() {
           </button>
         </div>
 
-        {/* Milestone cards */}
-        <div className="flex flex-col gap-[var(--space-4)]">
+        {/* Milestone rows — editable config, not a passive card list.
+            Read state: Icon · Text · Badge+Delete.
+            Edit state: Icon · 3 horizontal inputs + Save/Cancel · Badge+Delete. */}
+        <div className="flex flex-col gap-[var(--space-3)]">
           {milestones.map((m) => {
             const isEditing = editingId === m.id;
             const draft = drafts[m.id];
             return (
-            <article
-              key={m.id}
-              className="cursor-pointer rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.08)] bg-transparent px-[var(--space-6)] py-[var(--space-5)] transition-colors hover:border-[rgba(255,255,255,0.16)]"
-              onClick={() => { if (!isEditing) setEditingId(m.id); }}
-            >
-              <div className="flex items-start justify-between">
-                {/* Left: tile + info */}
-                <div className="flex items-start gap-[var(--space-4)]">
-                  <TierTile
-                    letter={m.letter}
-                    tileText={m.tileText}
-                    tileBorder={m.tileBorder}
-                    tileBg={m.tileBg}
-                  />
-                  <div onClick={isEditing ? (e) => e.stopPropagation() : undefined}>
+              <article
+                key={m.id}
+                className="rounded-[var(--radius-md)] border border-[rgba(255,255,255,0.06)] bg-[linear-gradient(180deg,rgba(255,255,255,0.015),transparent)] px-[var(--space-5)] py-[var(--space-4)] transition-colors hover:border-[rgba(255,255,255,0.12)]"
+              >
+                <div className="flex items-start justify-between gap-[var(--space-5)]">
+                  {/* LEFT — tile + content (text or inline form) */}
+                  <div className="flex min-w-0 flex-1 items-start gap-[var(--space-4)]">
+                    <TierTile
+                      letter={m.letter}
+                      tileText={m.tileText}
+                      tileBorder={m.tileBorder}
+                      tileBg={m.tileBg}
+                    />
+
                     {isEditing ? (
-                      <>
-                        <div className="flex flex-col gap-[var(--space-2)]">
-                          <label className={LABEL_CLASS}>Tier Name</label>
-                          <input
-                            type="text"
-                            value={draft?.name ?? m.name}
-                            onChange={(e) => updateDraft(m.id, "name", e.target.value)}
-                            className={`max-w-[20rem] ${INPUT_CLASS}`}
-                          />
+                      <div className="min-w-0 flex-1">
+                        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)] gap-[var(--space-4)]">
+                          <div className="flex flex-col gap-[var(--space-1)]">
+                            <label className={LABEL_CLASS}>Tier name</label>
+                            <input
+                              type="text"
+                              value={draft?.name ?? m.name}
+                              onChange={(e) => updateDraft(m.id, "name", e.target.value)}
+                              className={INPUT_CLASS}
+                            />
+                          </div>
+                          <div className="flex flex-col gap-[var(--space-1)]">
+                            <label className={LABEL_CLASS}>Reward description</label>
+                            <input
+                              type="text"
+                              value={draft?.description ?? m.description}
+                              onChange={(e) => updateDraft(m.id, "description", e.target.value)}
+                              className={INPUT_CLASS}
+                            />
+                          </div>
+                          <div className="flex flex-col gap-[var(--space-1)]">
+                            <label className={LABEL_CLASS}>Revenue threshold ($)</label>
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              value={draft?.threshold ?? formatCurrency(m.threshold)}
+                              onChange={(e) => updateDraft(m.id, "threshold", e.target.value)}
+                              className={INPUT_CLASS}
+                            />
+                          </div>
                         </div>
-                        <div className="mt-[var(--space-3)] flex flex-col gap-[var(--space-2)]">
-                          <label className={LABEL_CLASS}>Reward Description</label>
-                          <input
-                            type="text"
-                            value={draft?.description ?? m.description}
-                            onChange={(e) => updateDraft(m.id, "description", e.target.value)}
-                            className={`max-w-[20rem] ${INPUT_CLASS}`}
-                          />
-                        </div>
-                        <div className="mt-[var(--space-3)] flex flex-col gap-[var(--space-2)]">
-                          <label className={LABEL_CLASS}>Revenue Threshold ($)</label>
-                          <input
-                            type="text"
-                            value={draft?.threshold ?? formatCurrency(m.threshold)}
-                            onChange={(e) => updateDraft(m.id, "threshold", e.target.value)}
-                            className={`max-w-[16rem] ${INPUT_CLASS}`}
-                          />
-                        </div>
-                        <div className="mt-[var(--space-3)] flex gap-[var(--space-3)]">
+
+                        <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)]">
                           <button
                             type="button"
                             onClick={() => handleSave(m)}
                             disabled={updateMutation.isPending}
-                            className="rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+                            className="h-[2.25rem] rounded-[var(--radius)] px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-white transition-colors hover:opacity-100 disabled:opacity-50"
+                            style={{ background: "rgba(28,74,166,0.85)" }}
                           >
                             {updateMutation.isPending ? "Saving..." : "Save"}
                           </button>
                           <button
                             type="button"
                             onClick={() => handleCancel(m)}
-                            className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
+                            className="h-[2.25rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-transparent px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[rgba(255,255,255,0.75)] transition-colors hover:bg-[rgba(255,255,255,0.05)]"
                           >
                             Cancel
                           </button>
                         </div>
-                      </>
+                      </div>
                     ) : (
-                      <>
-                        <h3 className="font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
-                          {m.name}
-                        </h3>
-                        <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-[var(--space-3)]">
+                          <h3 className="font-[var(--font-display)] text-[var(--text-lg)] font-bold leading-none tracking-[-0.02em] text-[var(--color-text-primary)]">
+                            {m.name}
+                          </h3>
+                          <span className="font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.55)]">
+                            Threshold: {formatCurrency(m.threshold)}
+                          </span>
+                        </div>
+                        <p className="mt-[var(--space-1)] truncate font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
                           {m.description}
-                        </p>
-                        <p className="mt-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)]">
-                          Threshold: {formatCurrency(m.threshold)}
                         </p>
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingId(m.id);
-                          }}
-                          className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)] underline decoration-[rgba(255,255,255,0.22)] underline-offset-2 transition-colors hover:text-[var(--color-text-primary)]"
+                          onClick={() => setEditingId(m.id)}
+                          className="mt-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)] transition-colors hover:text-[var(--color-text-primary)]"
                         >
                           Click to edit
                         </button>
-                      </>
+                      </div>
                     )}
                   </div>
-                </div>
 
-                {/* Right: badge + delete */}
-                <div className="flex items-center gap-[var(--space-3)]" onClick={(e) => e.stopPropagation()}>
-                  <UnlockBadge type={m.unlockType} />
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(m.id)}
-                    aria-label={`Delete ${m.name}`}
-                    disabled={m.unlockType !== "Locked" || deleteMutation.isPending}
-                    className="flex items-center justify-center text-[#EF4444] transition-colors hover:text-[#FF6B6B] disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <IconTrash />
-                  </button>
+                  {/* RIGHT — status + delete (tight cluster) */}
+                  <div className="flex shrink-0 items-center gap-[var(--space-3)]">
+                    <UnlockBadge type={m.unlockType} />
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(m.id)}
+                      aria-label={`Delete ${m.name}`}
+                      disabled={m.unlockType !== "Locked" || deleteMutation.isPending}
+                      className="flex size-[2rem] items-center justify-center rounded-[var(--radius)] text-[rgba(239,68,68,0.55)] transition-colors hover:bg-[rgba(239,68,68,0.08)] hover:text-[#EF4444] disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                      <IconTrash />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </article>
+              </article>
             );
           })}
         </div>
