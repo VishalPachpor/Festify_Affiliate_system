@@ -948,7 +948,6 @@ export function ApplicationForm() {
             </div>
 
             <FormField
-              labelCase="normal"
               label="Previous Affiliate Partnership Experience at events (if any)"
               error={errors.experience}
             >
@@ -967,7 +966,6 @@ export function ApplicationForm() {
             </FormField>
 
             <FormField
-              labelCase="normal"
               label="Preferred Referral Code (e.g. SATOSHI2049)"
               required
               error={errors.requestedCode}
