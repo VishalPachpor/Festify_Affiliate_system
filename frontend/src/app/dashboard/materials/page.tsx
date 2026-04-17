@@ -6,6 +6,7 @@ import { useAssets } from "@/modules/assets";
 import type { Asset, AssetType } from "@/modules/assets";
 import { DashboardContainer } from "@/modules/dashboard/components/dashboard-layout";
 import { DashboardStageCanvas } from "@/modules/dashboard/components/dashboard-stage-canvas";
+import { getMaterialGradient } from "@/styles/gradients";
 import { cn } from "@/lib/utils";
 
 const FILTER_TABS: { label: string; value: AssetType | "all" }[] = [
@@ -88,28 +89,22 @@ function PreviewIcon({ type }: { type: AssetType }) {
   return <IconImage />;
 }
 
-// Multi-stop gradients with subtle hue shifts for richer depth.
-// Enriched with mid-stop for the indigo/purple blending Figma shows.
-const CARD_PALETTE = [
-  "linear-gradient(152deg, #192E55 0%, #25295A 50%, #332355 100%)", // blue → indigo → purple
-  "linear-gradient(152deg, #113D32 0%, #113838 50%, #113A3B 100%)", // green → dark teal
-  "linear-gradient(152deg, #421F41 0%, #3D1A3A 50%, #441B34 100%)", // magenta → wine → red
-  "linear-gradient(152deg, #443422 0%, #3E2E22 50%, #442A22 100%)", // amber → brown → orange
-  "linear-gradient(152deg, #113A4E 0%, #153352 50%, #192E55 100%)", // cyan → navy → blue
-  "linear-gradient(152deg, #2D2555 0%, #302950 50%, #332355 100%)", // violet → deep → purple
-];
+// Thumbnail gradient comes from the shared design token (see
+// @/styles/gradients). Same palette as the admin Materials grid so a
+// "banner" card looks identical on both sides of the app — no more
+// index-cycled palette producing different colours for the same type.
 
 function formatAddedDate(iso: string) {
   return iso.slice(0, 10);
 }
 
-function AssetCard({ asset, index }: { asset: Asset; index: number }) {
+function AssetCard({ asset }: { asset: Asset }) {
   return (
     <article className="h-full overflow-hidden rounded-[8px] border border-[rgba(255,255,255,0.05)] bg-[rgba(15,22,40,0.5)] p-px">
       {/* Gradient preview — 192px, centered icon */}
       <div
         className="flex h-[192px] items-center justify-center text-[rgba(255,255,255,0.45)]"
-        style={{ backgroundImage: CARD_PALETTE[index % CARD_PALETTE.length] }}
+        style={{ background: getMaterialGradient(asset.type) }}
         aria-hidden="true"
       >
         <PreviewIcon type={asset.type} />
@@ -241,8 +236,8 @@ export default function MaterialsPage() {
               </div>
             ) : (
               <div className="grid w-full grid-cols-1 items-stretch gap-[24px] md:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))]">
-                {assets.map((asset, i) => (
-                  <AssetCard key={asset.id} asset={asset} index={i} />
+                {assets.map((asset) => (
+                  <AssetCard key={asset.id} asset={asset} />
                 ))}
               </div>
             )}
