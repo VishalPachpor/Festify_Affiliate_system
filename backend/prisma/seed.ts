@@ -1,5 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import path from "path";
+import fs from "fs";
 
 const prisma = new PrismaClient();
 
@@ -240,26 +242,45 @@ async function main() {
   }
 
   // ── Demo marketing materials (Figma node 60:1975) ───────────────────
+  //
+  // Each demo asset is backed by a placeholder file written under
+  // backend/uploads/<tenantId>/ — the same path Express serves via
+  // /uploads/* (backend/src/server.ts). That keeps the Download anchor
+  // on the Materials page functional without shipping binaries in git.
   const DEMO_ASSETS = [
-    { id: "asset_hero_banner",     type: "banner" as const, title: "TOKEN2049 Hero Banner",       sizeBytes: 2_516_582, mimeType: "image/png"        },
-    { id: "asset_email_invite",    type: "email"  as const, title: "Email Invite Template",       sizeBytes: 159_744,   mimeType: "text/html"        },
-    { id: "asset_social_square",   type: "social" as const, title: "Social Media Square",         sizeBytes: 1_887_436, mimeType: "image/png"        },
-    { id: "asset_promo_copy",      type: "copy"   as const, title: "Promo Copy Snippets",         sizeBytes: 24_576,    mimeType: "text/plain"       },
-    { id: "asset_best_practices",  type: "guide"  as const, title: "Affiliate Best Practices",    sizeBytes: 1_258_291, mimeType: "application/pdf"  },
-    { id: "asset_ig_story",        type: "social" as const, title: "Instagram Story Template",    sizeBytes: 1_003_520, mimeType: "image/png"        },
+    { id: "asset_hero_banner",     type: "banner" as const, title: "TOKEN2049 Hero Banner",    mimeType: "image/png",       ext: "png"  },
+    { id: "asset_email_invite",    type: "email"  as const, title: "Email Invite Template",    mimeType: "text/html",       ext: "html" },
+    { id: "asset_social_square",   type: "social" as const, title: "Social Media Square",      mimeType: "image/png",       ext: "png"  },
+    { id: "asset_promo_copy",      type: "copy"   as const, title: "Promo Copy Snippets",      mimeType: "text/plain",      ext: "txt"  },
+    { id: "asset_best_practices",  type: "guide"  as const, title: "Affiliate Best Practices", mimeType: "application/pdf", ext: "pdf"  },
+    { id: "asset_ig_story",        type: "social" as const, title: "Instagram Story Template", mimeType: "image/png",       ext: "png"  },
   ];
 
+  const UPLOAD_DIR = path.resolve(process.cwd(), "uploads", TENANT_ID);
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+  const PUBLIC_API_URL = process.env.PUBLIC_API_URL ?? "http://localhost:3001";
+
   for (const a of DEMO_ASSETS) {
+    const filename = `${a.id}.${a.ext}`;
+    const absPath = path.join(UPLOAD_DIR, filename);
+    const placeholder =
+      `${a.title}\n\n` +
+      `This is a placeholder asset for the TOKEN2049 demo tenant.\n` +
+      `Upload a real file from Admin → Materials to replace it.\n`;
+    fs.writeFileSync(absPath, placeholder, "utf8");
+    const sizeBytes = fs.statSync(absPath).size;
+    const fileUrl = `${PUBLIC_API_URL}/uploads/${TENANT_ID}/${filename}`;
+
     await prisma.asset.upsert({
       where: { id: a.id },
-      update: { title: a.title, type: a.type, sizeBytes: a.sizeBytes, mimeType: a.mimeType, visible: true },
+      update: { title: a.title, type: a.type, sizeBytes, mimeType: a.mimeType, fileUrl, visible: true },
       create: {
         id: a.id,
         tenantId: TENANT_ID,
         type: a.type,
         title: a.title,
-        fileUrl: `#demo-${a.id}`,
-        sizeBytes: a.sizeBytes,
+        fileUrl,
+        sizeBytes,
         mimeType: a.mimeType,
         visible: true,
       },
