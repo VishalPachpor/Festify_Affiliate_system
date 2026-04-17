@@ -295,11 +295,11 @@ export default function AdminMaterialsPage() {
             return (
               <article
                 key={mat.id}
-                className="flex min-h-[19rem] flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-transparent transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
+                className="flex min-h-[16.25rem] min-w-0 flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-transparent transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
               >
-                {/* Thumbnail — balanced visual weight, gradient token from /styles/gradients.ts */}
+                {/* Thumbnail — compact 96px band, gradient token from /styles/gradients.ts */}
                 <div
-                  className="relative flex h-[6.5rem] shrink-0 items-center justify-center overflow-hidden"
+                  className="relative flex h-[6rem] shrink-0 items-center justify-center overflow-hidden"
                   style={{ background: mat.thumbnailGradient }}
                 >
                   {mat.isImage ? (
@@ -343,7 +343,7 @@ export default function AdminMaterialsPage() {
                   </div>
 
                   {/* Visible toggle */}
-                  <div className="mt-[var(--space-4)] flex items-center gap-[var(--space-3)]">
+                  <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-3)]">
                     <span className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
                       Visible to affiliates
                     </span>
@@ -357,7 +357,7 @@ export default function AdminMaterialsPage() {
                   <div className="flex-1" />
 
                   {/* Actions */}
-                  <div className="mt-[var(--space-4)] flex items-center gap-[var(--space-2)]">
+                  <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)]">
                     <button
                       type="button"
                       onClick={() => handleDownload(mat.fileUrl)}
@@ -392,7 +392,7 @@ export default function AdminMaterialsPage() {
                   </div>
 
                   {/* Date */}
-                  <div className="mt-[var(--space-4)] flex items-center gap-[var(--space-2)]">
+                  <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-2)]">
                     <span className="text-[rgba(255,255,255,0.35)]">
                       <IconCalendar />
                     </span>

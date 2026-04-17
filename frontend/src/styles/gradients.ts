@@ -18,10 +18,10 @@ export const MATERIAL_GRADIENTS = {
 
 export type MaterialGradientKey = keyof typeof MATERIAL_GRADIENTS;
 
-// Subtle top-left light direction — applied by appending as a second image so
-// the underlying hue stays pure but picks up a Figma-like highlight.
+// Soft top-left "premium glow" highlight — applied as a layer above the hue
+// so the gradient stays pure and picks up the Figma-like light direction.
 const GRADIENT_HIGHLIGHT =
-  "radial-gradient(circle at top left, rgba(255,255,255,0.08), transparent 45%)";
+  "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.12), transparent 40%)";
 
 // Hard fallback: unknown types snap to `banner` so the grid never renders a
 // bare or random background.
