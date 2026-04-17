@@ -176,14 +176,18 @@ router.post("/api/payouts/create", async (req: Request, res: Response) => {
         select: { id: true, amountMinor: true, saleId: true },
       });
 
-      // Nothing fresh to claim. If markAsPaid=true, fall back to promoting any
-      // already-pending payouts for this affiliate (or sale) to `paid`. This
-      // is what Mark Paid after Approve needs — the Approve step already
-      // linked the entries to a pending payout, so a strict "find unpaid"
-      // lookup comes back empty even though there's clearly money to move.
-      if (unpaidEntries.length === 0) {
-        if (!markAsPaid) return null;
-
+      // --- Path B: promote any pending payouts that already cover ledger
+      //     entries for this affiliate (and sale, if scoped). Runs in ADDITION
+      //     to Path A below so "Pay all approved" truly pays everything — both
+      //     fresh unpaid entries AND existing pending payouts from Approve. ---
+      let promotedTotal = 0;
+      let promotedSaleIds: string[] = [];
+      let firstPromotedPayoutId: string | null = null;
+      if (markAsPaid) {
+        // Strict scope: tenant + affiliate + pending.
+        // When a saleId is supplied, require that *every* linked ledger entry
+        // belongs to that sale — otherwise a batch payout covering sibling
+        // sales would accidentally flip them all to paid.
         const pendingPayoutsWhere: Record<string, unknown> = {
           tenantId,
           affiliateId,
@@ -192,6 +196,7 @@ router.post("/api/payouts/create", async (req: Request, res: Response) => {
         if (typeof saleId === "string" && saleId) {
           pendingPayoutsWhere.commissionEntries = {
             some: { saleId, tenantId },
+            every: { saleId, tenantId },
           };
         }
         const pendingPayouts = await tx.payout.findMany({
@@ -199,36 +204,40 @@ router.post("/api/payouts/create", async (req: Request, res: Response) => {
           select: { id: true, amountMinor: true, commissionEntries: { select: { saleId: true } } },
         });
 
-        if (pendingPayouts.length === 0) return null;
-
-        const now = new Date();
-        await tx.payout.updateMany({
-          where: { id: { in: pendingPayouts.map((p) => p.id) } },
-          data: { status: "paid", processedAt: now },
-        });
-
-        const affectedSaleIds = Array.from(
-          new Set(pendingPayouts.flatMap((p) => p.commissionEntries.map((e) => e.saleId))),
-        );
-        if (affectedSaleIds.length > 0) {
-          await tx.sale.updateMany({
-            where: { id: { in: affectedSaleIds }, tenantId },
-            data: { status: "paid" },
+        if (pendingPayouts.length > 0) {
+          const now = new Date();
+          await tx.payout.updateMany({
+            where: { id: { in: pendingPayouts.map((p) => p.id) } },
+            data: { status: "paid", processedAt: now },
           });
+          const affectedSaleIds = Array.from(
+            new Set(pendingPayouts.flatMap((p) => p.commissionEntries.map((e) => e.saleId))),
+          );
+          if (affectedSaleIds.length > 0) {
+            await tx.sale.updateMany({
+              where: { id: { in: affectedSaleIds }, tenantId },
+              data: { status: "paid" },
+            });
+          }
+          promotedTotal = pendingPayouts.reduce((sum, p) => sum + p.amountMinor, 0);
+          promotedSaleIds = affectedSaleIds;
+          firstPromotedPayoutId = pendingPayouts[0].id;
         }
+      }
 
+      // If there's nothing unpaid AND nothing pending promoted, we're done —
+      // the caller will get a 400 and know there's no money to move.
+      if (unpaidEntries.length === 0) {
+        if (firstPromotedPayoutId === null) return null;
         if (idempotencyKey) {
           await tx.payoutIdempotencyKey.create({
-            data: { tenantId, key: idempotencyKey, payoutId: pendingPayouts[0].id },
+            data: { tenantId, key: idempotencyKey, payoutId: firstPromotedPayoutId },
           });
         }
-
-        // Return the first promoted payout as the "result" shape the response
-        // layer expects. The caller used a single click; returning one id is
-        // fine even if multiple payouts got promoted in one go.
-        const totalAmount = pendingPayouts.reduce((sum, p) => sum + p.amountMinor, 0);
-        return { id: pendingPayouts[0].id, status: "paid", amountMinor: totalAmount };
+        return { id: firstPromotedPayoutId, status: "paid", amountMinor: promotedTotal };
       }
+      // Otherwise fall through to Path A: claim the unpaid entries into a new
+      // payout. The response will reflect combined totals below.
 
       const amount = unpaidEntries.reduce((sum, e) => sum + e.amountMinor, 0);
 
@@ -270,7 +279,13 @@ router.post("/api/payouts/create", async (req: Request, res: Response) => {
         });
       }
 
-      return payout;
+      // Combine Path B (promoted) + Path A (newly paid) totals on the response
+      // so the caller sees the full settlement amount in one number.
+      return {
+        id: payout.id,
+        status: payout.status,
+        amountMinor: payout.amountMinor + promotedTotal,
+      };
     });
 
     if (!result) {

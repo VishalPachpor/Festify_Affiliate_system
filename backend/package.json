@@ -12,7 +12,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "ts-node prisma/seed.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "ts-node --transpile-only tests/payouts.integration.test.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
