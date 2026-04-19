@@ -199,6 +199,23 @@ router.post("/api/payouts/create", async (req: Request, res: Response) => {
         select: { id: true, amountMinor: true, saleId: true },
       });
 
+      // Invariant: one sale → one payout. Refuse to bundle unpaid entries that
+      // span multiple sales. Caller must retry with an explicit saleId per sale.
+      // Prior incident: bundling produced a payout whose "mark paid" fanned
+      // across sibling sales and corrupted status transitions.
+      if (unpaidEntries.length > 0) {
+        const distinctSaleIds = new Set(unpaidEntries.map((e) => e.saleId));
+        if (distinctSaleIds.size > 1) {
+          const err = new Error(
+            `Refusing bundled payout: unpaid entries span ${distinctSaleIds.size} sales ` +
+              `(${Array.from(distinctSaleIds).join(", ")}). ` +
+              `Call POST /payouts/create once per saleId.`,
+          );
+          (err as Error & { code: string }).code = "BUNDLED_PAYOUT_REFUSED";
+          throw err;
+        }
+      }
+
       // --- Path B: promote any pending payouts that already cover ledger
       //     entries for this affiliate (and sale, if scoped). Runs in ADDITION
       //     to Path A below so "Pay all approved" truly pays everything — both
@@ -226,6 +243,21 @@ router.post("/api/payouts/create", async (req: Request, res: Response) => {
           where: pendingPayoutsWhere,
           select: { id: true, amountMinor: true, commissionEntries: { select: { saleId: true } } },
         });
+
+        // Invariant (Path B): refuse to promote any pending payout that covers
+        // >1 sale. Historical bundled payouts — if any ever land in the DB —
+        // must be unbundled manually, not silently flipped to paid here.
+        const bundled = pendingPayouts.filter(
+          (p) => new Set(p.commissionEntries.map((e) => e.saleId)).size > 1,
+        );
+        if (bundled.length > 0) {
+          const err = new Error(
+            `Refusing to promote bundled pending payout(s): ${bundled.map((p) => p.id).join(", ")}. ` +
+              `Unbundle via prisma/repair-bundled-payouts.ts before retrying.`,
+          );
+          (err as Error & { code: string }).code = "BUNDLED_PAYOUT_REFUSED";
+          throw err;
+        }
 
         if (pendingPayouts.length > 0) {
           const now = new Date();
@@ -338,9 +370,20 @@ router.post("/api/payouts/create", async (req: Request, res: Response) => {
       amountMinor: result.amountMinor,
     });
   } catch (err: unknown) {
+    const code = typeof err === "object" && err !== null && "code" in err
+      ? (err as { code: string }).code
+      : null;
     // Handle race: two concurrent requests with same idempotency key
-    if (typeof err === "object" && err !== null && "code" in err && (err as { code: string }).code === "P2002") {
+    if (code === "P2002") {
       res.status(409).json({ error: "Concurrent request with same idempotency key" });
+      return;
+    }
+    // Guardrail: bundled payout refused (invariant: 1 sale → 1 payout).
+    if (code === "BUNDLED_PAYOUT_REFUSED") {
+      res.status(422).json({
+        error: (err as Error).message,
+        code: "BUNDLED_PAYOUT_REFUSED",
+      });
       return;
     }
     console.error("[payouts] Create failed:", err);

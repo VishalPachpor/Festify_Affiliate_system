@@ -267,6 +267,50 @@ test("bulk payout: sum of linked ledger entries == payout.amountMinor", async ()
   }
 });
 
+test("guardrail: bulk create refuses to bundle unpaid entries across sales", async () => {
+  // Two unpaid sales (no approve → entries stay payoutId=null). Bulk-create
+  // with no saleId and markAsPaid=false would have bundled both into a single
+  // payout pre-guardrail. Now the server must refuse with 422.
+  const { saleId: s1 } = await createEphemeralSale(100_000);
+  const { saleId: s2 } = await createEphemeralSale(200_000);
+  try {
+    const payoutsBefore = await prisma.payout.count({
+      where: { tenantId: TENANT_ID, affiliateId: AFFILIATE_ID },
+    });
+
+    const result = await api<{ error: string; code?: string }>("/api/payouts/create", {
+      method: "POST",
+      body: { affiliateId: AFFILIATE_ID },
+    });
+    assert.equal(result.status, 422, `expected 422, got ${result.status}`);
+    assert.equal(result.body.code, "BUNDLED_PAYOUT_REFUSED");
+
+    // No payout row leaked through the transaction.
+    const payoutsAfter = await prisma.payout.count({
+      where: { tenantId: TENANT_ID, affiliateId: AFFILIATE_ID },
+    });
+    assert.equal(payoutsAfter, payoutsBefore, "guardrail must roll back — no payout created");
+
+    // Entries are still unpaid — caller can retry per-sale.
+    const [e1, e2] = await Promise.all([
+      prisma.commissionLedgerEntry.findFirst({ where: { saleId: s1 }, select: { payoutId: true } }),
+      prisma.commissionLedgerEntry.findFirst({ where: { saleId: s2 }, select: { payoutId: true } }),
+    ]);
+    assert.equal(e1?.payoutId, null);
+    assert.equal(e2?.payoutId, null);
+
+    // Per-sale retry works — proves the guardrail doesn't break the happy path.
+    const retry = await api<{ id: string; amountMinor: number }>("/api/payouts/create", {
+      method: "POST",
+      body: { affiliateId: AFFILIATE_ID, saleId: s1 },
+    });
+    assert.ok(retry.status === 200 || retry.status === 201);
+  } finally {
+    await cleanupSale(s1);
+    await cleanupSale(s2);
+  }
+});
+
 test("mixed path: one click settles both unpaid entries AND pending payouts", async () => {
   // Build the hybrid scenario: sale A is approved (→ pending payout, entries
   // linked), sale B stays pending (→ unpaid entry). Bulk pay must cover both.

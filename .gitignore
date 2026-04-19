@@ -11,3 +11,6 @@ node_modules/
 
 # Uploads (local dev only — production uses cloud storage)
 backend/uploads/
+
+# DB repair snapshots (may contain payout/affiliate data)
+backend/prisma/snapshots/
