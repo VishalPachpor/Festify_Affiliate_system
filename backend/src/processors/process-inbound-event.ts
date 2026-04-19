@@ -263,24 +263,24 @@ async function executeGoldenFlow(event: InboundEvent): Promise<void> {
  * means out-of-order events / replays don't drift the per-affiliate progress.
  */
 async function emitMilestoneProgress(tenantId: string, affiliateId: string): Promise<void> {
-  const [milestones, commissionAgg] = await Promise.all([
+  const [milestones, revenueAgg] = await Promise.all([
     prisma.milestone.findMany({
       where: { tenantId },
       orderBy: { sortOrder: "asc" },
     }),
-    prisma.commissionLedgerEntry.aggregate({
-      where: { tenantId, affiliateId, type: "earned" },
+    prisma.sale.aggregate({
+      where: { tenantId, attributionClaim: { affiliateId } },
       _sum: { amountMinor: true },
     }),
   ]);
 
   if (milestones.length === 0) return;
 
-  const totalCommission = commissionAgg._sum.amountMinor ?? 0;
+  const totalRevenue = revenueAgg._sum.amountMinor ?? 0;
 
   for (const milestone of milestones) {
-    const currentMinor = Math.min(totalCommission, milestone.targetMinor);
-    const unlocked = totalCommission >= milestone.targetMinor;
+    const currentMinor = Math.min(totalRevenue, milestone.targetMinor);
+    const unlocked = totalRevenue >= milestone.targetMinor;
 
     await emitEvent("milestone.progressed", {
       tenantId,

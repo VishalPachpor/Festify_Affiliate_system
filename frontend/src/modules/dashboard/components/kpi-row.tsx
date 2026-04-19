@@ -23,22 +23,12 @@ export function KpiRow() {
       <KpiCard
         label="Total Sales"
         value={formatCurrency(data?.totalRevenue ?? 0, currency)}
-        changeLabel={
-          data?.revenueChangePct !== undefined
-            ? `+${Number.isInteger(data.revenueChangePct) ? data.revenueChangePct : data.revenueChangePct.toFixed(1)}%`
-            : undefined
-        }
         accentColor="#D9D9D9"
         isLoading={isLoading}
       />
       <KpiCard
         label="Commission Earned"
         value={formatCurrency(data?.totalCommissions ?? 0, currency)}
-        changeLabel={
-          data?.commissionsChangePct !== undefined
-            ? `+${Number.isInteger(data.commissionsChangePct) ? data.commissionsChangePct : data.commissionsChangePct.toFixed(1)}`
-            : undefined
-        }
         accentColor="#1C4AA6"
         isLoading={isLoading}
       />
