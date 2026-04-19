@@ -161,12 +161,10 @@ export default function AdminCommissionsPage() {
   const currentPage = filters.page;
 
   // Total Earned = all commissions from the ledger (via sales summary)
-  // Total Paid = all payouts (paid + pending + processing — money allocated)
+  // Total Paid = only payouts with status=paid (actual money out the door)
   // Outstanding = earned minus paid
   const totalEarned = salesSummary?.totalCommissions ?? 0;
-  const totalPaid = (payoutData?.totalPaid ?? 0) +
-    (payoutData?.totalPending ?? 0) +
-    (payoutData?.totalProcessing ?? 0);
+  const totalPaid = payoutData?.totalPaid ?? 0;
   const outstanding = totalEarned - totalPaid;
 
   const startItem = (currentPage - 1) * PAGE_SIZE + 1;

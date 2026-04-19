@@ -151,7 +151,7 @@ export default function AdminDashboardPage() {
         <AdminHeroBanner />
 
         {/* KPI Cards */}
-        <dl className="grid grid-cols-1 items-stretch gap-[24px] sm:grid-cols-2 lg:grid-cols-4">
+        <dl className="grid grid-cols-1 items-stretch gap-[24px] sm:grid-cols-2 lg:grid-cols-3">
           <AdminKpiCard
             label="Total Affiliates"
             value={String(summary?.totalAffiliates ?? 0)}
@@ -163,12 +163,6 @@ export default function AdminDashboardPage() {
             value={formatCurrency(summary?.totalRevenue ?? 0, currency)}
             subtitle={`${summary?.totalAffiliates ?? 0} affiliates`}
             accentColor="#5B8DEF"
-          />
-          <AdminKpiCard
-            label="Total Commissions Paid"
-            value={formatCurrency(summary?.totalCommissions ?? 0, currency)}
-            subtitle={`${summary?.conversionRate ?? 0}% conversion`}
-            accentColor="#22C55E"
           />
           <AdminKpiCard
             label="Pending Approvals"
