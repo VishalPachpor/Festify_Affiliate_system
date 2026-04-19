@@ -54,16 +54,6 @@ const REFERRAL_CODE_STYLE = { bg: "rgba(255,255,255,0.04)", text: "rgba(255,255,
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
-function IconInvite() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="6" cy="5" r="2.5" />
-      <path d="M2 13c0-2.2 1.8-4 4-4s4 1.8 4 4" />
-      <path d="M13 5v4M11 7h4" />
-    </svg>
-  );
-}
-
 function IconSearch() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
@@ -216,9 +206,6 @@ export default function AdminAffiliatesPage() {
   const { filters, setFilters } = useAffiliatesFilters();
   const { data } = useAffiliatesList(tenant?.id, { ...filters, pageSize: PAGE_SIZE });
   const queryClient = useQueryClient();
-  const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteFeedback, setInviteFeedback] = useState<{ kind: "success" | "error"; message: string } | null>(null);
   const [selectedAffiliate, setSelectedAffiliate] = useState<Affiliate | null>(null);
   const [editingAffiliate, setEditingAffiliate] = useState<Affiliate | null>(null);
   const [editCode, setEditCode] = useState("");
@@ -254,28 +241,6 @@ export default function AdminAffiliatesPage() {
     },
   });
 
-  const inviteMutation = useMutation({
-    mutationFn: ({ email }: { email: string }) =>
-      apiClient<{ success: boolean; applyUrl: string }>("/affiliates/invite", {
-        method: "POST",
-        body: { email },
-      }),
-    onSuccess: (result, variables) => {
-      setInviteEmail("");
-      setIsInviteOpen(false);
-      setInviteFeedback({
-        kind: "success",
-        message: `Invite sent to ${variables.email}. Application link: ${result.applyUrl}`,
-      });
-    },
-    onError: (error) => {
-      setInviteFeedback({
-        kind: "error",
-        message: error instanceof Error ? error.message : "Failed to send invite",
-      });
-    },
-  });
-
   const affiliates: Affiliate[] = data?.affiliates ?? [];
   const total = data?.total ?? 0;
   const totalPages = data?.totalPages ?? 1;
@@ -308,62 +273,14 @@ export default function AdminAffiliatesPage() {
     <DashboardStageCanvas>
       <DashboardContainer>
         {/* Page header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="font-[var(--font-display)] text-[1.75rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
-              Affiliate Management
-            </h2>
-            <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
-              Manage and monitor all affiliates
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              setInviteFeedback(null);
-              setIsInviteOpen((open) => !open);
-            }}
-            className="flex items-center gap-[0.5rem] rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
-          >
-            <IconInvite />
-            Invite Affiliate
-          </button>
+        <div>
+          <h2 className="font-[var(--font-display)] text-[1.75rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
+            Affiliate Management
+          </h2>
+          <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
+            Manage and monitor all affiliates
+          </p>
         </div>
-
-        {(isInviteOpen || inviteFeedback) && (
-          <div className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.03)] p-[var(--space-4)]">
-            <div className="flex flex-wrap items-end gap-[var(--space-3)]">
-              <label className="flex min-w-[18rem] flex-1 flex-col gap-[var(--space-2)]">
-                <span className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[0.08em] text-[rgba(255,255,255,0.55)]">
-                  Affiliate email
-                </span>
-                <input
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className="h-[2.75rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] px-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.35)] focus:border-[var(--color-ring)] focus:outline-none"
-                />
-              </label>
-              <button
-                type="button"
-                onClick={() => inviteMutation.mutate({ email: inviteEmail.trim() })}
-                disabled={!inviteEmail.trim() || inviteMutation.isPending}
-                className="h-[2.75rem] rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-5)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {inviteMutation.isPending ? "Sending..." : "Send invite"}
-              </button>
-            </div>
-            {inviteFeedback && (
-              <p
-                className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)]"
-                style={{ color: inviteFeedback.kind === "success" ? "#86EFAC" : "#FCA5A5" }}
-              >
-                {inviteFeedback.message}
-              </p>
-            )}
-          </div>
-        )}
 
         {/* Search + Filters */}
         <div className="flex items-center gap-[var(--space-3)]">
@@ -404,7 +321,7 @@ export default function AdminAffiliatesPage() {
             <table className="w-full border-collapse font-[var(--font-sans)]" aria-label="Affiliates">
               <thead>
                 <tr>
-                  {["Name", "Referral Code", "Tier", "Referrals", "Revenue", "Commission Due", "Status", "Actions"].map((col) => (
+                  {["Name", "Referral Code", "Tier", "Referrals", "Revenue", "Status", "Actions"].map((col) => (
                     <th
                       key={col}
                       scope="col"
@@ -457,10 +374,6 @@ export default function AdminAffiliatesPage() {
                     {/* Revenue */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] whitespace-nowrap text-[#FFFFFF]">
                       {formatCurrency(aff.totalRevenue)}
-                    </td>
-                    {/* Commission Due — gold highlight like Figma */}
-                    <td className="py-[var(--space-3)] pr-[var(--space-4)] text-[var(--text-sm)] font-medium whitespace-nowrap text-[#C9A84C]">
-                      {formatCurrency(aff.totalCommission)}
                     </td>
                     {/* Status */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] whitespace-nowrap">

@@ -5,7 +5,6 @@ import { useTenant } from "@/modules/tenant-shell";
 import { useAuth } from "@/modules/auth";
 import { useDashboardSummary } from "@/modules/dashboard/hooks/use-dashboard-summary";
 import { useTopAffiliates } from "@/modules/dashboard/hooks/use-top-affiliates";
-import { useRecentActivity } from "@/modules/dashboard/hooks/use-recent-activity";
 import { DashboardContainer } from "@/modules/dashboard/components/dashboard-layout";
 import { DashboardStageCanvas } from "@/modules/dashboard/components/dashboard-stage-canvas";
 
@@ -18,37 +17,6 @@ function formatCurrency(minorUnits: number, currency: string): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(minorUnits / 100);
-}
-
-// ── Icons ─────────────────────────────────────────────────────────────────────
-
-function IconApprove() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="6" cy="5" r="2.5" />
-      <path d="M2 13c0-2.2 1.8-4 4-4s4 1.8 4 4" />
-      <path d="M12 7l1.5 1.5L16 5.5" />
-    </svg>
-  );
-}
-
-function IconCreateAsset() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="2" y="2" width="12" height="12" rx="2" />
-      <path d="M8 5v6M5 8h6" />
-    </svg>
-  );
-}
-
-function IconSetMilestone() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M4 2h8v5a4 4 0 01-8 0V2z" />
-      <path d="M2 2h2M12 2h2" />
-      <path d="M8 11v3M5 14h6" />
-    </svg>
-  );
 }
 
 // ── Tier badge ────────────────────────────────────────────────────────────────
@@ -168,25 +136,13 @@ function AdminHeroBanner() {
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
-}
-
 export default function AdminDashboardPage() {
   const { tenant } = useTenant();
   const { data: summary } = useDashboardSummary(tenant?.id);
   const { data: topAffData } = useTopAffiliates(tenant?.id, 5);
-  const { data: activityData } = useRecentActivity(tenant?.id);
 
   const currency = summary?.currency ?? "USD";
   const topAffiliates = topAffData?.affiliates ?? [];
-  const activityItems = activityData?.items ?? [];
 
   return (
     <DashboardStageCanvas>
@@ -222,46 +178,8 @@ export default function AdminDashboardPage() {
           />
         </dl>
 
-        {/* Quick Actions */}
+        {/* Top Affiliates */}
         <section
-          className="rounded-[8px] p-[24px]"
-          style={{
-            background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)",
-            boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 8px 24px rgba(0,0,0,0.2)",
-          }}
-        >
-          <h3 className="font-[var(--font-display)] font-bold text-[var(--text-lg)] leading-[var(--leading-tight)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
-            Quick Actions
-          </h3>
-          <div className="mt-[var(--space-4)] flex flex-wrap gap-[var(--space-3)]">
-            <Link
-              href="/admin/affiliates?status=pending"
-              className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] bg-[var(--color-primary)] px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)]"
-            >
-              <IconApprove />
-              Approve Pending
-            </Link>
-            <Link
-              href="/admin/materials"
-              className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.04)]"
-            >
-              <IconCreateAsset />
-              Create Asset
-            </Link>
-            <Link
-              href="/admin/milestones"
-              className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.2)] hover:bg-[rgba(255,255,255,0.04)]"
-            >
-              <IconSetMilestone />
-              Set Milestone
-            </Link>
-          </div>
-        </section>
-
-        {/* Bottom row: Top Affiliates + Recent Activity */}
-        <div className="grid grid-cols-1 gap-[24px] lg:grid-cols-[2fr_1fr]">
-          {/* Top Affiliates */}
-          <section
             className="rounded-[8px] p-[24px]"
             style={{
               background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)",
@@ -333,43 +251,6 @@ export default function AdminDashboardPage() {
               ))}
             </div>
           </section>
-
-          {/* Recent Activity */}
-          <section
-            className="rounded-[8px] p-[24px]"
-            style={{
-              background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)",
-              boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 8px 24px rgba(0,0,0,0.2)",
-            }}
-          >
-            <h3 className="font-[var(--font-display)] font-bold text-[var(--text-lg)] leading-[var(--leading-tight)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
-              Recent Activity
-            </h3>
-
-            <div className="mt-[var(--space-4)] flex flex-col gap-[20px]">
-              {activityItems.slice(0, 5).map((item) => (
-                <div key={item.id} className="flex items-start gap-[var(--space-3)]">
-                  <span
-                    className="mt-[8px] size-[var(--space-2)] shrink-0 rounded-full"
-                    style={{ background: "#F5A623" }}
-                    aria-hidden="true"
-                  />
-                  <div className="flex min-w-0 flex-col gap-[4px]">
-                    <p className="font-[var(--font-sans)] text-[var(--text-sm)] font-medium leading-[20px] text-[var(--color-text-primary)]">
-                      {item.description}
-                    </p>
-                    <p className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[16px] text-[rgba(255,255,255,0.50)]">
-                      {item.affiliateName}
-                    </p>
-                    <p className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[16px] text-[rgba(255,255,255,0.35)]">
-                      {timeAgo(item.timestamp)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
       </DashboardContainer>
     </DashboardStageCanvas>
   );

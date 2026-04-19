@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -61,15 +60,6 @@ function IconCommissions() {
   );
 }
 
-function IconSettings() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="10" cy="10" r="2.5" />
-      <path d="M10 1.5v2.5M10 16v2.5M3.8 3.8l1.8 1.8M14.4 14.4l1.8 1.8M1.5 10H4M16 10h2.5M3.8 16.2l1.8-1.8M14.4 5.6l1.8-1.8" />
-    </svg>
-  );
-}
-
 function IconChevron() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -86,7 +76,6 @@ const NAV_ITEMS = [
   { href: "/admin/materials",    label: "Materials",     Icon: IconMaterials    },
   { href: "/admin/milestones",   label: "Milestones",   Icon: IconMilestones   },
   { href: "/admin/commissions",  label: "Commissions",  Icon: IconCommissions  },
-  { href: "/admin/settings",     label: "Settings",     Icon: IconSettings     },
 ] as const;
 
 function isNavActive(href: string, pathname: string): boolean {
@@ -114,17 +103,12 @@ export function AdminSidebar() {
     >
       {/* Brand — Figma spec: p-24, border-bottom */}
       <div className="border-b border-[var(--color-border)] px-[24px] pt-[24px] pb-[24px]">
-        <Image
-          src="/token.png"
-          alt="TOKEN2049"
-          width={188}
-          height={24}
-          className="h-[21px] w-auto"
-          priority
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/TOKEN2049_Logo.svg"
+          alt={`TOKEN2049 ${brandSubtitle}`}
+          className="h-auto w-full"
         />
-        <p className="mt-[4px] font-[var(--font-sans)] text-[12px] leading-[18px] text-[#9CA4B7]">
-          {brandSubtitle}
-        </p>
       </div>
 
       {/* Nav — Figma spec: pt-16 px-16, gap-4 between items */}
@@ -160,7 +144,7 @@ export function AdminSidebar() {
       {/* User footer — Figma spec: border-top, pt-17 px-16 */}
       <div className="border-t border-[var(--color-border)] px-[16px] pt-[17px] pb-[16px]">
         <Link
-          href="/admin/settings"
+          href="/admin"
           className="flex h-[64px] items-center gap-[12px] rounded-[8px] px-[12px] transition-colors duration-[var(--duration-normal)] hover:bg-[var(--color-nav-hover-bg)]"
         >
           <div

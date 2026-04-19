@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -105,17 +104,12 @@ export function AppSidebar() {
     >
       {/* Brand — Figma 71:4: p-24, border-bottom */}
       <div className="border-b border-[var(--color-border)] px-[24px] pt-[24px] pb-[24px]">
-        <Image
-          src="/token.png"
-          alt="TOKEN2049"
-          width={188}
-          height={24}
-          className="h-[21px] w-auto"
-          priority
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/TOKEN2049_Logo.svg"
+          alt={`TOKEN2049 ${brandSubtitle}`}
+          className="h-auto w-full"
         />
-        <p className="mt-[4px] font-[var(--font-sans)] text-[12px] leading-[18px] text-[#9CA4B7]">
-          {brandSubtitle}
-        </p>
       </div>
 
       {/* Nav — Figma 71:21: pt-16 px-16, gap-4 between items */}

@@ -23,8 +23,6 @@ const TENANT_ID = "tenant_demo";
 const TENANT_SLUG = "demo";
 const CAMPAIGN_ID = "campaign_demo";
 const CAMPAIGN_SLUG = "demo";
-const AFFILIATE_ID = "affiliate_alex";
-const REFERRAL_CODE = "REF-ALEX";
 
 // Figma 60:2705 target values: $1,000 → $5,000 → $10,000 → $25,000
 const MILESTONES = [
@@ -58,17 +56,6 @@ async function main() {
     },
   });
 
-  await prisma.campaignAffiliate.upsert({
-    where: { tenantId_referralCode: { tenantId: TENANT_ID, referralCode: REFERRAL_CODE } },
-    update: {},
-    create: {
-      tenantId: TENANT_ID,
-      campaignId: CAMPAIGN_ID,
-      affiliateId: AFFILIATE_ID,
-      referralCode: REFERRAL_CODE,
-    },
-  });
-
   // Milestone tiers — keep targets low so the demo webhook actually unlocks
   // Bronze on the first sale ($100 ticket × 10% = $10 commission, well past
   // Bronze's $100 ticket / Silver at $500 / etc).
@@ -96,9 +83,9 @@ async function main() {
     });
   }
 
-  // ── Demo users ─────────────────────────────────────────────────────────
-  // Two pre-verified accounts so the login flow can be demoed without
-  // first running through signup → email verification.
+  // ── Admin user ─────────────────────────────────────────────────────────
+  // One pre-verified admin account so the organizer login flow works out
+  // of the box. Real affiliates sign up through the public application.
   const passwordHash = await bcrypt.hash("Password123!", 10);
 
   await prisma.user.upsert({
@@ -117,176 +104,6 @@ async function main() {
       emailVerifiedAt: new Date(),
     },
   });
-
-  await prisma.user.upsert({
-    where: { email: "alex@festify.io" },
-    update: {
-      tenantId: TENANT_ID,
-      role: "affiliate",
-      affiliateId: AFFILIATE_ID,
-      emailVerifiedAt: new Date(),
-    },
-    create: {
-      email: "alex@festify.io",
-      fullName: "Alex Demo",
-      passwordHash,
-      role: "affiliate",
-      tenantId: TENANT_ID,
-      affiliateId: AFFILIATE_ID,
-      emailVerifiedAt: new Date(),
-    },
-  });
-
-  // ── Additional demo affiliates for realistic admin dashboard ──────────
-  const EXTRA_AFFILIATES = [
-    { id: "affiliate_sarah",  code: "SARAH2049",  name: "Sarah Chen",     email: "sarah@festify.io"  },
-    { id: "affiliate_marcus", code: "MARCUS26",    name: "Marcus Johnson", email: "marcus@festify.io" },
-    { id: "affiliate_priya",  code: "PRIYA-SG",    name: "Priya Sharma",   email: "priya@festify.io"  },
-    { id: "affiliate_james",  code: "JAMES-VIP",   name: "James Wilson",   email: "james@festify.io"  },
-  ];
-
-  for (const aff of EXTRA_AFFILIATES) {
-    await prisma.campaignAffiliate.upsert({
-      where: { tenantId_referralCode: { tenantId: TENANT_ID, referralCode: aff.code } },
-      update: {},
-      create: {
-        tenantId: TENANT_ID,
-        campaignId: CAMPAIGN_ID,
-        affiliateId: aff.id,
-        referralCode: aff.code,
-      },
-    });
-    await prisma.user.upsert({
-      where: { email: aff.email },
-      update: { tenantId: TENANT_ID, role: "affiliate", affiliateId: aff.id, emailVerifiedAt: new Date() },
-      create: {
-        email: aff.email,
-        fullName: aff.name,
-        passwordHash,
-        role: "affiliate",
-        tenantId: TENANT_ID,
-        affiliateId: aff.id,
-        emailVerifiedAt: new Date(),
-      },
-    });
-  }
-
-  // ── Demo sales for chart + table data ─────────────────────────────────
-  // Commission = 10% of amount. Milestone thresholds (commission):
-  //   Bronze=$1K, Silver=$5K, Gold=$10K, Platinum=$25K
-  //
-  // Target tier distribution:
-  //   Sarah:  $435K revenue → $43.5K commission → PLATINUM
-  //   Priya:  $180K revenue → $18K commission   → GOLD
-  //   James:  $108K revenue → $10.8K commission  → GOLD
-  //   Marcus: $65.5K revenue → $6.55K commission → SILVER
-  //   Alex:   $25.5K revenue → $2.55K commission → BRONZE
-  const DEMO_SALES = [
-    { extId: "sale_demo_1",  amount: 15000000, aff: "affiliate_sarah",  daysAgo: 1  },
-    { extId: "sale_demo_2",  amount: 8000000,  aff: "affiliate_marcus", daysAgo: 1  },
-    { extId: "sale_demo_3",  amount: 4000000,  aff: AFFILIATE_ID,       daysAgo: 2  },
-    { extId: "sale_demo_4",  amount: 6000000,  aff: "affiliate_priya",  daysAgo: 3  },
-    { extId: "sale_demo_5",  amount: 8000000,  aff: "affiliate_james",  daysAgo: 4  },
-    { extId: "sale_demo_6",  amount: 8000000,  aff: "affiliate_sarah",  daysAgo: 5  },
-    { extId: "sale_demo_7",  amount: 5000000,  aff: "affiliate_marcus", daysAgo: 6  },
-    { extId: "sale_demo_8",  amount: 12000000, aff: "affiliate_priya",  daysAgo: 7  },
-    { extId: "sale_demo_9",  amount: 20500000, aff: "affiliate_sarah",  daysAgo: 2  },
-    { extId: "sale_demo_10", amount: 2500000,  aff: "affiliate_marcus", daysAgo: 3  },
-    { extId: "sale_demo_11", amount: 2800000,  aff: "affiliate_james",  daysAgo: 6  },
-    { extId: "sale_demo_12", amount: 2050000,  aff: AFFILIATE_ID,       daysAgo: 4  },
-  ];
-
-  // Map sale age → commission lifecycle so the demo has all three UI states:
-  //   ≥ 6 days old → paid (payout settled)
-  //   3–5 days    → approved (payout scheduled, Mark Paid available)
-  //   ≤ 2 days    → pending (needs Approve)
-  function statusForDaysAgo(days: number): "pending" | "approved" | "paid" {
-    if (days >= 6) return "paid";
-    if (days >= 3) return "approved";
-    return "pending";
-  }
-
-  for (const s of DEMO_SALES) {
-    const saleDate = new Date();
-    saleDate.setDate(saleDate.getDate() - s.daysAgo);
-    saleDate.setHours(12, 0, 0, 0);
-
-    const refCode = s.aff === AFFILIATE_ID ? REFERRAL_CODE :
-      EXTRA_AFFILIATES.find(a => a.id === s.aff)?.code ?? "UNKNOWN";
-
-    const existing = await prisma.sale.findUnique({
-      where: { tenantId_externalOrderId: { tenantId: TENANT_ID, externalOrderId: s.extId } },
-    });
-    const commissionMinor = Math.round(s.amount * 0.1);
-    const targetStatus = statusForDaysAgo(s.daysAgo);
-
-    if (existing) {
-      // Backfill status on prior seed runs (column added in a later schema migration).
-      if (existing.status !== targetStatus) {
-        await prisma.sale.update({
-          where: { id: existing.id },
-          data: { status: targetStatus },
-        });
-      }
-    }
-
-    if (!existing) {
-
-      const sale = await prisma.sale.create({
-        data: {
-          tenantId: TENANT_ID,
-          campaignId: CAMPAIGN_ID,
-          externalOrderId: s.extId,
-          amountMinor: s.amount,
-          currency: "USD",
-          referralCode: refCode,
-          status: targetStatus,
-          createdAt: saleDate,
-        },
-      });
-      await prisma.attributionClaim.create({
-        data: {
-          tenantId: TENANT_ID,
-          saleId: sale.id,
-          affiliateId: s.aff,
-          method: "referral_code",
-        },
-      });
-
-      // For approved/paid statuses, create the corresponding payout record
-      // and link the ledger entry to it. Matches what the UI actions would
-      // produce after Approve / Mark Paid clicks.
-      let payoutId: string | null = null;
-      if (targetStatus !== "pending") {
-        const payoutDate = new Date(saleDate);
-        payoutDate.setDate(payoutDate.getDate() + 2); // processed 2 days after sale
-        const payout = await prisma.payout.create({
-          data: {
-            tenantId: TENANT_ID,
-            affiliateId: s.aff,
-            amountMinor: commissionMinor,
-            currency: "USD",
-            status: targetStatus === "paid" ? "paid" : "pending",
-            processedAt: targetStatus === "paid" ? payoutDate : null,
-          },
-        });
-        payoutId = payout.id;
-      }
-
-      await prisma.commissionLedgerEntry.create({
-        data: {
-          tenantId: TENANT_ID,
-          affiliateId: s.aff,
-          saleId: sale.id,
-          type: "earned",
-          amountMinor: commissionMinor,
-          currency: "USD",
-          payoutId,
-          createdAt: saleDate,
-        },
-      });
-    }
-  }
 
   // ── Demo marketing materials (Figma node 60:1975) ───────────────────
   //
@@ -364,9 +181,9 @@ async function main() {
   }
 
   console.log(
-    `[seed] tenant=${TENANT_ID} campaign=${CAMPAIGN_ID}(slug=${CAMPAIGN_SLUG}) affiliate=${AFFILIATE_ID} referral=${REFERRAL_CODE} milestones=${MILESTONES.length} assets=${DEMO_ASSETS.length}`,
+    `[seed] tenant=${TENANT_ID} campaign=${CAMPAIGN_ID}(slug=${CAMPAIGN_SLUG}) milestones=${MILESTONES.length} assets=${DEMO_ASSETS.length}`,
   );
-  console.log(`[seed] users: admin@festify.io / alex@festify.io  (password: Password123!)`);
+  console.log(`[seed] admin: admin@festify.io  (password: Password123!)`);
 }
 
 main()
