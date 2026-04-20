@@ -131,7 +131,16 @@ router.get("/api/sales", async (req: Request, res: Response) => {
               // Need both: processedAt tells us when a paid payout settled,
               // createdAt is used as the "scheduled" date for approved (pending)
               // payouts that haven't been paid yet.
-              payout: { select: { status: true, processedAt: true, createdAt: true } },
+              payout: {
+                select: {
+                  status: true,
+                  processedAt: true,
+                  createdAt: true,
+                  commissionEntries: {
+                    select: { saleId: true },
+                  },
+                },
+              },
             },
           },
         },
@@ -200,6 +209,10 @@ router.get("/api/sales", async (req: Request, res: Response) => {
       const payoutIds = Array.from(
         new Set(entries.map((e) => e.payoutId).filter((id): id is string => typeof id === "string" && id.length > 0)),
       );
+      const payoutSaleCount = entries.reduce((max, entry) => {
+        const linkedSaleCount = new Set(entry.payout?.commissionEntries.map((linked) => linked.saleId) ?? []).size;
+        return Math.max(max, linkedSaleCount);
+      }, 0);
       const payoutStatus =
         payoutStatuses.includes("paid") ? "paid" :
         payoutStatuses.includes("processing") ? "processing" :
@@ -224,6 +237,7 @@ router.get("/api/sales", async (req: Request, res: Response) => {
         payoutDate,
         payoutId: payoutIds[0] ?? null,
         payoutStatus,
+        payoutSaleCount: payoutSaleCount > 0 ? payoutSaleCount : null,
       };
     });
 

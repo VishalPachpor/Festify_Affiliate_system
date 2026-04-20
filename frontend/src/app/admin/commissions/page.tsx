@@ -421,8 +421,11 @@ export default function AdminCommissionsPage() {
                   const isPaid = payoutSettled || row.status === "paid";
                   const paidAmount = isPaid ? row.commission : 0;
                   const outstandingAmount = isPaid ? 0 : row.commission;
+                  const isBundledPendingPayout =
+                    row.payoutStatus === "pending" && (row.payoutSaleCount ?? 0) > 1;
                   const canMarkPaid =
                     !!row.affiliateId &&
+                    !isBundledPendingPayout &&
                     ((row.payoutStatus === "pending" && !!row.payoutId) ||
                       (cStatus === "approved" && row.payoutStatus == null));
                   // Figma 101:9187/9210: alternating rows get a 1% white fill.
@@ -480,6 +483,14 @@ export default function AdminCommissionsPage() {
                             ? (row.payoutStatus === "pending" && row.payoutId ? "Settling..." : "Processing...")
                             : "Mark Paid"}
                         </button>
+                      )}
+                      {isBundledPendingPayout && (
+                        <span
+                          className="inline-block rounded-[8px] border border-[rgba(245,158,11,0.25)] bg-[rgba(245,158,11,0.08)] px-[12px] py-[8px] font-[var(--font-sans)] text-[12px] leading-[18px] text-[#f59e0b]"
+                          title="This payout is linked to multiple sales, so paying it from one row settles all linked rows. Repair the bundled payout data before using per-row actions."
+                        >
+                          Bundled payout
+                        </span>
                       )}
                       {cStatus === "pending" && row.affiliateId && (
                         <button

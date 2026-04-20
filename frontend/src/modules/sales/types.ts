@@ -20,6 +20,7 @@ export const saleSchema = z.object({
   payoutDate: z.string().nullable().optional(),
   payoutId: z.string().nullable().optional(),
   payoutStatus: z.enum(["pending", "processing", "paid", "failed"]).nullable().optional(),
+  payoutSaleCount: z.number().int().nullable().optional(),
 });
 
 export type Sale = z.infer<typeof saleSchema>;
