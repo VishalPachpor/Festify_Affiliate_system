@@ -398,7 +398,7 @@ router.post("/api/payouts/create", async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  pending: ["processing", "failed"],
+  pending: ["processing", "paid", "failed"],
   processing: ["paid", "failed"],
   failed: ["pending"], // allow retry
 };

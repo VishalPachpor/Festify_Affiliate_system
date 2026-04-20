@@ -211,6 +211,23 @@ export default function AdminCommissionsPage() {
     },
   });
 
+  const settlePendingPayoutMutation = useMutation({
+    mutationFn: (payoutId: string) =>
+      apiClient<{ id: string; status: string; processedAt: string | null }>(`/payouts/${payoutId}/status`, {
+        method: "PATCH",
+        body: { status: "paid" },
+      }),
+    onSuccess: () => {
+      setPayingSaleId(null);
+      queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["payouts"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+    onError: () => {
+      setPayingSaleId(null);
+    },
+  });
+
   // Approve → /sales/:id/approve. Backend mutates sale.status to approved,
   // creates a pending payout, and links the earned ledger entries to it.
   const approveMutation = useMutation({
@@ -354,9 +371,10 @@ export default function AdminCommissionsPage() {
         </div>
 
         {/* Mutation feedback — surfaces errors from either action */}
-        {(markPaidMutation.isError || approveMutation.isError) && (
+        {(markPaidMutation.isError || settlePendingPayoutMutation.isError || approveMutation.isError) && (
           <div className="rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[#FCA5A5]">
             {(markPaidMutation.error instanceof Error && markPaidMutation.error.message) ||
+              (settlePendingPayoutMutation.error instanceof Error && settlePendingPayoutMutation.error.message) ||
               (approveMutation.error instanceof Error && approveMutation.error.message) ||
               "Action failed"}
           </div>
@@ -405,8 +423,8 @@ export default function AdminCommissionsPage() {
                   const outstandingAmount = isPaid ? 0 : row.commission;
                   const canMarkPaid =
                     !!row.affiliateId &&
-                    cStatus === "approved" &&
-                    (row.payoutStatus === "pending" || row.payoutStatus == null);
+                    ((row.payoutStatus === "pending" && !!row.payoutId) ||
+                      (cStatus === "approved" && row.payoutStatus == null));
                   // Figma 101:9187/9210: alternating rows get a 1% white fill.
                   const zebra = rowIndex % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent";
                   const payoutDate =
@@ -446,6 +464,10 @@ export default function AdminCommissionsPage() {
                           type="button"
                           onClick={() => {
                             setPayingSaleId(row.id);
+                            if (row.payoutStatus === "pending" && row.payoutId) {
+                              settlePendingPayoutMutation.mutate(row.payoutId);
+                              return;
+                            }
                             markPaidMutation.mutate({
                               affiliateId: row.affiliateId,
                               saleId: row.id,
@@ -454,7 +476,9 @@ export default function AdminCommissionsPage() {
                           disabled={payingSaleId !== null}
                           className="rounded-[8px] bg-[#1c4aa6] px-[16px] py-[8px] font-[var(--font-sans)] text-[12px] leading-[18px] text-[#f0f0f0] transition-colors hover:bg-[#1a3f8f] disabled:opacity-50"
                         >
-                          {payingSaleId === row.id ? "Processing..." : "Mark Paid"}
+                          {payingSaleId === row.id
+                            ? (row.payoutStatus === "pending" && row.payoutId ? "Settling..." : "Processing...")
+                            : "Mark Paid"}
                         </button>
                       )}
                       {cStatus === "pending" && row.affiliateId && (

@@ -197,6 +197,9 @@ router.get("/api/sales", async (req: Request, res: Response) => {
       const payoutStatuses = entries
         .map((e) => e.payout?.status ?? null)
         .filter((status): status is "pending" | "processing" | "paid" | "failed" => status !== null);
+      const payoutIds = Array.from(
+        new Set(entries.map((e) => e.payoutId).filter((id): id is string => typeof id === "string" && id.length > 0)),
+      );
       const payoutStatus =
         payoutStatuses.includes("paid") ? "paid" :
         payoutStatuses.includes("processing") ? "processing" :
@@ -219,6 +222,7 @@ router.get("/api/sales", async (req: Request, res: Response) => {
         status: sale.status,
         createdAt: sale.createdAt.toISOString(),
         payoutDate,
+        payoutId: payoutIds[0] ?? null,
         payoutStatus,
       };
     });
