@@ -103,7 +103,7 @@ function exportToCsv(sales: Sale[]) {
     row.affiliateName,
     (row.amount / 100).toFixed(2),
     (row.commission / 100).toFixed(2),
-    toCommissionStatus(row.status),
+    row.payoutStatus === "paid" ? "paid" : toCommissionStatus(row.status),
     row.createdAt,
   ]);
 
@@ -376,8 +376,9 @@ export default function AdminCommissionsPage() {
                   </tr>
                 )}
                 {sales.map((row, rowIndex) => {
-                  const cStatus = toCommissionStatus(row.status);
-                  const isPaid = row.status === "paid";
+                  const payoutSettled = row.payoutStatus === "paid";
+                  const cStatus = payoutSettled ? "paid" : toCommissionStatus(row.status);
+                  const isPaid = payoutSettled || row.status === "paid";
                   const paidAmount = isPaid ? row.commission : 0;
                   const outstandingAmount = isPaid ? 0 : row.commission;
                   // Figma 101:9187/9210: alternating rows get a 1% white fill.

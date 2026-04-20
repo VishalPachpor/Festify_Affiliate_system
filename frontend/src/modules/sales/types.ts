@@ -18,6 +18,7 @@ export const saleSchema = z.object({
   createdAt: z.string(),
   // Latest payout.processedAt across attached payouts (null until a payout lands).
   payoutDate: z.string().nullable().optional(),
+  payoutStatus: z.enum(["pending", "processing", "paid", "failed"]).nullable().optional(),
 });
 
 export type Sale = z.infer<typeof saleSchema>;

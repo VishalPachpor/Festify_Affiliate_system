@@ -194,6 +194,16 @@ router.get("/api/sales", async (req: Request, res: Response) => {
           ? new Date(Math.max(...dates.map((d) => d.getTime()))).toISOString()
           : null;
 
+      const payoutStatuses = entries
+        .map((e) => e.payout?.status ?? null)
+        .filter((status): status is "pending" | "processing" | "paid" | "failed" => status !== null);
+      const payoutStatus =
+        payoutStatuses.includes("paid") ? "paid" :
+        payoutStatuses.includes("processing") ? "processing" :
+        payoutStatuses.includes("pending") ? "pending" :
+        payoutStatuses.includes("failed") ? "failed" :
+        null;
+
       const affiliateId = sale.attributionClaim?.affiliateId ?? "";
       const affiliateName =
         (affiliateId && nameByAffiliateId.get(affiliateId)) || affiliateId || "Unattributed";
@@ -209,6 +219,7 @@ router.get("/api/sales", async (req: Request, res: Response) => {
         status: sale.status,
         createdAt: sale.createdAt.toISOString(),
         payoutDate,
+        payoutStatus,
       };
     });
 
