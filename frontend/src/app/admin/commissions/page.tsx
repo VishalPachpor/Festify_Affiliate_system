@@ -11,7 +11,7 @@ import { useSalesFilters } from "@/modules/sales/hooks/use-sales-filters";
 import { apiClient } from "@/services/api/client";
 import type { Sale } from "@/modules/sales/types";
 
-type CommissionStatus = "paid" | "approved" | "pending";
+type CommissionStatus = "paid" | "approved" | "pending" | "processing" | "failed";
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 
@@ -66,6 +66,20 @@ function StatusCell({ status }: { status: CommissionStatus }) {
       </span>
     );
   }
+  if (status === "processing") {
+    return (
+      <span className={base} style={{ background: "rgba(91,141,239,0.2)", color: "#A6D1FF" }}>
+        processing
+      </span>
+    );
+  }
+  if (status === "failed") {
+    return (
+      <span className={base} style={{ background: "rgba(239,68,68,0.2)", color: "#FCA5A5" }}>
+        failed
+      </span>
+    );
+  }
   return (
     <span className={base} style={{ background: "rgba(245,158,11,0.2)", color: "#f59e0b" }}>
       pending
@@ -103,7 +117,7 @@ function exportToCsv(sales: Sale[]) {
     row.affiliateName,
     (row.amount / 100).toFixed(2),
     (row.commission / 100).toFixed(2),
-    row.payoutStatus === "paid" ? "paid" : toCommissionStatus(row.status),
+    deriveCommissionStatus(row),
     row.createdAt,
   ]);
 
@@ -125,6 +139,14 @@ function toCommissionStatus(s: Sale["status"]): CommissionStatus {
   if (s === "paid") return "paid";
   if (s === "approved" || s === "confirmed") return "approved";
   return "pending";
+}
+
+function deriveCommissionStatus(row: Sale): CommissionStatus {
+  if (row.payoutStatus === "paid") return "paid";
+  if (row.payoutStatus === "processing") return "processing";
+  if (row.payoutStatus === "failed") return "failed";
+  if (row.payoutStatus === "pending") return "approved";
+  return toCommissionStatus(row.status);
 }
 
 const STATUS_OPTIONS = [
@@ -377,10 +399,14 @@ export default function AdminCommissionsPage() {
                 )}
                 {sales.map((row, rowIndex) => {
                   const payoutSettled = row.payoutStatus === "paid";
-                  const cStatus = payoutSettled ? "paid" : toCommissionStatus(row.status);
+                  const cStatus = deriveCommissionStatus(row);
                   const isPaid = payoutSettled || row.status === "paid";
                   const paidAmount = isPaid ? row.commission : 0;
                   const outstandingAmount = isPaid ? 0 : row.commission;
+                  const canMarkPaid =
+                    !!row.affiliateId &&
+                    cStatus === "approved" &&
+                    (row.payoutStatus === "pending" || row.payoutStatus == null);
                   // Figma 101:9187/9210: alternating rows get a 1% white fill.
                   const zebra = rowIndex % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent";
                   const payoutDate =
@@ -415,7 +441,7 @@ export default function AdminCommissionsPage() {
                       {payoutDate}
                     </td>
                     <td className="py-[var(--space-3)] text-center whitespace-nowrap">
-                      {cStatus === "approved" && row.affiliateId && (
+                      {canMarkPaid && (
                         <button
                           type="button"
                           onClick={() => {
