@@ -135,7 +135,13 @@ async function executeGoldenFlow(event: InboundEvent): Promise<void> {
     throw new Error(`Amount exceeds max allowed: ${amountMinor}`);
   }
 
-  const referralCode = extractString(payload, "referralCode") ?? null;
+  const referralCodeRaw = extractString(payload, "referralCode") ?? null;
+  // CampaignAffiliate.referralCode is stored UPPERCASE + alphanumeric-only by the
+  // admin approval UI. Luma's webhook echoes whatever the buyer typed at checkout,
+  // which can be any case. Normalize before the unique lookup so `vishal2020` and
+  // `VISHAL2020` both resolve to the same affiliate. Sale.referralCode keeps the
+  // raw trimmed value so it's still debuggable.
+  const referralCodeLookup = normalizeReferralCode(referralCodeRaw);
 
   // ── 2. Resolve campaign from DB ─────────────────────────────────────────
   // Prefer campaignId from payload if provided; otherwise fall back to
@@ -154,9 +160,9 @@ async function executeGoldenFlow(event: InboundEvent): Promise<void> {
   // ── 3. Resolve affiliate (optional, before transaction) ─────────────────
   let affiliate: { affiliateId: string } | null = null;
 
-  if (referralCode) {
+  if (referralCodeLookup) {
     affiliate = await prisma.campaignAffiliate.findUnique({
-      where: { tenantId_referralCode: { tenantId, referralCode } },
+      where: { tenantId_referralCode: { tenantId, referralCode: referralCodeLookup } },
       select: { affiliateId: true },
     });
   }
@@ -181,7 +187,7 @@ async function executeGoldenFlow(event: InboundEvent): Promise<void> {
           externalOrderId,
           amountMinor,
           currency,
-          referralCode,
+          referralCode: referralCodeRaw,
         },
       });
     } catch (err: unknown) {
@@ -309,6 +315,22 @@ function extractString(obj: Record<string, unknown>, key: string): string | null
   const val = obj[key];
   if (typeof val === "string" && val.trim().length > 0) return val.trim();
   return null;
+}
+
+/**
+ * Canonicalise a referral code for affiliate lookups.
+ *
+ * Admin approval forces codes to UPPER + alphanumeric-only on the way in
+ * (see frontend/src/app/admin/affiliates/page.tsx), so CampaignAffiliate
+ * rows are always stored in that shape. Webhooks echo whatever the buyer
+ * typed at checkout (Luma is case-insensitive on coupons), so lookups must
+ * normalize identically — otherwise a `vishal2020` sale misses
+ * `VISHAL2020` and attribution silently fails.
+ */
+export function normalizeReferralCode(raw: string | null | undefined): string | null {
+  if (raw == null) return null;
+  const cleaned = raw.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return cleaned.length > 0 ? cleaned : null;
 }
 
 function extractInt(obj: Record<string, unknown>, key: string): number | null {
