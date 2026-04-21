@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import Script from "next/script";
+import { useEffect, useRef, useState } from "react";
 
 const TWITTER_HANDLE = "token2049";
 const WIDGETS_SRC = "https://platform.twitter.com/widgets.js";
 
-// X's widgets.js attaches itself to window as `twttr` and exposes a
-// `widgets.load(el?)` method that scans the subtree for `.twitter-timeline`
-// anchors and replaces them with iframes. We load the script once globally
-// and then trigger a per-mount load() so this works under Next.js client
-// navigation (the script tag won't re-fire on subsequent route changes).
+// X's widgets.js exposes window.twttr.widgets.load(el?) which scans the
+// subtree for `.twitter-timeline` anchors and replaces them with iframes.
+// Loading is delegated to next/script so Next handles dedup + strategy —
+// we just trigger widgets.load() on our ref once the script is ready.
 type TwttrWidgets = { load: (el?: HTMLElement) => void };
 type TwttrGlobal = { widgets: TwttrWidgets };
 
@@ -19,54 +19,25 @@ declare global {
   }
 }
 
-function loadWidgetsScript(): Promise<TwttrGlobal> {
-  if (typeof window === "undefined") return Promise.reject(new Error("ssr"));
-  if (window.twttr) return Promise.resolve(window.twttr);
-
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>(`script[src="${WIDGETS_SRC}"]`);
-    if (existing) {
-      existing.addEventListener("load", () => {
-        if (window.twttr) resolve(window.twttr);
-        else reject(new Error("twttr global missing after script load"));
-      });
-      existing.addEventListener("error", () => reject(new Error("widgets.js failed to load")));
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = WIDGETS_SRC;
-    script.async = true;
-    script.charset = "utf-8";
-    script.addEventListener("load", () => {
-      if (window.twttr) resolve(window.twttr);
-      else reject(new Error("twttr global missing after script load"));
-    });
-    script.addEventListener("error", () => reject(new Error("widgets.js failed to load")));
-    document.body.appendChild(script);
-  });
-}
-
 export function TwitterFeed() {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [scriptReady, setScriptReady] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
 
+  // If widgets.js was already loaded by a prior mount, skip the wait.
   useEffect(() => {
-    let cancelled = false;
-    loadWidgetsScript()
-      .then((twttr) => {
-        if (cancelled || !containerRef.current) return;
-        twttr.widgets.load(containerRef.current);
-      })
-      .catch((err) => {
-        // Non-fatal — the anchor stays as a plain link so users can still
-        // click through to the X profile. Log so we notice if X breaks the
-        // widget script (which has happened historically).
-        console.warn("[TwitterFeed] widgets.js load failed:", err);
-      });
-    return () => {
-      cancelled = true;
-    };
+    if (typeof window !== "undefined" && window.twttr?.widgets) {
+      setScriptReady(true);
+    }
   }, []);
+
+  // Once the script is ready AND the container is mounted, ask twttr to
+  // replace the anchor with an iframe.
+  useEffect(() => {
+    if (!scriptReady) return;
+    if (!containerRef.current) return;
+    window.twttr?.widgets.load(containerRef.current);
+  }, [scriptReady]);
 
   return (
     <section
@@ -78,10 +49,18 @@ export function TwitterFeed() {
         boxShadow: "0 0 0 1px rgba(255,255,255,0.05), 0 8px 24px rgba(0,0,0,0.2)",
       }}
     >
-      <div className="border-b border-[rgba(255,255,255,0.1)] pb-[24px]">
+      <div className="flex items-baseline justify-between border-b border-[rgba(255,255,255,0.1)] pb-[24px]">
         <h2 className="font-[var(--font-display)] text-[18px] font-medium leading-[20px] tracking-[-0.2px] text-[#F0F0F0]">
           Latest from @{TWITTER_HANDLE}
         </h2>
+        <a
+          href={`https://twitter.com/${TWITTER_HANDLE}`}
+          target="_blank"
+          rel="noreferrer"
+          className="font-[var(--font-sans)] text-[12px] leading-[18px] text-[#A6D1FF] hover:underline"
+        >
+          Open on X →
+        </a>
       </div>
 
       <div ref={containerRef} className="pt-[16px]">
@@ -94,7 +73,19 @@ export function TwitterFeed() {
         >
           Tweets by @{TWITTER_HANDLE}
         </a>
+        {loadFailed ? (
+          <p className="mt-[12px] font-[var(--font-sans)] text-[12px] leading-[18px] text-[rgba(255,255,255,0.55)]">
+            Timeline couldn&apos;t load. Click &quot;Open on X&quot; above to view posts.
+          </p>
+        ) : null}
       </div>
+
+      <Script
+        src={WIDGETS_SRC}
+        strategy="lazyOnload"
+        onReady={() => setScriptReady(true)}
+        onError={() => setLoadFailed(true)}
+      />
     </section>
   );
 }
