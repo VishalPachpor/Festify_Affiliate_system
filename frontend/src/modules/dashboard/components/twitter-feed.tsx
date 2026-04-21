@@ -5,11 +5,21 @@ import { useEffect, useRef, useState } from "react";
 
 const TWITTER_HANDLE = "token2049";
 const WIDGETS_SRC = "https://platform.twitter.com/widgets.js";
+const LOAD_TIMEOUT_MS = 6000;
 
-// X's widgets.js exposes window.twttr.widgets.load(el?) which scans the
-// subtree for `.twitter-timeline` anchors and replaces them with iframes.
-// Loading is delegated to next/script so Next handles dedup + strategy —
-// we just trigger widgets.load() on our ref once the script is ready.
+// X's widgets.js is loaded via next/script (afterInteractive so it fires
+// right after hydration, not idle). Once the twttr global shows up we
+// call widgets.load() on our ref — that replaces the `.twitter-timeline`
+// anchor with X's iframe.
+//
+// The widget has three failure modes we can't code around:
+//   1. widgets.js blocked (adblocker, tracker blocker, strict CSP)
+//   2. widgets.js loads but X returns an empty iframe for anonymous
+//      embeds (X has been aggressive about this since 2023)
+//   3. Network / 3rd-party cookies disabled
+// If nothing has rendered a .twitter-tweet / iframe inside our ref
+// within LOAD_TIMEOUT_MS we surface a fallback link so the section
+// isn't just a blank card.
 type TwttrWidgets = { load: (el?: HTMLElement) => void };
 type TwttrGlobal = { widgets: TwttrWidgets };
 
@@ -21,23 +31,51 @@ declare global {
 
 export function TwitterFeed() {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [scriptReady, setScriptReady] = useState(false);
-  const [loadFailed, setLoadFailed] = useState(false);
+  const [status, setStatus] = useState<"loading" | "rendered" | "failed">("loading");
 
-  // If widgets.js was already loaded by a prior mount, skip the wait.
   useEffect(() => {
-    if (typeof window !== "undefined" && window.twttr?.widgets) {
-      setScriptReady(true);
+    let cancelled = false;
+
+    // Poll for twttr.widgets up to the timeout, then call load().
+    const pollStart = Date.now();
+    const poll = window.setInterval(() => {
+      if (cancelled) return;
+      if (Date.now() - pollStart > LOAD_TIMEOUT_MS) {
+        window.clearInterval(poll);
+        setStatus((s) => (s === "rendered" ? s : "failed"));
+        return;
+      }
+      if (window.twttr?.widgets && containerRef.current) {
+        window.clearInterval(poll);
+        window.twttr.widgets.load(containerRef.current);
+      }
+    }, 150);
+
+    // Watch the container — once the widget injects an iframe, flip to
+    // rendered. If we never see one by the timeout, flip to failed.
+    const observer = new MutationObserver(() => {
+      if (!containerRef.current) return;
+      if (containerRef.current.querySelector("iframe")) {
+        if (!cancelled) setStatus("rendered");
+        observer.disconnect();
+      }
+    });
+    if (containerRef.current) {
+      observer.observe(containerRef.current, { childList: true, subtree: true });
     }
-  }, []);
 
-  // Once the script is ready AND the container is mounted, ask twttr to
-  // replace the anchor with an iframe.
-  useEffect(() => {
-    if (!scriptReady) return;
-    if (!containerRef.current) return;
-    window.twttr?.widgets.load(containerRef.current);
-  }, [scriptReady]);
+    const timeout = window.setTimeout(() => {
+      if (cancelled) return;
+      setStatus((s) => (s === "rendered" ? s : "failed"));
+    }, LOAD_TIMEOUT_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(poll);
+      window.clearTimeout(timeout);
+      observer.disconnect();
+    };
+  }, []);
 
   return (
     <section
@@ -64,6 +102,9 @@ export function TwitterFeed() {
       </div>
 
       <div ref={containerRef} className="pt-[16px]">
+        {/* The anchor is what widgets.js scans for and replaces. Keep
+            it visible so users have a link even while the script
+            loads. */}
         <a
           className="twitter-timeline"
           data-theme="dark"
@@ -73,18 +114,31 @@ export function TwitterFeed() {
         >
           Tweets by @{TWITTER_HANDLE}
         </a>
-        {loadFailed ? (
-          <p className="mt-[12px] font-[var(--font-sans)] text-[12px] leading-[18px] text-[rgba(255,255,255,0.55)]">
-            Timeline couldn&apos;t load. Click &quot;Open on X&quot; above to view posts.
-          </p>
+        {status === "failed" ? (
+          <div
+            className="mt-[12px] rounded-[8px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] p-[16px] font-[var(--font-sans)] text-[13px] leading-[20px] text-[rgba(255,255,255,0.65)]"
+            role="status"
+          >
+            The embedded timeline couldn&apos;t load — this often happens
+            when a tracker blocker or strict network blocks
+            platform.twitter.com. Use the{" "}
+            <a
+              href={`https://twitter.com/${TWITTER_HANDLE}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#A6D1FF] hover:underline"
+            >
+              Open on X
+            </a>{" "}
+            link above to view posts directly.
+          </div>
         ) : null}
       </div>
 
       <Script
         src={WIDGETS_SRC}
-        strategy="lazyOnload"
-        onReady={() => setScriptReady(true)}
-        onError={() => setLoadFailed(true)}
+        strategy="afterInteractive"
+        onError={() => setStatus("failed")}
       />
     </section>
   );
