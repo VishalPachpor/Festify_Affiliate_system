@@ -181,11 +181,14 @@ function MilestoneCard({
   complimentaryTickets: number;
 }) {
   const styles = styleForTier(name);
-  // Starter (targetMinor = 0) is always "unlocked" by definition — show it
-  // as full progress rather than divide-by-zero gibberish.
-  const isEntryTier = targetAmount <= 0;
+  // Entry tier (Starter, targetMinor = 0) is always "unlocked" by
+  // definition — show it as full progress rather than divide-by-zero
+  // gibberish. Also treat non-finite / missing targets as entry so a
+  // malformed row from the API can't poison the render.
+  const isEntryTier = !Number.isFinite(targetAmount) || targetAmount <= 0;
   const effectiveCurrent = unlocked || isEntryTier ? Math.max(targetAmount, currentAmount) : currentAmount;
-  const pct = isEntryTier ? 100 : Math.min(100, (effectiveCurrent / targetAmount) * 100);
+  const rawPct = isEntryTier ? 100 : (effectiveCurrent / targetAmount) * 100;
+  const pct = Number.isFinite(rawPct) ? Math.min(100, Math.max(0, rawPct)) : 0;
 
   return (
     <article
