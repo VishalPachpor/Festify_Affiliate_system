@@ -101,8 +101,9 @@ export function AdminSidebar() {
       className="flex w-[var(--sidebar-w)] shrink-0 flex-col bg-[var(--color-surface-sidebar)] border-r border-[var(--color-border)]"
       aria-label="Admin navigation"
     >
-      {/* Brand — Figma spec: p-24, border-bottom */}
-      <div className="border-b border-[var(--color-border)] px-[24px] pt-[24px] pb-[24px]">
+      {/* Brand — Figma p-24 relaxed to p-16 so it shares the sidebar's 16px
+          rhythm (nav + footer) instead of being a one-off 24px outlier. */}
+      <div className="border-b border-[var(--color-border)] px-[16px] pt-[16px] pb-[16px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/TOKEN2049_Logo.svg"
