@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { prisma } from "../lib/prisma";
 import { getTenantId } from "../middleware/auth";
 import { sendAffiliateInviteEmail } from "../lib/email";
+import { COMMISSION_CREDIT_TYPES } from "../lib/commission-types";
 
 const router = Router();
 
@@ -13,13 +14,17 @@ function requireAdmin(req: Request, res: Response): boolean {
   return true;
 }
 
+// Tier keys come from the rate-setting milestone ladder. Tiers unlock on
+// attributed-revenue thresholds (GMV), NOT on commission earned, so this
+// takes revenue — swapping in commission here will put every affiliate one
+// tier behind where they should be.
 function deriveTierKey(
-  currentCommissionMinor: number,
+  currentRevenueMinor: number,
   milestones: Array<{ key: string; targetMinor: number }>,
 ): string | null {
   let currentTier: string | null = null;
   for (const milestone of milestones) {
-    if (currentCommissionMinor >= milestone.targetMinor) {
+    if (currentRevenueMinor >= milestone.targetMinor) {
       currentTier = milestone.key.toLowerCase();
     } else {
       break;
@@ -77,7 +82,7 @@ router.get("/api/affiliates/me", async (req: Request, res: Response) => {
     // Aggregate this affiliate's commission + sales from the ledger.
     const [commissionAgg, attributionCount, sales] = await Promise.all([
       prisma.commissionLedgerEntry.aggregate({
-        where: { tenantId, affiliateId, type: "earned" },
+        where: { tenantId, affiliateId, type: { in: COMMISSION_CREDIT_TYPES } },
         _sum: { amountMinor: true },
       }),
       prisma.attributionClaim.count({ where: { tenantId, affiliateId } }),
@@ -169,7 +174,7 @@ router.get("/api/affiliates", async (req: Request, res: Response) => {
       const [commissionGroups, attributionGroups, sales] = await Promise.all([
         prisma.commissionLedgerEntry.groupBy({
           by: ["affiliateId"],
-          where: { tenantId, affiliateId: { in: affiliateIds }, type: "earned" },
+          where: { tenantId, affiliateId: { in: affiliateIds }, type: { in: COMMISSION_CREDIT_TYPES } },
           _sum: { amountMinor: true },
         }),
         prisma.attributionClaim.groupBy({
@@ -225,7 +230,7 @@ router.get("/api/affiliates", async (req: Request, res: Response) => {
           currency: "USD",
           joinedAt: aff.createdAt.toISOString(),
           referralCode: aff.referralCode,
-          tier: deriveTierKey(commissionByAff.get(aff.affiliateId) ?? 0, milestones),
+          tier: deriveTierKey(revenueByAff.get(aff.affiliateId) ?? 0, milestones),
         });
       }
     }
@@ -318,7 +323,7 @@ router.get("/api/affiliates/:id/financials", async (req: Request, res: Response)
 
     const [entries, payouts] = await Promise.all([
       prisma.commissionLedgerEntry.findMany({
-        where: { tenantId, affiliateId, type: "earned" },
+        where: { tenantId, affiliateId, type: { in: COMMISSION_CREDIT_TYPES } },
         select: {
           amountMinor: true,
           sale: { select: { status: true } },

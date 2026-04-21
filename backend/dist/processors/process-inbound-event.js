@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RetryableError = void 0;
 exports.processInboundEvent = processInboundEvent;
+exports.normalizeReferralCode = normalizeReferralCode;
 const prisma_1 = require("../lib/prisma");
 const cache_1 = require("../lib/cache");
 const event_bus_1 = require("../lib/event-bus");
@@ -116,7 +117,13 @@ async function executeGoldenFlow(event) {
     if (amountMinor > MAX_AMOUNT_MINOR) {
         throw new Error(`Amount exceeds max allowed: ${amountMinor}`);
     }
-    const referralCode = extractString(payload, "referralCode") ?? null;
+    const referralCodeRaw = extractString(payload, "referralCode") ?? null;
+    // CampaignAffiliate.referralCode is stored UPPERCASE + alphanumeric-only by the
+    // admin approval UI. Luma's webhook echoes whatever the buyer typed at checkout,
+    // which can be any case. Normalize before the unique lookup so `vishal2020` and
+    // `VISHAL2020` both resolve to the same affiliate. Sale.referralCode keeps the
+    // raw trimmed value so it's still debuggable.
+    const referralCodeLookup = normalizeReferralCode(referralCodeRaw);
     // ── 2. Resolve campaign from DB ─────────────────────────────────────────
     // Prefer campaignId from payload if provided; otherwise fall back to
     // the first campaign for this tenant (MVP behavior).
@@ -131,9 +138,9 @@ async function executeGoldenFlow(event) {
     }
     // ── 3. Resolve affiliate (optional, before transaction) ─────────────────
     let affiliate = null;
-    if (referralCode) {
+    if (referralCodeLookup) {
         affiliate = await prisma_1.prisma.campaignAffiliate.findUnique({
-            where: { tenantId_referralCode: { tenantId, referralCode } },
+            where: { tenantId_referralCode: { tenantId, referralCode: referralCodeLookup } },
             select: { affiliateId: true },
         });
     }
@@ -157,7 +164,7 @@ async function executeGoldenFlow(event) {
                     externalOrderId,
                     amountMinor,
                     currency,
-                    referralCode,
+                    referralCode: referralCodeRaw,
                 },
             });
         }
@@ -229,22 +236,22 @@ async function executeGoldenFlow(event) {
  * means out-of-order events / replays don't drift the per-affiliate progress.
  */
 async function emitMilestoneProgress(tenantId, affiliateId) {
-    const [milestones, commissionAgg] = await Promise.all([
+    const [milestones, revenueAgg] = await Promise.all([
         prisma_1.prisma.milestone.findMany({
             where: { tenantId },
             orderBy: { sortOrder: "asc" },
         }),
-        prisma_1.prisma.commissionLedgerEntry.aggregate({
-            where: { tenantId, affiliateId, type: "earned" },
+        prisma_1.prisma.sale.aggregate({
+            where: { tenantId, attributionClaim: { affiliateId } },
             _sum: { amountMinor: true },
         }),
     ]);
     if (milestones.length === 0)
         return;
-    const totalCommission = commissionAgg._sum.amountMinor ?? 0;
+    const totalRevenue = revenueAgg._sum.amountMinor ?? 0;
     for (const milestone of milestones) {
-        const currentMinor = Math.min(totalCommission, milestone.targetMinor);
-        const unlocked = totalCommission >= milestone.targetMinor;
+        const currentMinor = Math.min(totalRevenue, milestone.targetMinor);
+        const unlocked = totalRevenue >= milestone.targetMinor;
         await (0, event_bus_1.emitEvent)("milestone.progressed", {
             tenantId,
             affiliateId,
@@ -268,6 +275,22 @@ function extractString(obj, key) {
     if (typeof val === "string" && val.trim().length > 0)
         return val.trim();
     return null;
+}
+/**
+ * Canonicalise a referral code for affiliate lookups.
+ *
+ * Admin approval forces codes to UPPER + alphanumeric-only on the way in
+ * (see frontend/src/app/admin/affiliates/page.tsx), so CampaignAffiliate
+ * rows are always stored in that shape. Webhooks echo whatever the buyer
+ * typed at checkout (Luma is case-insensitive on coupons), so lookups must
+ * normalize identically — otherwise a `vishal2020` sale misses
+ * `VISHAL2020` and attribution silently fails.
+ */
+function normalizeReferralCode(raw) {
+    if (raw == null)
+        return null;
+    const cleaned = raw.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+    return cleaned.length > 0 ? cleaned : null;
 }
 function extractInt(obj, key) {
     const val = obj[key];

@@ -15,4 +15,15 @@ export declare class RetryableError extends Error {
  * This guarantees the event always leaves "pending" state.
  */
 export declare function processInboundEvent(eventId: string): Promise<void>;
+/**
+ * Canonicalise a referral code for affiliate lookups.
+ *
+ * Admin approval forces codes to UPPER + alphanumeric-only on the way in
+ * (see frontend/src/app/admin/affiliates/page.tsx), so CampaignAffiliate
+ * rows are always stored in that shape. Webhooks echo whatever the buyer
+ * typed at checkout (Luma is case-insensitive on coupons), so lookups must
+ * normalize identically — otherwise a `vishal2020` sale misses
+ * `VISHAL2020` and attribution silently fails.
+ */
+export declare function normalizeReferralCode(raw: string | null | undefined): string | null;
 //# sourceMappingURL=process-inbound-event.d.ts.map

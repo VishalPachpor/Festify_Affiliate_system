@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma";
 import { getTenantId } from "../middleware/auth";
 import { buildCacheKey, getCache, setCache } from "../lib/cache";
 import { createdAtFilter } from "../lib/time-filters";
+import { COMMISSION_CREDIT_TYPES } from "../lib/commission-types";
 
 const router = Router();
 
@@ -40,7 +41,7 @@ router.get("/api/sales/summary", async (req: Request, res: Response) => {
       }),
 
       prisma.commissionLedgerEntry.aggregate({
-        where: { tenantId, type: "earned", ...dateFilter },
+        where: { tenantId, type: { in: COMMISSION_CREDIT_TYPES }, ...dateFilter },
         _sum: { amountMinor: true },
       }),
 
@@ -124,7 +125,7 @@ router.get("/api/sales", async (req: Request, res: Response) => {
         include: {
           attributionClaim: { select: { affiliateId: true } },
           commissionLedgerEntries: {
-            where: { type: "earned" },
+            where: { type: { in: COMMISSION_CREDIT_TYPES } },
             select: {
               amountMinor: true,
               payoutId: true,
@@ -273,7 +274,7 @@ router.post("/api/sales/:id/approve", async (req: Request, res: Response) => {
       include: {
         attributionClaim: { select: { affiliateId: true } },
         commissionLedgerEntries: {
-          where: { type: "earned" },
+          where: { type: { in: COMMISSION_CREDIT_TYPES } },
           select: { id: true, amountMinor: true, payoutId: true },
         },
       },

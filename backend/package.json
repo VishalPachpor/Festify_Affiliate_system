@@ -12,7 +12,8 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "ts-node prisma/seed.ts",
-    "test": "ts-node --transpile-only tests/payouts.integration.test.ts"
+    "test": "ts-node --transpile-only tests/tier-rate.unit.test.ts && ts-node --transpile-only tests/payouts.integration.test.ts",
+    "test:unit": "ts-node --transpile-only tests/tier-rate.unit.test.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

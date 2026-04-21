@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma";
 import { getTenantId } from "../middleware/auth";
 import { buildCacheKey, getCache, setCache, invalidateCache } from "../lib/cache";
 import { emitEvent } from "../lib/event-bus";
+import { COMMISSION_CREDIT_TYPES } from "../lib/commission-types";
 
 const router = Router();
 
@@ -184,11 +185,12 @@ router.post("/api/payouts/create", async (req: Request, res: Response) => {
       }
 
       // Find unpaid earned commissions — scoped to a single sale if saleId provided,
-      // otherwise all unpaid entries for the affiliate.
+      // otherwise all unpaid entries for the affiliate. Includes both original
+      // earnings and retroactive tier adjustments so catch-up deltas get paid.
       const entryWhere: Record<string, unknown> = {
         tenantId,
         affiliateId,
-        type: "earned",
+        type: { in: COMMISSION_CREDIT_TYPES },
         payoutId: null,
       };
       if (typeof saleId === "string" && saleId) {

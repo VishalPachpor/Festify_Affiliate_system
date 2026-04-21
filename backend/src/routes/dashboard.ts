@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma";
 import { getTenantId } from "../middleware/auth";
 import { buildCacheKey, getCache, setCache } from "../lib/cache";
 import { extractDateRange } from "../lib/time-filters";
+import { COMMISSION_CREDIT_TYPES } from "../lib/commission-types";
 
 const router = Router();
 
@@ -64,7 +65,7 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
         await Promise.all([
           prisma.sale.aggregate({ where, _sum: { amountMinor: true } }),
           prisma.sale.count({ where }),
-          prisma.commissionLedgerEntry.aggregate({ where: { tenantId, type: "earned", ...dateFilter }, _sum: { amountMinor: true } }),
+          prisma.commissionLedgerEntry.aggregate({ where: { tenantId, type: { in: COMMISSION_CREDIT_TYPES }, ...dateFilter }, _sum: { amountMinor: true } }),
           prisma.attributionClaim.count({ where: { tenantId, ...dateFilter } }),
           prisma.campaignAffiliate.count({ where: { tenantId } }),
           prisma.payout.aggregate({ where: { tenantId, status: "paid" }, _sum: { amountMinor: true } }),
@@ -109,11 +110,11 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
         _sum: { amountMinor: true },
       }),
       prisma.commissionLedgerEntry.aggregate({
-        where: { tenantId, type: "earned", createdAt: { gte: currentStart, lte: now } },
+        where: { tenantId, type: { in: COMMISSION_CREDIT_TYPES }, createdAt: { gte: currentStart, lte: now } },
         _sum: { amountMinor: true },
       }),
       prisma.commissionLedgerEntry.aggregate({
-        where: { tenantId, type: "earned", createdAt: { gte: prevStart, lt: currentStart } },
+        where: { tenantId, type: { in: COMMISSION_CREDIT_TYPES }, createdAt: { gte: prevStart, lt: currentStart } },
         _sum: { amountMinor: true },
       }),
     ]);
@@ -281,7 +282,7 @@ router.get("/api/dashboard/trend", async (req: Request, res: Response) => {
           _sum: { amountMinor: true },
         }),
         prisma.commissionLedgerEntry.aggregate({
-          where: { tenantId, type: "earned", createdAt: { gte: dayStart, lte: dayEnd } },
+          where: { tenantId, type: { in: COMMISSION_CREDIT_TYPES }, createdAt: { gte: dayStart, lte: dayEnd } },
           _sum: { amountMinor: true },
         }),
       ]);

@@ -49,13 +49,13 @@ router.get("/api/milestones/tiers", async (req, res) => {
             progressByMilestone = new Map(progress.map((p) => [p.milestoneId, { currentMinor: p.currentMinor, unlockedAt: p.unlockedAt }]));
         }
         else {
-            // Organizer view: report tenant-wide commission total against each tier.
+            // Organizer view: report tenant-wide revenue total against each tier.
             const stats = await prisma_1.prisma.dashboardStats.findUnique({ where: { tenantId } });
-            const totalCommission = stats?.totalCommission ?? 0;
+            const totalRevenue = stats?.totalRevenue ?? 0;
             for (const m of milestones) {
                 progressByMilestone.set(m.id, {
-                    currentMinor: Math.min(totalCommission, m.targetMinor),
-                    unlockedAt: totalCommission >= m.targetMinor ? new Date() : null,
+                    currentMinor: Math.min(totalRevenue, m.targetMinor),
+                    unlockedAt: totalRevenue >= m.targetMinor ? new Date() : null,
                 });
             }
         }
@@ -105,23 +105,23 @@ router.get("/api/milestones/progress", async (req, res) => {
             });
             return;
         }
-        let totalCommission = 0;
+        let totalRevenue = 0;
         if (affiliateId) {
-            const agg = await prisma_1.prisma.commissionLedgerEntry.aggregate({
-                where: { tenantId, affiliateId, type: "earned" },
+            const agg = await prisma_1.prisma.sale.aggregate({
+                where: { tenantId, attributionClaim: { affiliateId } },
                 _sum: { amountMinor: true },
             });
-            totalCommission = agg._sum.amountMinor ?? 0;
+            totalRevenue = agg._sum.amountMinor ?? 0;
         }
         else {
             const stats = await prisma_1.prisma.dashboardStats.findUnique({ where: { tenantId } });
-            totalCommission = stats?.totalCommission ?? 0;
+            totalRevenue = stats?.totalRevenue ?? 0;
         }
         // Find the highest unlocked tier and the next locked tier.
         let currentTier = null;
         let nextTier = null;
         for (const m of milestones) {
-            if (totalCommission >= m.targetMinor) {
+            if (totalRevenue >= m.targetMinor) {
                 currentTier = m;
             }
             else {
@@ -130,7 +130,7 @@ router.get("/api/milestones/progress", async (req, res) => {
             }
         }
         res.status(200).json({
-            currentRevenue: totalCommission,
+            currentRevenue: totalRevenue,
             currentTier: currentTier?.key ?? null,
             nextTier: nextTier?.key ?? null,
             nextTierTarget: nextTier?.targetMinor ?? 0,

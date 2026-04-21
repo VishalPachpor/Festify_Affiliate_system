@@ -116,7 +116,7 @@ const IDEMPOTENCY_KEY_REGEX = /^[a-zA-Z0-9_-]{16,128}$/;
 router.post("/api/payouts/create", async (req, res) => {
     try {
         const tenantId = (0, auth_1.getTenantId)(req);
-        const { affiliateId } = req.body;
+        const { affiliateId, saleId, markAsPaid } = req.body;
         if (!affiliateId || typeof affiliateId !== "string") {
             res.status(400).json({ error: "affiliateId required" });
             return;
@@ -131,12 +131,30 @@ router.post("/api/payouts/create", async (req, res) => {
             }
             idempotencyKey = rawKey.trim();
         }
+        // Auto-generate a server-side idempotency key when the client doesn't
+        // supply one. Minute-bucketed per (tenant, affiliate, saleId): a
+        // double-click or retry within the same minute hits the DB unique
+        // constraint and replays the original payout. Prevents duplicate
+        // payouts from UI double-fires or network retries.
+        if (!idempotencyKey) {
+            const minuteBucket = Math.floor(Date.now() / 60_000);
+            const scope = saleId && typeof saleId === "string" ? `sale-${saleId}` : "bulk";
+            idempotencyKey = `auto-${affiliateId}-${scope}-${minuteBucket}`;
+        }
         // ── Atomic: idempotency check + payout creation in ONE transaction ──
         // DB-enforced via PayoutIdempotencyKey unique constraint.
         // No race condition possible — even concurrent requests with the same key
         // will see exactly one succeed at the unique-constraint level.
         let alreadyExisted = false;
         const result = await prisma_1.prisma.$transaction(async (tx) => {
+            // Concurrency guard: transaction-scoped advisory lock on the affiliate
+            // ledger. If two admins click "Pay" at the same instant, only one
+            // transaction enters this section at a time — the other waits and
+            // then sees the idempotency record the first one wrote (or a fully
+            // settled state) and no-ops.
+            //   pg_advisory_xact_lock takes a bigint; hashtextextended returns
+            //   64 bits. Fits cleanly and releases automatically on commit/rollback.
+            await tx.$executeRawUnsafe(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, `payout:${tenantId}:${affiliateId}`);
             // Idempotency check inside transaction
             if (idempotencyKey) {
                 const existing = await tx.payoutIdempotencyKey.findUnique({
@@ -148,13 +166,104 @@ router.post("/api/payouts/create", async (req, res) => {
                     return payout;
                 }
             }
-            // Find all unpaid earned commissions for this affiliate
+            // Find unpaid earned commissions — scoped to a single sale if saleId provided,
+            // otherwise all unpaid entries for the affiliate.
+            const entryWhere = {
+                tenantId,
+                affiliateId,
+                type: "earned",
+                payoutId: null,
+            };
+            if (typeof saleId === "string" && saleId) {
+                entryWhere.saleId = saleId;
+            }
             const unpaidEntries = await tx.commissionLedgerEntry.findMany({
-                where: { tenantId, affiliateId, type: "earned", payoutId: null },
-                select: { id: true, amountMinor: true },
+                where: entryWhere,
+                select: { id: true, amountMinor: true, saleId: true },
             });
-            if (unpaidEntries.length === 0)
-                return null;
+            // Invariant: one sale → one payout. Refuse to bundle unpaid entries that
+            // span multiple sales. Caller must retry with an explicit saleId per sale.
+            // Prior incident: bundling produced a payout whose "mark paid" fanned
+            // across sibling sales and corrupted status transitions.
+            if (unpaidEntries.length > 0) {
+                const distinctSaleIds = new Set(unpaidEntries.map((e) => e.saleId));
+                if (distinctSaleIds.size > 1) {
+                    const err = new Error(`Refusing bundled payout: unpaid entries span ${distinctSaleIds.size} sales ` +
+                        `(${Array.from(distinctSaleIds).join(", ")}). ` +
+                        `Call POST /payouts/create once per saleId.`);
+                    err.code = "BUNDLED_PAYOUT_REFUSED";
+                    throw err;
+                }
+            }
+            // --- Path B: promote any pending payouts that already cover ledger
+            //     entries for this affiliate (and sale, if scoped). Runs in ADDITION
+            //     to Path A below so "Pay all approved" truly pays everything — both
+            //     fresh unpaid entries AND existing pending payouts from Approve. ---
+            let promotedTotal = 0;
+            let promotedSaleIds = [];
+            let firstPromotedPayoutId = null;
+            if (markAsPaid) {
+                // Strict scope: tenant + affiliate + pending.
+                // When a saleId is supplied, require that *every* linked ledger entry
+                // belongs to that sale — otherwise a batch payout covering sibling
+                // sales would accidentally flip them all to paid.
+                const pendingPayoutsWhere = {
+                    tenantId,
+                    affiliateId,
+                    status: "pending",
+                };
+                if (typeof saleId === "string" && saleId) {
+                    pendingPayoutsWhere.commissionEntries = {
+                        some: { saleId, tenantId },
+                        every: { saleId, tenantId },
+                    };
+                }
+                const pendingPayouts = await tx.payout.findMany({
+                    where: pendingPayoutsWhere,
+                    select: { id: true, amountMinor: true, commissionEntries: { select: { saleId: true } } },
+                });
+                // Invariant (Path B): refuse to promote any pending payout that covers
+                // >1 sale. Historical bundled payouts — if any ever land in the DB —
+                // must be unbundled manually, not silently flipped to paid here.
+                const bundled = pendingPayouts.filter((p) => new Set(p.commissionEntries.map((e) => e.saleId)).size > 1);
+                if (bundled.length > 0) {
+                    const err = new Error(`Refusing to promote bundled pending payout(s): ${bundled.map((p) => p.id).join(", ")}. ` +
+                        `Unbundle via prisma/repair-bundled-payouts.ts before retrying.`);
+                    err.code = "BUNDLED_PAYOUT_REFUSED";
+                    throw err;
+                }
+                if (pendingPayouts.length > 0) {
+                    const now = new Date();
+                    await tx.payout.updateMany({
+                        where: { id: { in: pendingPayouts.map((p) => p.id) } },
+                        data: { status: "paid", processedAt: now },
+                    });
+                    const affectedSaleIds = Array.from(new Set(pendingPayouts.flatMap((p) => p.commissionEntries.map((e) => e.saleId))));
+                    if (affectedSaleIds.length > 0) {
+                        await tx.sale.updateMany({
+                            where: { id: { in: affectedSaleIds }, tenantId },
+                            data: { status: "paid" },
+                        });
+                    }
+                    promotedTotal = pendingPayouts.reduce((sum, p) => sum + p.amountMinor, 0);
+                    promotedSaleIds = affectedSaleIds;
+                    firstPromotedPayoutId = pendingPayouts[0].id;
+                }
+            }
+            // If there's nothing unpaid AND nothing pending promoted, we're done —
+            // the caller will get a 400 and know there's no money to move.
+            if (unpaidEntries.length === 0) {
+                if (firstPromotedPayoutId === null)
+                    return null;
+                if (idempotencyKey) {
+                    await tx.payoutIdempotencyKey.create({
+                        data: { tenantId, key: idempotencyKey, payoutId: firstPromotedPayoutId },
+                    });
+                }
+                return { id: firstPromotedPayoutId, status: "paid", amountMinor: promotedTotal };
+            }
+            // Otherwise fall through to Path A: claim the unpaid entries into a new
+            // payout. The response will reflect combined totals below.
             const amount = unpaidEntries.reduce((sum, e) => sum + e.amountMinor, 0);
             const payout = await tx.payout.create({
                 data: {
@@ -162,7 +271,8 @@ router.post("/api/payouts/create", async (req, res) => {
                     affiliateId,
                     amountMinor: amount,
                     currency: "USD",
-                    status: "pending",
+                    status: markAsPaid ? "paid" : "pending",
+                    processedAt: markAsPaid ? new Date() : undefined,
                 },
             });
             // Lock all claimed entries by setting payoutId
@@ -170,22 +280,51 @@ router.post("/api/payouts/create", async (req, res) => {
                 where: { id: { in: unpaidEntries.map((e) => e.id) } },
                 data: { payoutId: payout.id },
             });
+            // Flip sale.status to match the new payout's state so the commissions
+            // UI reads the source-of-truth column instead of deriving it.
+            //   markAsPaid: true  → sale.status = paid
+            //   markAsPaid: false → sale.status = approved
+            const affectedSaleIds = Array.from(new Set(unpaidEntries.map((e) => e.saleId).filter((id) => typeof id === "string")));
+            if (affectedSaleIds.length > 0) {
+                await tx.sale.updateMany({
+                    where: { id: { in: affectedSaleIds }, tenantId },
+                    data: { status: markAsPaid ? "paid" : "approved" },
+                });
+            }
             // Record idempotency key (DB unique constraint catches concurrent races)
             if (idempotencyKey) {
                 await tx.payoutIdempotencyKey.create({
                     data: { tenantId, key: idempotencyKey, payoutId: payout.id },
                 });
             }
-            return payout;
+            // Combine Path B (promoted) + Path A (newly paid) totals on the response
+            // so the caller sees the full settlement amount in one number.
+            return {
+                id: payout.id,
+                status: payout.status,
+                amountMinor: payout.amountMinor + promotedTotal,
+            };
         });
         if (!result) {
             res.status(400).json({ error: "No unpaid commissions to pay out" });
             return;
         }
-        // Emit event AFTER transaction commits (with await — never lose events)
+        // Post-commit side-effects: emit event + bust cache. These must NOT fail
+        // the request — the payout is already committed to the DB, the user gets
+        // confused seeing a 500 when their money actually moved. Log and swallow.
         if (!alreadyExisted) {
-            await (0, event_bus_1.emitEvent)("payout.created", { tenantId, amountMinor: result.amountMinor });
-            await (0, cache_1.invalidateCache)(tenantId, "payouts:summary", "dashboard:summary");
+            try {
+                await (0, event_bus_1.emitEvent)("payout.created", { tenantId, amountMinor: result.amountMinor });
+            }
+            catch (e) {
+                console.warn("[payouts] emit event failed (non-fatal):", e);
+            }
+            try {
+                await (0, cache_1.invalidateCache)(tenantId, "payouts:summary", "dashboard:summary");
+            }
+            catch (e) {
+                console.warn("[payouts] cache invalidate failed (non-fatal):", e);
+            }
         }
         res.status(alreadyExisted ? 200 : 201).json({
             id: result.id,
@@ -194,9 +333,20 @@ router.post("/api/payouts/create", async (req, res) => {
         });
     }
     catch (err) {
+        const code = typeof err === "object" && err !== null && "code" in err
+            ? err.code
+            : null;
         // Handle race: two concurrent requests with same idempotency key
-        if (typeof err === "object" && err !== null && "code" in err && err.code === "P2002") {
+        if (code === "P2002") {
             res.status(409).json({ error: "Concurrent request with same idempotency key" });
+            return;
+        }
+        // Guardrail: bundled payout refused (invariant: 1 sale → 1 payout).
+        if (code === "BUNDLED_PAYOUT_REFUSED") {
+            res.status(422).json({
+                error: err.message,
+                code: "BUNDLED_PAYOUT_REFUSED",
+            });
             return;
         }
         console.error("[payouts] Create failed:", err);
@@ -209,7 +359,7 @@ router.post("/api/payouts/create", async (req, res) => {
 // Transition payout status: pending → processing → paid / failed
 // ─────────────────────────────────────────────────────────────────────────────
 const VALID_TRANSITIONS = {
-    pending: ["processing", "failed"],
+    pending: ["processing", "paid", "failed"],
     processing: ["paid", "failed"],
     failed: ["pending"], // allow retry
 };
@@ -236,13 +386,30 @@ router.patch("/api/payouts/:id/status", async (req, res) => {
             });
             return;
         }
-        const updated = await prisma_1.prisma.payout.update({
-            where: { id },
-            data: {
-                status: status,
-                externalReference: externalReference ?? payout.externalReference,
-                processedAt: status === "paid" ? new Date() : payout.processedAt,
-            },
+        const updated = await prisma_1.prisma.$transaction(async (tx) => {
+            const up = await tx.payout.update({
+                where: { id },
+                data: {
+                    status: status,
+                    externalReference: externalReference ?? payout.externalReference,
+                    processedAt: status === "paid" ? new Date() : payout.processedAt,
+                },
+            });
+            // Sale.status mirrors the payout when it reaches a terminal state.
+            if (status === "paid") {
+                const entries = await tx.commissionLedgerEntry.findMany({
+                    where: { payoutId: id },
+                    select: { saleId: true },
+                });
+                const saleIds = Array.from(new Set(entries.map((e) => e.saleId)));
+                if (saleIds.length > 0) {
+                    await tx.sale.updateMany({
+                        where: { id: { in: saleIds }, tenantId },
+                        data: { status: "paid" },
+                    });
+                }
+            }
+            return up;
         });
         await (0, event_bus_1.emitEvent)("payout.status_changed", {
             tenantId,

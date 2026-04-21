@@ -37,6 +37,7 @@ router.get("/api/dashboard/summary", async (req, res) => {
                 const conversionRate = totalSales > 0
                     ? Math.round((stats.attributedSales / totalSales) * 1000) / 10
                     : 0;
+                const pendingCount = await prisma_1.prisma.application.count({ where: { tenantId, status: "pending" } });
                 const now = new Date();
                 result = {
                     totalRevenue: stats.totalRevenue,
@@ -44,6 +45,7 @@ router.get("/api/dashboard/summary", async (req, res) => {
                     totalAffiliates: stats.totalAffiliates,
                     conversionRate,
                     paidOut: stats.totalPaidOut,
+                    pendingApprovals: pendingCount,
                     milestonesUnlocked: 0,
                     currency: stats.currency,
                     periodStart: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0],
@@ -55,13 +57,14 @@ router.get("/api/dashboard/summary", async (req, res) => {
         if (!result) {
             const dateFilter = hasDateFilter ? { createdAt: dateRange } : {};
             const where = { tenantId, ...dateFilter };
-            const [revenueSummary, salesCount, commissionSummary, attributedCount, affiliateCount, paidOutSummary] = await Promise.all([
+            const [revenueSummary, salesCount, commissionSummary, attributedCount, affiliateCount, paidOutSummary, pendingApprovals] = await Promise.all([
                 prisma_1.prisma.sale.aggregate({ where, _sum: { amountMinor: true } }),
                 prisma_1.prisma.sale.count({ where }),
                 prisma_1.prisma.commissionLedgerEntry.aggregate({ where: { tenantId, type: "earned", ...dateFilter }, _sum: { amountMinor: true } }),
                 prisma_1.prisma.attributionClaim.count({ where: { tenantId, ...dateFilter } }),
                 prisma_1.prisma.campaignAffiliate.count({ where: { tenantId } }),
                 prisma_1.prisma.payout.aggregate({ where: { tenantId, status: "paid" }, _sum: { amountMinor: true } }),
+                prisma_1.prisma.application.count({ where: { tenantId, status: "pending" } }),
             ]);
             const totalRevenue = revenueSummary._sum.amountMinor ?? 0;
             const totalSales = salesCount;
@@ -75,12 +78,53 @@ router.get("/api/dashboard/summary", async (req, res) => {
                 totalAffiliates: affiliateCount,
                 conversionRate,
                 paidOut: paidOutSummary._sum.amountMinor ?? 0,
+                pendingApprovals,
                 milestonesUnlocked: 0,
                 currency: "USD",
                 periodStart: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0],
                 periodEnd: now.toISOString().split("T")[0],
             };
         }
+        // ── Revenue change % (current 30 days vs previous 30 days) ──────────
+        const now = new Date();
+        const currentStart = new Date(now);
+        currentStart.setDate(now.getDate() - 30);
+        const prevStart = new Date(currentStart);
+        prevStart.setDate(currentStart.getDate() - 30);
+        const [currentRev, prevRev, currentComm, prevComm] = await Promise.all([
+            prisma_1.prisma.sale.aggregate({
+                where: { tenantId, createdAt: { gte: currentStart, lte: now } },
+                _sum: { amountMinor: true },
+            }),
+            prisma_1.prisma.sale.aggregate({
+                where: { tenantId, createdAt: { gte: prevStart, lt: currentStart } },
+                _sum: { amountMinor: true },
+            }),
+            prisma_1.prisma.commissionLedgerEntry.aggregate({
+                where: { tenantId, type: "earned", createdAt: { gte: currentStart, lte: now } },
+                _sum: { amountMinor: true },
+            }),
+            prisma_1.prisma.commissionLedgerEntry.aggregate({
+                where: { tenantId, type: "earned", createdAt: { gte: prevStart, lt: currentStart } },
+                _sum: { amountMinor: true },
+            }),
+        ]);
+        const curVal = currentRev._sum.amountMinor ?? 0;
+        const prevVal = prevRev._sum.amountMinor ?? 0;
+        const revenueChangePct = prevVal > 0
+            ? Math.round(((curVal - prevVal) / prevVal) * 1000) / 10
+            : curVal > 0
+                ? 100
+                : 0;
+        const curComVal = currentComm._sum.amountMinor ?? 0;
+        const prevComVal = prevComm._sum.amountMinor ?? 0;
+        const commissionsChangePct = prevComVal > 0
+            ? Math.round(((curComVal - prevComVal) / prevComVal) * 1000) / 10
+            : curComVal > 0
+                ? 100
+                : 0;
+        result.revenueChangePct = revenueChangePct;
+        result.commissionsChangePct = commissionsChangePct;
         await (0, cache_1.setCache)(cacheKey, result, 60);
         res.status(200).json(result);
     }
@@ -119,8 +163,8 @@ router.get("/api/dashboard/top-affiliates", async (req, res) => {
                 continue;
             revenueByAffiliate.set(affId, (revenueByAffiliate.get(affId) ?? 0) + s.amountMinor);
         }
-        // Resolve real names/emails from User and Application tables
-        const [users, applications] = await Promise.all([
+        // Resolve real names/emails from User and Application tables, plus referral codes
+        const [users, applications, campaignAffiliates] = await Promise.all([
             prisma_1.prisma.user.findMany({
                 where: { tenantId, affiliateId: { in: affiliateIds } },
                 select: { affiliateId: true, fullName: true, email: true },
@@ -129,9 +173,14 @@ router.get("/api/dashboard/top-affiliates", async (req, res) => {
                 where: { tenantId, affiliateId: { in: affiliateIds }, status: "approved" },
                 select: { affiliateId: true, firstName: true, email: true },
             }),
+            prisma_1.prisma.campaignAffiliate.findMany({
+                where: { tenantId, affiliateId: { in: affiliateIds } },
+                select: { affiliateId: true, referralCode: true },
+            }),
         ]);
         const userByAffId = new Map(users.map((u) => [u.affiliateId, u]));
         const appByAffId = new Map(applications.map((a) => [a.affiliateId, a]));
+        const codeByAffId = new Map(campaignAffiliates.map((c) => [c.affiliateId, c.referralCode]));
         const mapped = grouped.map((g) => {
             const user = userByAffId.get(g.affiliateId);
             const app = appByAffId.get(g.affiliateId);
@@ -139,6 +188,7 @@ router.get("/api/dashboard/top-affiliates", async (req, res) => {
                 id: g.affiliateId,
                 name: user?.fullName ?? app?.firstName ?? g.affiliateId,
                 email: user?.email ?? app?.email ?? `${g.affiliateId}@affiliate.local`,
+                referralCode: codeByAffId.get(g.affiliateId) ?? null,
                 totalSales: g._count._all,
                 totalRevenue: revenueByAffiliate.get(g.affiliateId) ?? 0,
                 conversionRate: 0,
