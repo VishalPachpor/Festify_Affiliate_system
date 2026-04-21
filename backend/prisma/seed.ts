@@ -24,13 +24,18 @@ const TENANT_SLUG = "demo";
 const CAMPAIGN_ID = "campaign_demo";
 const CAMPAIGN_SLUG = "demo";
 
-// Figma 60:2705 target values: $1,000 → $5,000 → $10,000 → $25,000
+// Rate-setting tier ladder. targetMinor is the attributed revenue (GMV)
+// threshold to reach the tier. commissionRateBps is applied to every sale
+// the affiliate has accrued once they reach the tier (retroactive).
+// complimentaryTickets is display-only — no redemption flow.
 const MILESTONES = [
-  { key: "bronze",   name: "Bronze",   letter: "B", color: "#CD7F32", description: "Event VIP pass upgrade",            targetMinor: 1_000_00,   sortOrder: 1 },
-  { key: "silver",   name: "Silver",   letter: "S", color: "#C0C0C0", description: "Backstage / speaker lounge access", targetMinor: 5_000_00,   sortOrder: 2 },
-  { key: "gold",     name: "Gold",     letter: "G", color: "#FFD700", description: "Speaking / panel opportunity",      targetMinor: 10_000_00,  sortOrder: 3 },
-  { key: "platinum", name: "Platinum", letter: "P", color: "#E5E4E2", description: "Revenue share increase to 15%",     targetMinor: 25_000_00,  sortOrder: 4 },
+  { key: "starter", name: "Starter", letter: "S", color: "#9CA4B7", description: "Entry tier — your first sales earn 2.5%.",                                       targetMinor: 0,           commissionRateBps: 250,  complimentaryTickets: 0, sortOrder: 1 },
+  { key: "riser",   name: "Riser",   letter: "R", color: "#5B8DEF", description: "Cross $10k in attributed revenue to unlock 5% on every sale, past and future.",   targetMinor: 10_000_00,   commissionRateBps: 500,  complimentaryTickets: 2, sortOrder: 2 },
+  { key: "pro",     name: "Pro",     letter: "P", color: "#E19A3E", description: "Cross $50k to unlock 7.5% — prior sales are repriced at the new rate.",           targetMinor: 50_000_00,   commissionRateBps: 750,  complimentaryTickets: 4, sortOrder: 3 },
+  { key: "elite",   name: "Elite",   letter: "E", color: "#FFD620", description: "Cross $100k to unlock 10% — the top of the ladder.",                              targetMinor: 100_000_00,  commissionRateBps: 1000, complimentaryTickets: 6, sortOrder: 4 },
 ];
+
+const MILESTONE_KEYS = MILESTONES.map((m) => m.key);
 
 async function main() {
   await prisma.tenant.upsert({
@@ -56,9 +61,29 @@ async function main() {
     },
   });
 
-  // Milestone tiers — keep targets low so the demo webhook actually unlocks
-  // Bronze on the first sale ($100 ticket × 10% = $10 commission, well past
-  // Bronze's $100 ticket / Silver at $500 / etc).
+  // ── Wipe legacy milestones ──────────────────────────────────────────────
+  // The old Bronze/Silver/Gold/Platinum unlock-tier system was replaced by
+  // the Starter/Riser/Pro/Elite rate-setting ladder. Drop any tenant rows
+  // whose key isn't in the new ladder, along with their per-affiliate
+  // progress, so the demo (and any prod tenant re-running this seed) boots
+  // with a clean slate instead of mixing old + new tiers in the UI.
+  const legacyMilestones = await prisma.milestone.findMany({
+    where: { tenantId: TENANT_ID, key: { notIn: MILESTONE_KEYS } },
+    select: { id: true },
+  });
+  if (legacyMilestones.length > 0) {
+    const legacyIds = legacyMilestones.map((m) => m.id);
+    await prisma.$transaction([
+      prisma.affiliateMilestoneProgress.deleteMany({
+        where: { tenantId: TENANT_ID, milestoneId: { in: legacyIds } },
+      }),
+      prisma.milestone.deleteMany({
+        where: { tenantId: TENANT_ID, id: { in: legacyIds } },
+      }),
+    ]);
+  }
+
+  // ── Reseed the rate-setting tier ladder ─────────────────────────────────
   for (const m of MILESTONES) {
     await prisma.milestone.upsert({
       where: { tenantId_key: { tenantId: TENANT_ID, key: m.key } },
@@ -68,6 +93,8 @@ async function main() {
         color: m.color,
         description: m.description,
         targetMinor: m.targetMinor,
+        commissionRateBps: m.commissionRateBps,
+        complimentaryTickets: m.complimentaryTickets,
         sortOrder: m.sortOrder,
       },
       create: {
@@ -78,6 +105,8 @@ async function main() {
         color: m.color,
         description: m.description,
         targetMinor: m.targetMinor,
+        commissionRateBps: m.commissionRateBps,
+        complimentaryTickets: m.complimentaryTickets,
         sortOrder: m.sortOrder,
       },
     });

@@ -18,6 +18,10 @@ enum EventStatus {
 enum CommissionEntryType {
   earned
   reversal
+  /// Retroactive delta emitted when an affiliate crosses a tier threshold
+  /// and their prior sales need to be repriced at the new (higher) rate.
+  /// Summed with "earned" entries when computing affiliate-facing commission totals.
+  tier_adjustment
 }
 
 enum AttributionMethod {
@@ -461,8 +465,10 @@ model Application {
 }
 
 // ─── Milestone ───────────────────────────────────────────────────────────────
-// Per-tenant tier definitions. Each tier represents a commission threshold
-// (in minor units) that, once crossed by an affiliate, unlocks a reward.
+// Per-tenant tier definitions. Each tier represents an attributed-revenue
+// threshold (in minor units) that, once crossed by an affiliate, sets their
+// commission rate going forward AND retroactively reprices prior sales at
+// the new (higher) rate.
 
 model Milestone {
   id          String @id @default(cuid())
@@ -472,8 +478,15 @@ model Milestone {
   letter      String
   color       String
   description String
-  /// Threshold in minor units (cents) of *commission earned* by an affiliate.
+  /// Threshold in minor units (cents) of *attributed revenue* (GMV) an
+  /// affiliate must accrue to unlock this tier. 0 = entry tier.
   targetMinor Int
+  /// Commission rate applied to sales while the affiliate sits at this
+  /// tier. 250 = 2.5%, 500 = 5%, etc. Overrides Campaign.commissionRateBps.
+  commissionRateBps   Int @default(0)
+  /// Display-only perk: complimentary tickets granted at this tier. No
+  /// redemption flow — surfaces in the UI next to the rate.
+  complimentaryTickets Int @default(0)
   sortOrder   Int    @default(0)
 
   createdAt DateTime @default(now())
@@ -493,6 +506,8 @@ model AffiliateMilestoneProgress {
   tenantId     String
   affiliateId  String
   milestoneId  String
+  /// Attributed revenue (GMV) accumulated against this tier's target.
+  /// Capped at the tier's targetMinor so UI progress bars never exceed 100%.
   currentMinor Int      @default(0)
   unlockedAt   DateTime?
 
