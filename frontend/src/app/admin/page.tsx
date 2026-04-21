@@ -21,18 +21,23 @@ function formatCurrency(minorUnits: number, currency: string): string {
 
 // ── Tier badge ────────────────────────────────────────────────────────────────
 
+// Colors match the Starter/Riser/Pro/Elite ladder seeded in prisma/seed.ts.
+// Unknown/custom tier names fall back to the neutral preset so the badge
+// never renders as broken white-on-white.
 const TIER_COLORS: Record<string, { bg: string; text: string }> = {
-  platinum: { bg: "rgba(34,197,94,0.14)", text: "#22C55E" },
-  gold:     { bg: "rgba(234,179,8,0.14)", text: "#EAB308" },
-  silver:   { bg: "rgba(148,163,184,0.14)", text: "#94A3B8" },
-  bronze:   { bg: "rgba(217,119,6,0.14)", text: "#D97706" },
+  elite:   { bg: "rgba(255,214,32,0.14)",  text: "#FFD620" },
+  pro:     { bg: "rgba(225,154,62,0.14)",  text: "#E19A3E" },
+  riser:   { bg: "rgba(91,141,239,0.14)",  text: "#5B8DEF" },
+  starter: { bg: "rgba(156,164,183,0.14)", text: "#9CA4B7" },
 };
 
+const FALLBACK_TIER_COLOR = { bg: "rgba(148,163,184,0.14)", text: "#94A3B8" };
+
 function TierBadge({ tier }: { tier: string }) {
-  const colors = TIER_COLORS[tier] ?? TIER_COLORS.bronze;
+  const colors = TIER_COLORS[tier.toLowerCase()] ?? FALLBACK_TIER_COLOR;
   return (
     <span
-      className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
+      className="inline-block rounded-[var(--space-1)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium capitalize"
       style={{ background: colors.bg, color: colors.text }}
     >
       {tier}
@@ -235,10 +240,12 @@ export default function AdminDashboardPage() {
                   </span>
                   <div className="flex justify-center">
                     <TierBadge tier={
-                      aff.totalRevenue >= 250000 ? "platinum" :
-                      aff.totalRevenue >= 100000 ? "gold" :
-                      aff.totalRevenue >= 50000 ? "silver" :
-                      aff.totalRevenue > 0 ? "bronze" : "—"
+                      // Thresholds in minor units (cents). Matches the
+                      // Starter/Riser/Pro/Elite ladder seeded for the tenant.
+                      aff.totalRevenue >= 10_000_000 ? "elite" :
+                      aff.totalRevenue >= 5_000_000 ? "pro" :
+                      aff.totalRevenue >= 1_000_000 ? "riser" :
+                      aff.totalRevenue > 0 ? "starter" : "—"
                     } />
                   </div>
                 </div>

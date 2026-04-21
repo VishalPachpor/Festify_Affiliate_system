@@ -12,6 +12,11 @@ function formatCurrency(minorUnits: number, currency: string): string {
   }).format(minorUnits / 100);
 }
 
+function formatRatePct(bps: number): string {
+  const pct = bps / 100;
+  return Number.isInteger(pct) ? `${pct}%` : `${pct.toFixed(1)}%`;
+}
+
 // Figma 56:2761 — progress bar gradient
 const PROGRESS_GRADIENT =
   "linear-gradient(90deg, rgb(28,74,166) 0%, rgb(36,79,166) 25%, rgb(44,84,166) 50%, rgb(52,89,165) 75%, rgb(59,94,165) 100%)";
@@ -44,6 +49,8 @@ export function MilestoneProgress() {
   const target = data.nextTierTarget || 1;
   const currency = data.currency ?? "USD";
   const tierName = data.nextTier.charAt(0).toUpperCase() + data.nextTier.slice(1);
+  const currentRateBps = data.currentTierRateBps ?? 0;
+  const nextRateBps = data.nextTierRateBps ?? 0;
 
   const pct = Math.min(100, Math.round((current / target) * 100));
   const remaining = target - current;
@@ -54,15 +61,29 @@ export function MilestoneProgress() {
       className="rounded-[8px] p-[24px]"
       style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(21,26,43,0.5)", boxShadow: "0 0 0 1px rgba(255,255,255,0.05), 0 8px 24px rgba(0,0,0,0.2)" }}
     >
-      {/* Header — Figma 56:2749 */}
+      {/* Header — tier name on the left, next-tier rate framed as the
+          upside on the right. Users care more about the rate they'll
+          unlock than the raw revenue target, so lead with that. */}
       <div className="flex items-center justify-between gap-[16px]">
         <h2 className="font-[var(--font-display)] text-[18px] font-medium leading-[20px] tracking-[-0.2px] text-[#F0F0F0]">
           Next Milestone: {tierName}
         </h2>
         <p className="font-[var(--font-sans)] text-[12px] leading-[18px] text-[#E5E5E5]">
-          {formatCurrency(target, currency)} target
+          <span className="text-[rgba(255,255,255,0.55)]">Unlock </span>
+          <span className="font-medium text-[#A6D1FF]">{formatRatePct(nextRateBps)}</span>
+          <span className="text-[rgba(255,255,255,0.55)]"> at </span>
+          <span className="font-medium text-[#F0F0F0]">{formatCurrency(target, currency)}</span>
         </p>
       </div>
+
+      {/* Current earning rate line — anchors the affiliate on what they're
+          getting right now (retro-recomputed) so the "next" number reads
+          as an upgrade, not a gate. */}
+      <p className="mt-[8px] font-[var(--font-sans)] text-[12px] leading-[18px] text-[rgba(255,255,255,0.55)]">
+        Currently earning{" "}
+        <span className="font-medium text-[#F0F0F0]">{formatRatePct(currentRateBps)}</span>
+        {" "}on every sale.
+      </p>
 
       {/* Progress info — Figma 56:2754 */}
       <div className="mt-[16px] flex flex-col gap-[8px]">

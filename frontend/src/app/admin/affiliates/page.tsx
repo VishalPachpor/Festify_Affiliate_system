@@ -12,7 +12,7 @@ import type { Affiliate } from "@/modules/affiliates/types";
 import { AffiliateDetailDrawer } from "@/modules/affiliates/components/affiliate-detail-drawer";
 
 const PAGE_SIZE = 6;
-const TIER_FILTERS = ["all", "bronze", "silver", "gold", "platinum", "none"] as const;
+const TIER_FILTERS = ["all", "starter", "riser", "pro", "elite", "none"] as const;
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 
@@ -44,10 +44,10 @@ const AVATAR_COLORS: Record<string, string> = {
 };
 
 const TIER_STYLES: Record<string, { bg: string; text: string; border: string }> = {
-  platinum: { bg: "rgba(229,228,226,0.12)", text: "#E5E4E2", border: "rgba(229,228,226,0.25)" },
-  gold:     { bg: "rgba(255,215,0,0.12)",   text: "#FFD700", border: "rgba(255,215,0,0.25)"   },
-  silver:   { bg: "rgba(192,192,192,0.12)", text: "#C0C0C0", border: "rgba(192,192,192,0.25)" },
-  bronze:   { bg: "rgba(205,127,50,0.12)",  text: "#CD7F32", border: "rgba(205,127,50,0.25)"  },
+  elite:   { bg: "rgba(255,214,32,0.12)",  text: "#FFD620", border: "rgba(255,214,32,0.25)"  },
+  pro:     { bg: "rgba(225,154,62,0.12)",  text: "#E19A3E", border: "rgba(225,154,62,0.25)"  },
+  riser:   { bg: "rgba(91,141,239,0.12)",  text: "#5B8DEF", border: "rgba(91,141,239,0.25)"  },
+  starter: { bg: "rgba(156,164,183,0.12)", text: "#9CA4B7", border: "rgba(156,164,183,0.25)" },
 };
 
 const REFERRAL_CODE_STYLE = { bg: "rgba(255,255,255,0.04)", text: "rgba(255,255,255,0.55)" };

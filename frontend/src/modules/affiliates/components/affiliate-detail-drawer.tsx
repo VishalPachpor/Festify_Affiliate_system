@@ -11,8 +11,11 @@ import type { AffiliatePayoutLog } from "@/modules/affiliates/api/get-affiliate-
 
 // ── Tier palette ─────────────────────────────────────────────────────────────
 
-type TierKey = "platinum" | "gold" | "silver" | "bronze";
+type TierKey = "elite" | "pro" | "riser" | "starter";
 
+// Palette matches the Starter/Riser/Pro/Elite rate-setting ladder. Tier
+// identity is set by the hex ("solid") — everything else derives a washed
+// variant so the drawer hero feels tier-coded without being noisy.
 const TIER_PALETTE: Record<
   TierKey,
   {
@@ -25,45 +28,45 @@ const TIER_PALETTE: Record<
     gradient: string;
   }
 > = {
-  platinum: {
-    solid: "#E5E4E2",
-    ring: "rgba(229,228,226,0.35)",
-    glow: "rgba(229,228,226,0.18)",
-    chipBg: "rgba(229,228,226,0.10)",
-    chipText: "#E5E4E2",
-    chipBorder: "rgba(229,228,226,0.22)",
+  elite: {
+    solid: "#FFD620",
+    ring: "rgba(255,214,32,0.30)",
+    glow: "rgba(255,214,32,0.14)",
+    chipBg: "rgba(255,214,32,0.10)",
+    chipText: "#FFD620",
+    chipBorder: "rgba(255,214,32,0.22)",
     gradient:
-      "radial-gradient(120% 100% at 50% 0%, rgba(229,228,226,0.18) 0%, rgba(229,228,226,0.06) 40%, rgba(17,21,37,0) 100%)",
+      "radial-gradient(120% 100% at 50% 0%, rgba(255,214,32,0.16) 0%, rgba(255,214,32,0.05) 40%, rgba(17,21,37,0) 100%)",
   },
-  gold: {
-    solid: "#FFD700",
-    ring: "rgba(255,215,0,0.30)",
-    glow: "rgba(255,215,0,0.14)",
-    chipBg: "rgba(255,215,0,0.10)",
-    chipText: "#FFD700",
-    chipBorder: "rgba(255,215,0,0.22)",
-    gradient:
-      "radial-gradient(120% 100% at 50% 0%, rgba(255,215,0,0.16) 0%, rgba(255,215,0,0.05) 40%, rgba(17,21,37,0) 100%)",
-  },
-  silver: {
-    solid: "#C0C0C0",
-    ring: "rgba(192,192,192,0.32)",
-    glow: "rgba(192,192,192,0.15)",
-    chipBg: "rgba(192,192,192,0.10)",
-    chipText: "#C0C0C0",
-    chipBorder: "rgba(192,192,192,0.22)",
-    gradient:
-      "radial-gradient(120% 100% at 50% 0%, rgba(192,192,192,0.16) 0%, rgba(192,192,192,0.05) 40%, rgba(17,21,37,0) 100%)",
-  },
-  bronze: {
-    solid: "#CD7F32",
-    ring: "rgba(205,127,50,0.32)",
-    glow: "rgba(205,127,50,0.14)",
-    chipBg: "rgba(205,127,50,0.10)",
+  pro: {
+    solid: "#E19A3E",
+    ring: "rgba(225,154,62,0.32)",
+    glow: "rgba(225,154,62,0.14)",
+    chipBg: "rgba(225,154,62,0.10)",
     chipText: "#E9A66A",
-    chipBorder: "rgba(205,127,50,0.22)",
+    chipBorder: "rgba(225,154,62,0.22)",
     gradient:
-      "radial-gradient(120% 100% at 50% 0%, rgba(205,127,50,0.16) 0%, rgba(205,127,50,0.05) 40%, rgba(17,21,37,0) 100%)",
+      "radial-gradient(120% 100% at 50% 0%, rgba(225,154,62,0.16) 0%, rgba(225,154,62,0.05) 40%, rgba(17,21,37,0) 100%)",
+  },
+  riser: {
+    solid: "#5B8DEF",
+    ring: "rgba(91,141,239,0.32)",
+    glow: "rgba(91,141,239,0.15)",
+    chipBg: "rgba(91,141,239,0.10)",
+    chipText: "#A6D1FF",
+    chipBorder: "rgba(91,141,239,0.22)",
+    gradient:
+      "radial-gradient(120% 100% at 50% 0%, rgba(91,141,239,0.16) 0%, rgba(91,141,239,0.05) 40%, rgba(17,21,37,0) 100%)",
+  },
+  starter: {
+    solid: "#9CA4B7",
+    ring: "rgba(156,164,183,0.32)",
+    glow: "rgba(156,164,183,0.14)",
+    chipBg: "rgba(156,164,183,0.10)",
+    chipText: "#C2C8D6",
+    chipBorder: "rgba(156,164,183,0.22)",
+    gradient:
+      "radial-gradient(120% 100% at 50% 0%, rgba(156,164,183,0.16) 0%, rgba(156,164,183,0.05) 40%, rgba(17,21,37,0) 100%)",
   },
 };
 
@@ -291,7 +294,9 @@ export function AffiliateDetailDrawer({ affiliate, onClose, currency }: Props) {
                     style={{
                       fontFamily: "var(--font-sans)",
                       fontSize: 28,
-                      color: tierKey === "gold" || tierKey === "platinum" || tierKey === "silver" ? "#0C0E1A" : "#FFFFFF",
+                      // Light tier colors (Elite yellow, Starter grey) need
+                      // dark text for contrast against the avatar fill.
+                      color: tierKey === "elite" || tierKey === "starter" ? "#0C0E1A" : "#FFFFFF",
                       letterSpacing: "-0.02em",
                     }}
                   >

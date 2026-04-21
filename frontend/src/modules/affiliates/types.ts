@@ -52,7 +52,7 @@ export type AffiliatesFilterState = {
   page: number;
   pageSize: number;
   status?: AffiliateStatus;
-  tier?: "bronze" | "silver" | "gold" | "platinum" | "none";
+  tier?: "starter" | "riser" | "pro" | "elite" | "none";
   search?: string;
   sortBy?: "joinedAt" | "totalRevenue" | "totalSales";
   sortOrder?: "asc" | "desc";

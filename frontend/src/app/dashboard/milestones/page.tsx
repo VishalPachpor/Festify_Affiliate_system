@@ -14,6 +14,11 @@ function formatCurrency(minorUnits: number, currency: string): string {
   }).format(minorUnits / 100);
 }
 
+function formatRatePct(bps: number): string {
+  const pct = bps / 100;
+  return Number.isInteger(pct) ? `${pct}%` : `${pct.toFixed(1)}%`;
+}
+
 function IconCheck() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -22,33 +27,60 @@ function IconCheck() {
   );
 }
 
-// Figma 60:2705 — exact tier colors
-const TIER_STYLES = {
-  bronze: {
-    tileText: "#CD7F32",
-    tileBorder: "rgba(205,127,50,0.6)",
-    tileBg: "rgba(205,127,50,0.2)",
-    progress: "linear-gradient(90deg, rgb(205,127,50) 0%, rgb(184,115,51) 100%)",
+function IconTicket() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2 5a1 1 0 011-1h10a1 1 0 011 1v1.5a1.5 1.5 0 000 3V11a1 1 0 01-1 1H3a1 1 0 01-1-1V9.5a1.5 1.5 0 000-3V5z" />
+      <path d="M6 4v8" strokeDasharray="1.5 1.5" />
+    </svg>
+  );
+}
+
+// Rate-setting tier ladder (Starter / Riser / Pro / Elite). Colors match the
+// milestone seed so the admin view and the affiliate view show the same
+// visual identity per tier. `fallback` is the default for any tier the
+// organizer added manually that we don't have a custom palette for.
+const TIER_STYLES: Record<string, {
+  tileText: string;
+  tileBorder: string;
+  tileBg: string;
+  progress: string;
+}> = {
+  starter: {
+    tileText: "#9CA4B7",
+    tileBorder: "rgba(156,164,183,0.6)",
+    tileBg: "rgba(156,164,183,0.18)",
+    progress: "linear-gradient(90deg, rgb(156,164,183) 0%, rgb(120,128,148) 100%)",
   },
-  silver: {
-    tileText: "#C0C0C0",
-    tileBorder: "rgba(192,192,192,0.6)",
-    tileBg: "rgba(192,192,192,0.2)",
-    progress: "linear-gradient(90deg, rgb(192,192,192) 0%, rgb(168,168,168) 100%)",
+  riser: {
+    tileText: "#5B8DEF",
+    tileBorder: "rgba(91,141,239,0.6)",
+    tileBg: "rgba(91,141,239,0.18)",
+    progress: "linear-gradient(90deg, rgb(91,141,239) 0%, rgb(44,84,166) 100%)",
   },
-  gold: {
-    tileText: "#FFD700",
-    tileBorder: "rgba(255,215,0,0.6)",
-    tileBg: "rgba(255,215,0,0.2)",
-    progress: "linear-gradient(90deg, rgb(255,215,0) 0%, rgb(255,165,0) 100%)",
+  pro: {
+    tileText: "#E19A3E",
+    tileBorder: "rgba(225,154,62,0.6)",
+    tileBg: "rgba(225,154,62,0.18)",
+    progress: "linear-gradient(90deg, rgb(225,154,62) 0%, rgb(184,115,51) 100%)",
   },
-  platinum: {
-    tileText: "#E5E4E2",
-    tileBorder: "rgba(229,228,226,0.6)",
-    tileBg: "rgba(229,228,226,0.2)",
-    progress: "linear-gradient(90deg, rgb(229,228,226) 0%, rgb(192,192,192) 100%)",
+  elite: {
+    tileText: "#FFD620",
+    tileBorder: "rgba(255,214,32,0.6)",
+    tileBg: "rgba(255,214,32,0.18)",
+    progress: "linear-gradient(90deg, rgb(255,214,32) 0%, rgb(255,165,0) 100%)",
   },
-} as const;
+  fallback: {
+    tileText: "#E5E7EB",
+    tileBorder: "rgba(229,231,235,0.6)",
+    tileBg: "rgba(229,231,235,0.18)",
+    progress: "linear-gradient(90deg, rgb(229,231,235) 0%, rgb(180,183,192) 100%)",
+  },
+};
+
+function styleForTier(nameOrKey: string) {
+  return TIER_STYLES[nameOrKey.toLowerCase()] ?? TIER_STYLES.fallback;
+}
 
 function TierTile({
   letter,
@@ -63,8 +95,6 @@ function TierTile({
   tileBg: string;
   unlocked: boolean;
 }) {
-  // Figma: tile ALWAYS shows tier color regardless of locked/unlocked.
-  // Only the checkmark badge differs between states.
   return (
     <div className="relative">
       <div
@@ -84,6 +114,18 @@ function TierTile({
         </span>
       ) : null}
     </div>
+  );
+}
+
+// Pill used for the comp-tickets metadata. Kept neutral so the tier color
+// in the tile stays the dominant signal and the pill reads as supporting
+// info, not a competing badge.
+function MetaPill({ label, value }: { label: React.ReactNode; value: string }) {
+  return (
+    <span className="inline-flex items-center gap-[var(--space-2)] rounded-full border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.03)] px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[12px] leading-[16px] text-[rgba(255,255,255,0.80)]">
+      <span className="inline-flex items-center gap-[4px] text-[rgba(255,255,255,0.50)]">{label}</span>
+      <span className="font-medium text-[#F0F0F0]">{value}</span>
+    </span>
   );
 }
 
@@ -124,6 +166,8 @@ function MilestoneCard({
   currency,
   description,
   unlocked,
+  commissionRateBps,
+  complimentaryTickets,
 }: {
   id: string;
   name: string;
@@ -133,10 +177,15 @@ function MilestoneCard({
   currency: string;
   description: string;
   unlocked: boolean;
+  commissionRateBps: number;
+  complimentaryTickets: number;
 }) {
-  const styles = TIER_STYLES[name.toLowerCase() as keyof typeof TIER_STYLES] ?? TIER_STYLES.bronze;
-  const effectiveCurrent = unlocked ? targetAmount : currentAmount;
-  const pct = Math.min(100, (effectiveCurrent / targetAmount) * 100);
+  const styles = styleForTier(name);
+  // Starter (targetMinor = 0) is always "unlocked" by definition — show it
+  // as full progress rather than divide-by-zero gibberish.
+  const isEntryTier = targetAmount <= 0;
+  const effectiveCurrent = unlocked || isEntryTier ? Math.max(targetAmount, currentAmount) : currentAmount;
+  const pct = isEntryTier ? 100 : Math.min(100, (effectiveCurrent / targetAmount) * 100);
 
   return (
     <article
@@ -155,14 +204,20 @@ function MilestoneCard({
           unlocked={unlocked}
         />
         <div className="min-w-0 flex-1">
-          {/* Title row — Figma: Oswald Bold 20px + line + Medium 16px amount */}
-          <div className="flex items-center gap-[24px]">
+          {/* Title row — tier name · rate · revenue-to-unlock */}
+          <div className="flex items-center gap-[16px]">
             <h2 className="font-[var(--font-display)] text-[20px] font-bold leading-[28px] tracking-[-0.3px] text-[#F0F0F0]">
               {name}
             </h2>
-            <span className="inline-block h-[1px] w-[40px] bg-[rgba(255,255,255,0.42)]" />
-            <p className="font-[var(--font-sans)] text-[16px] font-medium leading-[24px] text-[#F0F0F0]">
-              {formatCurrency(targetAmount, currency)}
+            <span
+              className="font-[var(--font-display)] text-[20px] font-bold leading-[28px] tracking-[-0.3px]"
+              style={{ color: styles.tileText }}
+            >
+              {formatRatePct(commissionRateBps)}
+            </span>
+            <span className="inline-block h-[1px] w-[24px] bg-[rgba(255,255,255,0.42)]" />
+            <p className="font-[var(--font-sans)] text-[14px] leading-[20px] text-[rgba(255,255,255,0.70)]">
+              {isEntryTier ? "Entry" : formatCurrency(targetAmount, currency)}
             </p>
           </div>
 
@@ -171,14 +226,30 @@ function MilestoneCard({
             {description}
           </p>
 
+          {/* Metadata pills — comp tickets. Kept below the description so
+              the money fact (rate) stays anchored to the name row. */}
+          <div className="mt-[12px] flex flex-wrap items-center gap-[var(--space-2)]">
+            <MetaPill
+              label={
+                <>
+                  <IconTicket />
+                  <span>Complimentary tickets</span>
+                </>
+              }
+              value={String(complimentaryTickets)}
+            />
+          </div>
+
           {/* Progress section */}
-          <div className="mt-[12px] flex flex-col gap-[8px]">
+          <div className="mt-[16px] flex flex-col gap-[8px]">
             <div className="flex items-center justify-between">
               <p className="font-[var(--font-sans)] text-[12px] leading-[14px] text-[#9CA4B7]">
-                {formatCurrency(effectiveCurrent, currency)} / {formatCurrency(targetAmount, currency)} ({Math.round(pct)}%)
+                {isEntryTier
+                  ? "Entry tier — active from your first sale"
+                  : `${formatCurrency(effectiveCurrent, currency)} / ${formatCurrency(targetAmount, currency)} (${Math.round(pct)}%)`}
               </p>
-              <span className={`font-[var(--font-sans)] text-[12px] font-medium leading-[14px] ${unlocked ? "text-[#22C55E]" : "text-[#F0F0F0]"}`}>
-                {unlocked ? "Unlocked!" : "Locked"}
+              <span className={`font-[var(--font-sans)] text-[12px] font-medium leading-[14px] ${unlocked || isEntryTier ? "text-[#22C55E]" : "text-[#F0F0F0]"}`}>
+                {unlocked || isEntryTier ? "Unlocked!" : "Locked"}
               </span>
             </div>
 

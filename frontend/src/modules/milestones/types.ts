@@ -5,8 +5,13 @@ import { z } from "zod";
 export const milestoneProgressSchema = z.object({
   currentRevenue: z.number(),
   currentTier: z.string().nullable(),
+  /// Commission rate the affiliate is currently earning (basis points).
+  /// 0 when they haven't crossed even the entry tier.
+  currentTierRateBps: z.number().default(0),
+  currentTierComplimentaryTickets: z.number().default(0),
   nextTier: z.string().nullable(),
   nextTierTarget: z.number(),
+  nextTierRateBps: z.number().default(0),
   currency: z.string(),
 });
 
@@ -24,6 +29,11 @@ export const milestoneTierSchema = z.object({
   description: z.string(),
   color: z.string(),
   unlocked: z.boolean(),
+  /// Rate-setting ladder: commission rate applied to sales while the
+  /// affiliate sits at this tier, in basis points (250 = 2.5%).
+  commissionRateBps: z.number().default(0),
+  /// Display-only perk count. No redemption flow.
+  complimentaryTickets: z.number().default(0),
 });
 
 export const milestoneTiersResponseSchema = z.object({
