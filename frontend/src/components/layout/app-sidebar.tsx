@@ -102,15 +102,15 @@ export function AppSidebar() {
       className="flex w-[var(--sidebar-w)] shrink-0 flex-col bg-[var(--color-surface-sidebar)] border-r border-[var(--color-border)]"
       aria-label="Main navigation"
     >
-      {/* Brand — Figma 71:4: p-24, border-bottom. Logo is capped to the
-          container width AND a max-height so a tall SVG can't dominate
-          the sidebar. */}
-      <div className="border-b border-[var(--color-border)] px-[24px] pt-[24px] pb-[24px]">
+      {/* Brand — p-12 (tightened from Figma's p-24 per request). Logo
+          renders at its natural w-full size; padding is small so the
+          brand block doesn't eat vertical real estate. */}
+      <div className="border-b border-[var(--color-border)] px-[12px] pt-[12px] pb-[12px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/TOKEN2049_Logo.svg"
           alt={`TOKEN2049 ${brandSubtitle}`}
-          className="h-auto w-full max-h-[64px] object-contain"
+          className="h-auto w-full"
         />
       </div>
 
