@@ -6,6 +6,7 @@ const prisma_1 = require("../lib/prisma");
 const auth_1 = require("../middleware/auth");
 const cache_1 = require("../lib/cache");
 const time_filters_1 = require("../lib/time-filters");
+const commission_types_1 = require("../lib/commission-types");
 const router = (0, express_1.Router)();
 exports.salesRouter = router;
 // ─────────────────────────────────────────────────────────────────────────────
@@ -32,7 +33,7 @@ router.get("/api/sales/summary", async (req, res) => {
                 _sum: { amountMinor: true },
             }),
             prisma_1.prisma.commissionLedgerEntry.aggregate({
-                where: { tenantId, type: "earned", ...dateFilter },
+                where: { tenantId, type: { in: commission_types_1.COMMISSION_CREDIT_TYPES }, ...dateFilter },
                 _sum: { amountMinor: true },
             }),
             // Sale statuses: for MVP, attributed = "confirmed", unattributed = "pending"
@@ -108,7 +109,7 @@ router.get("/api/sales", async (req, res) => {
                 include: {
                     attributionClaim: { select: { affiliateId: true } },
                     commissionLedgerEntries: {
-                        where: { type: "earned" },
+                        where: { type: { in: commission_types_1.COMMISSION_CREDIT_TYPES } },
                         select: {
                             amountMinor: true,
                             payoutId: true,
@@ -238,7 +239,7 @@ router.post("/api/sales/:id/approve", async (req, res) => {
             include: {
                 attributionClaim: { select: { affiliateId: true } },
                 commissionLedgerEntries: {
-                    where: { type: "earned" },
+                    where: { type: { in: commission_types_1.COMMISSION_CREDIT_TYPES } },
                     select: { id: true, amountMinor: true, payoutId: true },
                 },
             },

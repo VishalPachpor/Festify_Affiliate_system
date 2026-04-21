@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RetryableError = void 0;
 exports.processInboundEvent = processInboundEvent;
+exports.pickTierRateBps = pickTierRateBps;
 exports.normalizeReferralCode = normalizeReferralCode;
 const prisma_1 = require("../lib/prisma");
 const cache_1 = require("../lib/cache");
@@ -28,7 +29,12 @@ exports.RetryableError = RetryableError;
 //   2. Idempotent at every layer — safe under retries and race conditions.
 //   3. Sale is the anchor — duplicate sale (P2002) means "already processed".
 //   4. Attribution is optional — sale can exist without a matched affiliate.
-//   5. Commission rate comes from Campaign DB record, never hardcoded.
+//   5. Commission rate comes from the affiliate's current Milestone tier
+//      (rate-setting ladder — Starter / Riser / Pro / Elite). Campaign.
+//      commissionRateBps is the fallback when no tiers are defined for the
+//      tenant. When a sale crosses a tier threshold, ALL prior attributed
+//      sales for that affiliate are repriced by emitting tier_adjustment
+//      ledger entries (positive delta → next payout cycle).
 // ─────────────────────────────────────────────────────────────────────────────
 /**
  * Process a single pending InboundEvent by its ID.
@@ -144,6 +150,14 @@ async function executeGoldenFlow(event) {
             select: { affiliateId: true },
         });
     }
+    // ── 3a. Load tier ladder for this tenant (if any) ────────────────────────
+    // Used inside the transaction to price the new sale AND to detect whether
+    // this sale crossed a tier threshold — in which case every prior sale
+    // needs a delta adjustment written to the ledger.
+    const tiers = await prisma_1.prisma.milestone.findMany({
+        where: { tenantId },
+        orderBy: { targetMinor: "asc" },
+    });
     // ── 4. Transaction: Sale + Attribution + Commission ─────────────────────
     // All writes are atomic. If any step fails, everything rolls back.
     //
@@ -176,6 +190,7 @@ async function executeGoldenFlow(event) {
             throw err;
         }
         let commissionAmount = 0;
+        let tierAdjustmentTotal = 0;
         // STEP 2: Attribution (only if affiliate was resolved)
         if (affiliate) {
             await tx.attributionClaim.create({
@@ -187,9 +202,16 @@ async function executeGoldenFlow(event) {
                 },
             });
             // STEP 3: Commission (only if attributed)
+            //
+            // Rate comes from the affiliate's *current* tier after this sale lands.
+            // That's the correct rate for this sale itself — and if it crosses
+            // a tier threshold, the retro delta below catches prior sales up.
+            const priorRevenue = await sumPriorAttributedRevenue(tx, tenantId, affiliate.affiliateId, sale.id);
+            const newRevenue = priorRevenue + sale.amountMinor;
+            const effectiveRateBps = pickTierRateBps(tiers, newRevenue, campaign.commissionRateBps);
             // Round to nearest cent. Math.round ensures fair commission calculation.
             // Math.floor would systematically underpay affiliates.
-            commissionAmount = Math.round((sale.amountMinor * campaign.commissionRateBps) / 10_000);
+            commissionAmount = Math.round((sale.amountMinor * effectiveRateBps) / 10_000);
             if (commissionAmount > 0) {
                 await tx.commissionLedgerEntry.create({
                     data: {
@@ -202,8 +224,36 @@ async function executeGoldenFlow(event) {
                     },
                 });
             }
+            // STEP 4: Retroactive tier adjustment
+            //
+            // If this sale pushed the affiliate into a tier with a higher rate
+            // than the tier they were in *before* this sale, every prior sale
+            // is entitled to the delta. We emit one tier_adjustment ledger
+            // entry per prior sale, payoutId=null — they ride the next payout.
+            //
+            // Paid-out sales still get their delta: the catch-up rides the next
+            // payout cycle and the ledger stays append-only (no rewriting of
+            // settled entries). Pending (approved) payouts stay at their
+            // approve-time total; the delta bundles separately.
+            if (tiers.length > 0) {
+                const priorRateBps = pickTierRateBps(tiers, priorRevenue, campaign.commissionRateBps);
+                if (effectiveRateBps > priorRateBps) {
+                    tierAdjustmentTotal = await emitRetroTierAdjustments(tx, {
+                        tenantId,
+                        affiliateId: affiliate.affiliateId,
+                        excludeSaleId: sale.id,
+                        newRateBps: effectiveRateBps,
+                        priorRateBps,
+                    });
+                }
+            }
         }
-        return { saleAmount: sale.amountMinor, attributed: !!affiliate, commissionAmount };
+        return {
+            saleAmount: sale.amountMinor,
+            attributed: !!affiliate,
+            commissionAmount,
+            tierAdjustmentTotal,
+        };
     });
     // ── Emit domain events AFTER transaction commits ──────────────────────
     // Events drive aggregate table updates. Only fire if transaction succeeded
@@ -214,26 +264,33 @@ async function executeGoldenFlow(event) {
             amountMinor: txResult.saleAmount,
             attributed: txResult.attributed,
         });
-        if (txResult.commissionAmount > 0 && affiliate) {
-            await (0, event_bus_1.emitEvent)("commission.earned", {
-                tenantId,
-                amountMinor: txResult.commissionAmount,
-            });
+        if (affiliate) {
+            const totalEarned = txResult.commissionAmount + txResult.tierAdjustmentTotal;
+            if (totalEarned > 0) {
+                await (0, event_bus_1.emitEvent)("commission.earned", {
+                    tenantId,
+                    amountMinor: totalEarned,
+                });
+            }
             // ── Milestone progression ─────────────────────────────────────────
-            // Compute the affiliate's running commission total and emit one
+            // Recompute the affiliate's attributed-revenue total and emit one
             // milestone.progressed event per defined tier. The handler is
             // idempotent + only flips unlockedAt on the locked → unlocked edge,
             // so re-emitting tiers the affiliate already passed is safe.
-            await emitMilestoneProgress(tenantId, affiliate.affiliateId);
+            if (txResult.commissionAmount > 0 || txResult.tierAdjustmentTotal > 0) {
+                await emitMilestoneProgress(tenantId, affiliate.affiliateId);
+            }
         }
     }
 }
 /**
- * Recomputes the affiliate's commission total against every milestone tier
- * defined for the tenant and emits one `milestone.progressed` event per tier.
+ * Recomputes the affiliate's attributed-revenue total against every
+ * milestone tier defined for the tenant and emits one
+ * `milestone.progressed` event per tier.
  *
- * Recomputing (vs incrementing) keeps the source of truth in the ledger and
- * means out-of-order events / replays don't drift the per-affiliate progress.
+ * Recomputing (vs incrementing) keeps the source of truth in the Sale +
+ * AttributionClaim tables and means out-of-order events / replays don't
+ * drift the per-affiliate progress.
  */
 async function emitMilestoneProgress(tenantId, affiliateId) {
     const [milestones, revenueAgg] = await Promise.all([
@@ -262,6 +319,94 @@ async function emitMilestoneProgress(tenantId, affiliateId) {
             unlocked,
         });
     }
+}
+// ─── Tier helpers ────────────────────────────────────────────────────────────
+/**
+ * Pick the rate that applies at a given cumulative attributed revenue.
+ *
+ * Walks tiers in ascending targetMinor order and returns the highest tier
+ * whose threshold has been crossed. Falls back to the campaign rate if
+ * no tiers are defined for the tenant or the affiliate hasn't crossed
+ * even the entry tier's threshold (defensive — entry tier should be 0).
+ *
+ * Exported for unit testing. Accepts a loose tier shape so the test can
+ * construct fixtures without pulling the full Prisma `Milestone` type.
+ */
+function pickTierRateBps(tiers, cumulativeRevenueMinor, campaignRateBps) {
+    if (tiers.length === 0)
+        return campaignRateBps;
+    // Sort defensively in case the caller didn't pre-sort. Costs nothing on
+    // the hot path (tier ladders are ~4 items) and makes the unit test
+    // boundary self-contained.
+    const sorted = [...tiers].sort((a, b) => a.targetMinor - b.targetMinor);
+    let rate = campaignRateBps;
+    let matched = false;
+    for (const tier of sorted) {
+        if (cumulativeRevenueMinor >= tier.targetMinor) {
+            rate = tier.commissionRateBps;
+            matched = true;
+        }
+        else {
+            break;
+        }
+    }
+    return matched ? rate : campaignRateBps;
+}
+/**
+ * Sums the affiliate's prior attributed sale revenue (all attributed sales
+ * except the one currently being processed). Used to work out what tier the
+ * affiliate was in *before* this sale landed, so we can detect a tier crossing.
+ */
+async function sumPriorAttributedRevenue(tx, tenantId, affiliateId, excludeSaleId) {
+    const agg = await tx.sale.aggregate({
+        where: {
+            tenantId,
+            attributionClaim: { affiliateId },
+            id: { not: excludeSaleId },
+        },
+        _sum: { amountMinor: true },
+    });
+    return agg._sum.amountMinor ?? 0;
+}
+/**
+ * Emits one `tier_adjustment` ledger entry per prior attributed sale,
+ * equal to the delta between the new and old rate applied to that sale's
+ * revenue. Returns the total delta written (cents).
+ *
+ * Entries are written with payoutId=null so they bundle into the next
+ * payout cycle — paid-out sales get their catch-up without rewriting
+ * settled ledger rows.
+ */
+async function emitRetroTierAdjustments(tx, args) {
+    const { tenantId, affiliateId, excludeSaleId, newRateBps, priorRateBps } = args;
+    const priorSales = await tx.sale.findMany({
+        where: {
+            tenantId,
+            attributionClaim: { affiliateId },
+            id: { not: excludeSaleId },
+        },
+        select: { id: true, amountMinor: true, currency: true },
+    });
+    let total = 0;
+    for (const sale of priorSales) {
+        const newCommission = Math.round((sale.amountMinor * newRateBps) / 10_000);
+        const priorCommission = Math.round((sale.amountMinor * priorRateBps) / 10_000);
+        const delta = newCommission - priorCommission;
+        if (delta <= 0)
+            continue;
+        await tx.commissionLedgerEntry.create({
+            data: {
+                tenantId,
+                saleId: sale.id,
+                affiliateId,
+                amountMinor: delta,
+                currency: sale.currency,
+                type: "tier_adjustment",
+            },
+        });
+        total += delta;
+    }
+    return total;
 }
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function isPrismaUniqueConstraintError(err) {

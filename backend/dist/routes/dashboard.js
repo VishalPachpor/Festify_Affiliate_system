@@ -6,6 +6,7 @@ const prisma_1 = require("../lib/prisma");
 const auth_1 = require("../middleware/auth");
 const cache_1 = require("../lib/cache");
 const time_filters_1 = require("../lib/time-filters");
+const commission_types_1 = require("../lib/commission-types");
 const router = (0, express_1.Router)();
 exports.dashboardRouter = router;
 // ─────────────────────────────────────────────────────────────────────────────
@@ -60,7 +61,7 @@ router.get("/api/dashboard/summary", async (req, res) => {
             const [revenueSummary, salesCount, commissionSummary, attributedCount, affiliateCount, paidOutSummary, pendingApprovals] = await Promise.all([
                 prisma_1.prisma.sale.aggregate({ where, _sum: { amountMinor: true } }),
                 prisma_1.prisma.sale.count({ where }),
-                prisma_1.prisma.commissionLedgerEntry.aggregate({ where: { tenantId, type: "earned", ...dateFilter }, _sum: { amountMinor: true } }),
+                prisma_1.prisma.commissionLedgerEntry.aggregate({ where: { tenantId, type: { in: commission_types_1.COMMISSION_CREDIT_TYPES }, ...dateFilter }, _sum: { amountMinor: true } }),
                 prisma_1.prisma.attributionClaim.count({ where: { tenantId, ...dateFilter } }),
                 prisma_1.prisma.campaignAffiliate.count({ where: { tenantId } }),
                 prisma_1.prisma.payout.aggregate({ where: { tenantId, status: "paid" }, _sum: { amountMinor: true } }),
@@ -101,11 +102,11 @@ router.get("/api/dashboard/summary", async (req, res) => {
                 _sum: { amountMinor: true },
             }),
             prisma_1.prisma.commissionLedgerEntry.aggregate({
-                where: { tenantId, type: "earned", createdAt: { gte: currentStart, lte: now } },
+                where: { tenantId, type: { in: commission_types_1.COMMISSION_CREDIT_TYPES }, createdAt: { gte: currentStart, lte: now } },
                 _sum: { amountMinor: true },
             }),
             prisma_1.prisma.commissionLedgerEntry.aggregate({
-                where: { tenantId, type: "earned", createdAt: { gte: prevStart, lt: currentStart } },
+                where: { tenantId, type: { in: commission_types_1.COMMISSION_CREDIT_TYPES }, createdAt: { gte: prevStart, lt: currentStart } },
                 _sum: { amountMinor: true },
             }),
         ]);
@@ -252,7 +253,7 @@ router.get("/api/dashboard/trend", async (req, res) => {
                     _sum: { amountMinor: true },
                 }),
                 prisma_1.prisma.commissionLedgerEntry.aggregate({
-                    where: { tenantId, type: "earned", createdAt: { gte: dayStart, lte: dayEnd } },
+                    where: { tenantId, type: { in: commission_types_1.COMMISSION_CREDIT_TYPES }, createdAt: { gte: dayStart, lte: dayEnd } },
                     _sum: { amountMinor: true },
                 }),
             ]);

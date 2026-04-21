@@ -100,6 +100,24 @@ app.get("/health", (_req, res) => {
 // Static asset serving (no auth) — uploaded marketing materials live under
 // backend/uploads/<tenantId>/<file>. Files are addressed by random ids so
 // listing without auth is fine; affiliates need plain URLs to download.
+//
+// Content-Disposition is opt-in: only force a browser download when the
+// request carries ?download=1. Without it, the browser renders inline so
+// the Preview/eye button can show images/PDFs in a new tab. The HTML
+// `download` attribute alone is ignored cross-origin (dev:3000 ↔ :3001),
+// so the attachment intent has to be signalled by the server.
+// Mount a tiny pre-middleware that sets Content-Disposition: attachment when
+// the caller passes ?download=1. Express.static then serves the file with
+// that header intact. Using express.static's own setHeaders hook with
+// res.locals wasn't reliable in practice — setting the header directly on
+// the response before static runs is simpler and works.
+app.use("/uploads", (req, res, next) => {
+    if (req.query.download === "1") {
+        const filename = path_1.default.basename(req.path);
+        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    }
+    next();
+});
 app.use("/uploads", express_1.default.static(path_1.default.resolve(process.cwd(), "uploads")));
 // Auth routes (no auth required, rate-limited)
 app.use("/api/auth", authLimiter);

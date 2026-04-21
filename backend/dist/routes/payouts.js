@@ -6,6 +6,7 @@ const prisma_1 = require("../lib/prisma");
 const auth_1 = require("../middleware/auth");
 const cache_1 = require("../lib/cache");
 const event_bus_1 = require("../lib/event-bus");
+const commission_types_1 = require("../lib/commission-types");
 const router = (0, express_1.Router)();
 exports.payoutsRouter = router;
 // ─────────────────────────────────────────────────────────────────────────────
@@ -167,11 +168,12 @@ router.post("/api/payouts/create", async (req, res) => {
                 }
             }
             // Find unpaid earned commissions — scoped to a single sale if saleId provided,
-            // otherwise all unpaid entries for the affiliate.
+            // otherwise all unpaid entries for the affiliate. Includes both original
+            // earnings and retroactive tier adjustments so catch-up deltas get paid.
             const entryWhere = {
                 tenantId,
                 affiliateId,
-                type: "earned",
+                type: { in: commission_types_1.COMMISSION_CREDIT_TYPES },
                 payoutId: null,
             };
             if (typeof saleId === "string" && saleId) {

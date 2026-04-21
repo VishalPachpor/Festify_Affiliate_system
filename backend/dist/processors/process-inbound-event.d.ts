@@ -1,3 +1,4 @@
+import type { Milestone } from "@prisma/client";
 /**
  * Thrown when an event can't be processed yet but should be retried later.
  * Causes status to remain "pending" instead of moving to "failed".
@@ -15,6 +16,18 @@ export declare class RetryableError extends Error {
  * This guarantees the event always leaves "pending" state.
  */
 export declare function processInboundEvent(eventId: string): Promise<void>;
+/**
+ * Pick the rate that applies at a given cumulative attributed revenue.
+ *
+ * Walks tiers in ascending targetMinor order and returns the highest tier
+ * whose threshold has been crossed. Falls back to the campaign rate if
+ * no tiers are defined for the tenant or the affiliate hasn't crossed
+ * even the entry tier's threshold (defensive — entry tier should be 0).
+ *
+ * Exported for unit testing. Accepts a loose tier shape so the test can
+ * construct fixtures without pulling the full Prisma `Milestone` type.
+ */
+export declare function pickTierRateBps(tiers: Pick<Milestone, "targetMinor" | "commissionRateBps">[], cumulativeRevenueMinor: number, campaignRateBps: number): number;
 /**
  * Canonicalise a referral code for affiliate lookups.
  *

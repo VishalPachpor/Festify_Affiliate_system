@@ -16,6 +16,16 @@ function requireAdmin(req, res) {
 function asNonEmptyString(v) {
     return typeof v === "string" && v.trim().length > 0 ? v.trim() : null;
 }
+// Coerce and clamp a user-supplied integer to [min, max]. Non-numeric inputs
+// fall back to `min`. Used for the tier rate (basis points) and complimentary
+// ticket count, which must stay in sensible bounds regardless of what the
+// admin UI sends.
+function clampInt(v, min, max) {
+    const n = Number(v);
+    if (!Number.isFinite(n))
+        return min;
+    return Math.max(min, Math.min(max, Math.round(n)));
+}
 function slugifyKey(value) {
     return value
         .toLowerCase()
@@ -73,6 +83,8 @@ router.get("/api/milestones/tiers", async (req, res) => {
                 unlocked: !!p?.unlockedAt,
                 currentAmount,
                 currency: "USD",
+                commissionRateBps: m.commissionRateBps,
+                complimentaryTickets: m.complimentaryTickets,
             };
         });
         res.status(200).json({ tiers });
@@ -99,8 +111,11 @@ router.get("/api/milestones/progress", async (req, res) => {
             res.status(200).json({
                 currentRevenue: 0,
                 currentTier: null,
+                currentTierRateBps: 0,
+                currentTierComplimentaryTickets: 0,
                 nextTier: null,
                 nextTierTarget: 0,
+                nextTierRateBps: 0,
                 currency: "USD",
             });
             return;
@@ -132,8 +147,11 @@ router.get("/api/milestones/progress", async (req, res) => {
         res.status(200).json({
             currentRevenue: totalRevenue,
             currentTier: currentTier?.key ?? null,
+            currentTierRateBps: currentTier?.commissionRateBps ?? 0,
+            currentTierComplimentaryTickets: currentTier?.complimentaryTickets ?? 0,
             nextTier: nextTier?.key ?? null,
             nextTierTarget: nextTier?.targetMinor ?? 0,
+            nextTierRateBps: nextTier?.commissionRateBps ?? 0,
             currency: "USD",
         });
     }
@@ -154,8 +172,12 @@ router.post("/api/milestones", async (req, res) => {
         const letter = (asNonEmptyString(req.body?.letter) ?? name?.charAt(0) ?? "M")
             .slice(0, 1)
             .toUpperCase();
-        if (!name || !description || !Number.isFinite(targetAmount) || targetAmount <= 0) {
-            res.status(400).json({ error: "name, description, and a positive targetAmount are required" });
+        // Allow 0% (e.g. an entry tier that grants no commission) and 0 comp
+        // tickets. The unlock-threshold enforces positive; rate + tickets don't.
+        const commissionRateBps = clampInt(req.body?.commissionRateBps, 0, 10_000);
+        const complimentaryTickets = clampInt(req.body?.complimentaryTickets, 0, 1_000);
+        if (!name || !description || !Number.isFinite(targetAmount) || targetAmount < 0) {
+            res.status(400).json({ error: "name, description, and a non-negative targetAmount are required" });
             return;
         }
         const count = await prisma_1.prisma.milestone.count({ where: { tenantId } });
@@ -175,6 +197,8 @@ router.post("/api/milestones", async (req, res) => {
                 color,
                 description,
                 targetMinor: targetAmount,
+                commissionRateBps,
+                complimentaryTickets,
                 sortOrder: count,
             },
         });
@@ -189,6 +213,8 @@ router.post("/api/milestones", async (req, res) => {
             currency: "USD",
             description: milestone.description,
             unlocked: false,
+            commissionRateBps: milestone.commissionRateBps,
+            complimentaryTickets: milestone.complimentaryTickets,
         });
     }
     catch (err) {
@@ -205,9 +231,13 @@ router.patch("/api/milestones/:id", async (req, res) => {
         const targetAmount = req.body?.targetAmount === undefined ? null : Number(req.body.targetAmount);
         const name = asNonEmptyString(req.body?.name);
         const description = asNonEmptyString(req.body?.description);
+        const commissionRateBps = req.body?.commissionRateBps === undefined ? null : clampInt(req.body.commissionRateBps, 0, 10_000);
+        const complimentaryTickets = req.body?.complimentaryTickets === undefined ? null : clampInt(req.body.complimentaryTickets, 0, 1_000);
+        // targetAmount=0 is allowed (the Starter entry tier). Reject only negative
+        // or non-finite values — everything else goes through.
         if (targetAmount !== null &&
-            (!Number.isFinite(targetAmount) || targetAmount <= 0)) {
-            res.status(400).json({ error: "targetAmount must be a positive number" });
+            (!Number.isFinite(targetAmount) || targetAmount < 0)) {
+            res.status(400).json({ error: "targetAmount must be a non-negative number" });
             return;
         }
         const existing = await prisma_1.prisma.milestone.findFirst({ where: { id, tenantId } });
@@ -221,6 +251,8 @@ router.patch("/api/milestones/:id", async (req, res) => {
                 ...(targetAmount !== null ? { targetMinor: targetAmount } : {}),
                 ...(name ? { name } : {}),
                 ...(description ? { description } : {}),
+                ...(commissionRateBps !== null ? { commissionRateBps } : {}),
+                ...(complimentaryTickets !== null ? { complimentaryTickets } : {}),
             },
         });
         res.status(200).json({
@@ -234,6 +266,8 @@ router.patch("/api/milestones/:id", async (req, res) => {
             currency: "USD",
             description: updated.description,
             unlocked: false,
+            commissionRateBps: updated.commissionRateBps,
+            complimentaryTickets: updated.complimentaryTickets,
         });
     }
     catch (err) {

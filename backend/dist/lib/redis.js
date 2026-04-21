@@ -9,6 +9,12 @@ const REDIS_URL = process.env.REDIS_URL ?? "redis://localhost:6379";
 exports.redis = new ioredis_1.default(REDIS_URL, {
     maxRetriesPerRequest: null,
     lazyConnect: true,
+    connectTimeout: 3000,
+    retryStrategy(times) {
+        if (times > 3)
+            return null; // stop retrying after 3 attempts
+        return Math.min(times * 200, 1000);
+    },
 });
 exports.redis.on("error", (err) => {
     console.error("[redis] Connection error:", err.message);

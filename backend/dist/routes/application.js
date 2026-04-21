@@ -27,10 +27,17 @@ router.get("/api/application/status", async (req, res) => {
                 return;
             }
         }
-        const email = String(req.query.email ?? "").trim().toLowerCase();
-        if (email) {
+        // Identity comes from the authenticated user, not a query param. The form's
+        // email field is a display/contact field and may differ from the auth email;
+        // using the query-param email here caused the dashboard to flip back to
+        // "not_applied" after a successful submit, which remounted the empty form.
+        const authEmail = req.userId
+            ? (await prisma_1.prisma.user.findUnique({ where: { id: req.userId } }))?.email?.toLowerCase() ?? null
+            : null;
+        const lookupEmail = authEmail ?? String(req.query.email ?? "").trim().toLowerCase();
+        if (lookupEmail) {
             const application = await prisma_1.prisma.application.findFirst({
-                where: { tenantId, email },
+                where: { tenantId, email: lookupEmail },
                 orderBy: { createdAt: "desc" },
             });
             if (application) {
@@ -66,6 +73,14 @@ router.post("/api/application/submit", async (req, res) => {
     try {
         const tenantId = (0, auth_1.getTenantId)(req);
         const body = (req.body ?? {});
+        // Resolve the authenticated user's email once; it becomes the canonical
+        // Application.email so the status query (which also keys off the authed
+        // user) can always find this row. The form's email field is still accepted
+        // but treated as a contact hint, not identity.
+        const authUser = req.userId
+            ? await prisma_1.prisma.user.findUnique({ where: { id: req.userId } })
+            : null;
+        const authEmail = authUser?.email?.toLowerCase() ?? null;
         const applyingAs = asApplicantType(body.applyingAs);
         const fullName = asNonEmptyString(body.fullName);
         const email = asNonEmptyString(body.email)?.toLowerCase();
@@ -86,7 +101,11 @@ router.post("/api/application/submit", async (req, res) => {
             res.status(400).json({ error: "Select at least one communication channel" });
             return;
         }
-        const canonicalEmail = applyingAs === "individual" ? email : contactPersonEmail;
+        const formEmail = applyingAs === "individual" ? email : contactPersonEmail;
+        // Prefer the authenticated user's email for identity. Fall back to the
+        // form-entered email only if we somehow don't have an auth email (dev mode
+        // without auth, etc.).
+        const canonicalEmail = authEmail ?? formEmail;
         const displayName = applyingAs === "individual" ? fullName : companyName;
         if (!canonicalEmail || !displayName) {
             res.status(400).json({ error: "Missing required application details" });
