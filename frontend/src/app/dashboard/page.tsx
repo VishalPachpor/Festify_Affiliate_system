@@ -5,6 +5,7 @@ import { KpiRow } from "@/modules/dashboard/components/kpi-row";
 import { ReferralCard } from "@/modules/dashboard/components/referral-card";
 import { MilestoneProgress } from "@/modules/dashboard/components/milestone-progress";
 import { RecentMaterials } from "@/modules/dashboard/components/recent-materials";
+import { TwitterFeed } from "@/modules/dashboard/components/twitter-feed";
 
 export default function DashboardPage() {
   return (
@@ -15,6 +16,7 @@ export default function DashboardPage() {
         <ReferralCard />
         <MilestoneProgress />
         <RecentMaterials />
+        <TwitterFeed />
       </DashboardContainer>
     </DashboardStageCanvas>
   );
