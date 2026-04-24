@@ -132,6 +132,12 @@ async function signPreviewUrl(
   mimeType: string,
 ): Promise<string | null> {
   if (!mimeType.startsWith("image/")) return null;
+  // Seeded demo assets (prisma/seed.ts) persist fileUrl as a local HTTP path
+  // like `http://localhost:3001/uploads/<tenant>/foo.png`, not a real Spaces
+  // object key. Signing such a value would produce a nonsense presigned URL
+  // and waste an S3 round-trip at render time; skip it so the UI falls back
+  // to the gradient + type icon.
+  if (/^https?:\/\//i.test(key)) return null;
   try {
     return await getSignedUrl(
       s3,
