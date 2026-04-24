@@ -7,7 +7,10 @@ export const assetSchema = z.object({
   id: z.string(),
   title: z.string(),
   type: assetTypeSchema,
+  // Inline view URL (same as viewUrl) — kept for backward compatibility.
   fileUrl: z.string(),
+  viewUrl: z.string(),
+  downloadUrl: z.string(),
   sizeBytes: z.number(),
   sizeLabel: z.string(),
   mimeType: z.string(),

@@ -141,10 +141,10 @@ function AssetCard({ asset }: { asset: Asset }) {
 
         {/* Download button — border #1c4aa6 */}
         <a
-          href={`${asset.fileUrl}?download=1`}
+          href={asset.downloadUrl}
           target="_blank"
           rel="noopener noreferrer"
-          download
+          download={asset.title}
           className="flex h-[37px] w-full items-center justify-center gap-[8px] rounded-[8px] border border-[#1c4aa6] bg-[rgba(28,74,166,0.12)] font-[var(--font-sans)] text-[14px] font-semibold leading-[21px] text-[#f0f0f0] transition-colors duration-[var(--duration-normal)] hover:bg-[rgba(28,74,166,0.25)]"
           aria-label={`Download ${asset.title}`}
         >

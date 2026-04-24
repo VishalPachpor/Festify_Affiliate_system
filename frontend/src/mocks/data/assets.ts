@@ -2,12 +2,21 @@ import type { Asset } from "@/modules/assets/types";
 
 // Mock data only — used by stories/tests when the real API isn't reachable.
 // Real upload + CRUD happens through /api/assets via useUploadAsset() etc.
+function mockUrls(id: string) {
+  const base = "https://example.com/api/assets";
+  return {
+    fileUrl: `${base}/${id}/view`,
+    viewUrl: `${base}/${id}/view`,
+    downloadUrl: `${base}/${id}/download`,
+  };
+}
+
 export const mockAssets: Asset[] = [
   {
     id: "asset-1",
     title: "TOKEN2049 Hero Banner",
     type: "banner",
-    fileUrl: "https://example.com/uploads/asset-1.png",
+    ...mockUrls("asset-1"),
     sizeBytes: 2_400_000,
     sizeLabel: "2.4 MB",
     mimeType: "image/png",
@@ -19,7 +28,7 @@ export const mockAssets: Asset[] = [
     id: "asset-2",
     title: "Email Invite Template",
     type: "email",
-    fileUrl: "https://example.com/uploads/asset-2.html",
+    ...mockUrls("asset-2"),
     sizeBytes: 156_000,
     sizeLabel: "156 KB",
     mimeType: "text/html",
@@ -31,7 +40,7 @@ export const mockAssets: Asset[] = [
     id: "asset-3",
     title: "Social Media Square",
     type: "social",
-    fileUrl: "https://example.com/uploads/asset-3.jpg",
+    ...mockUrls("asset-3"),
     sizeBytes: 1_800_000,
     sizeLabel: "1.8 MB",
     mimeType: "image/jpeg",
@@ -43,7 +52,7 @@ export const mockAssets: Asset[] = [
     id: "asset-4",
     title: "Promo Copy Snippets",
     type: "copy",
-    fileUrl: "https://example.com/uploads/asset-4.txt",
+    ...mockUrls("asset-4"),
     sizeBytes: 24_000,
     sizeLabel: "24 KB",
     mimeType: "text/plain",
@@ -55,7 +64,7 @@ export const mockAssets: Asset[] = [
     id: "asset-5",
     title: "Affiliate Best Practices",
     type: "guide",
-    fileUrl: "https://example.com/uploads/asset-5.pdf",
+    ...mockUrls("asset-5"),
     sizeBytes: 1_200_000,
     sizeLabel: "1.2 MB",
     mimeType: "application/pdf",
@@ -67,7 +76,7 @@ export const mockAssets: Asset[] = [
     id: "asset-6",
     title: "Instagram Story Template",
     type: "social",
-    fileUrl: "https://example.com/uploads/asset-6.png",
+    ...mockUrls("asset-6"),
     sizeBytes: 980_000,
     sizeLabel: "980 KB",
     mimeType: "image/png",

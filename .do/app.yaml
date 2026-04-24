@@ -1,0 +1,96 @@
+# DigitalOcean App Platform spec.
+#
+# Before deploying:
+#   - Replace YOUR_GH_ORG/festify with your GitHub repo
+#   - After first deploy, in DO panel → App → Settings → Domains, add
+#     `api.passtrack.xyz` as a custom domain (creates a CNAME record for you
+#     to paste into your DNS provider).
+#   - Fill these SECRETs via DO panel after first push (don't commit):
+#       JWT_SECRET, SPACES_BUCKET, SPACES_KEY, SPACES_SECRET,
+#       RESEND_API_KEY, GOOGLE_CLIENT_SECRET
+#   - Confirm the Spaces bucket (passtrack-assets) has CORS rules for
+#     https://passtrack.xyz, https://www.passtrack.xyz, http://localhost:3000
+
+name: festify
+region: sgp
+
+services:
+  - name: backend
+    github:
+      repo: VishalPachpor/Festify_Affiliate_system
+      branch: main
+      deploy_on_push: true
+    source_dir: backend
+    build_command: npm ci && npm run build
+    run_command: npm start
+    instance_size_slug: basic-xxs
+    instance_count: 1
+    http_port: 3001
+    health_check:
+      http_path: /health
+    envs:
+      # Core
+      - { key: NODE_ENV, value: production }
+      - { key: PORT, value: "3001" }
+      - { key: APP_NAME, value: Passtrack }
+      - { key: DATABASE_URL, value: ${db.DATABASE_URL} }
+      - { key: REDIS_URL, value: ${redis.REDIS_URL} }
+      - { key: JWT_SECRET, type: SECRET }
+
+      # Public URLs — PUBLIC_API_URL is used when generating absolute viewUrl /
+      # downloadUrl responses, so it must match the domain the frontend calls.
+      - { key: PUBLIC_API_URL, value: "https://api.passtrack.xyz" }
+      - { key: APP_URL, value: "https://passtrack.xyz" }
+      - { key: FRONTEND_APP_URL, value: "https://passtrack.xyz" }
+      - { key: CORS_ORIGIN, value: "https://passtrack.xyz,https://www.passtrack.xyz" }
+      - { key: REFERRAL_LINK_BASE, value: "https://event.festify.io" }
+
+      # Spaces (object storage)
+      - { key: SPACES_REGION, value: sgp1 }
+      - { key: SPACES_ENDPOINT, value: https://sgp1.digitaloceanspaces.com }
+      - { key: SPACES_BUCKET, type: SECRET }
+      - { key: SPACES_KEY, type: SECRET }
+      - { key: SPACES_SECRET, type: SECRET }
+
+      # Email (Resend via send.passtrack.xyz — DKIM/SPF already verified)
+      - { key: EMAIL_PROVIDER, value: resend }
+      - { key: EMAIL_FROM, value: "no-reply@send.passtrack.xyz" }
+      - { key: EMAIL_FROM_NAME, value: Passtrack }
+      - { key: RESEND_API_KEY, type: SECRET }
+
+      # Google OAuth
+      - { key: GOOGLE_CLIENT_ID, value: "577415178954-hb4i21df2huk7233e7o06hhhs7p01uja.apps.googleusercontent.com" }
+      - { key: GOOGLE_CLIENT_SECRET, type: SECRET }
+
+workers:
+  - name: event-worker
+    github:
+      repo: VishalPachpor/Festify_Affiliate_system
+      branch: main
+      deploy_on_push: true
+    source_dir: backend
+    build_command: npm ci && npm run build
+    run_command: node dist/workers/event-worker.js
+    instance_size_slug: basic-xxs
+    envs:
+      - { key: NODE_ENV, value: production }
+      - { key: DATABASE_URL, value: ${db.DATABASE_URL} }
+      - { key: REDIS_URL, value: ${redis.REDIS_URL} }
+
+  - name: inbound-processor
+    github:
+      repo: VishalPachpor/Festify_Affiliate_system
+      branch: main
+      deploy_on_push: true
+    source_dir: backend
+    build_command: npm ci && npm run build
+    run_command: node dist/processors/worker.js
+    instance_size_slug: basic-xxs
+    envs:
+      - { key: NODE_ENV, value: production }
+      - { key: DATABASE_URL, value: ${db.DATABASE_URL} }
+      - { key: REDIS_URL, value: ${redis.REDIS_URL} }
+
+databases:
+  - { name: db, engine: PG, version: "16", production: true }
+  - { name: redis, engine: REDIS, production: true }

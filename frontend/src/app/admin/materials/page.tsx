@@ -212,6 +212,7 @@ export default function AdminMaterialsPage() {
       size: a.sizeLabel,
       visible: a.visible,
       fileUrl: a.fileUrl,
+      downloadUrl: a.downloadUrl,
       mimeType: a.mimeType,
       addedAt: formatAddedAt(a.addedAt),
       thumbnailGradient: getMaterialGradient(a.thumbnailBg),
@@ -236,15 +237,6 @@ export default function AdminMaterialsPage() {
       onSuccess: () => setPendingDelete(null),
       onError: () => setPendingDelete(null),
     });
-  }
-
-  function deriveFilename(fileUrl: string, title: string): string {
-    try {
-      const last = new URL(fileUrl).pathname.split("/").pop();
-      return last || title;
-    } catch {
-      return title;
-    }
   }
 
   return (
@@ -366,8 +358,8 @@ export default function AdminMaterialsPage() {
                   {/* Actions */}
                   <div className="flex items-center gap-[var(--space-2)]">
                     <a
-                      href={`${mat.fileUrl}?download=1`}
-                      download={deriveFilename(mat.fileUrl, mat.title)}
+                      href={mat.downloadUrl}
+                      download={mat.title}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex flex-1 items-center justify-center gap-[var(--space-2)] rounded-[var(--radius)] border px-[var(--space-3)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(28,74,166,0.14)]"

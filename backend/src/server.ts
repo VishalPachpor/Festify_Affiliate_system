@@ -1,5 +1,4 @@
 import express from "express";
-import path from "path";
 import rateLimit from "express-rate-limit";
 import { apiAuth } from "./middleware/auth";
 import { webhookIngestRouter } from "./routes/webhook-ingest";
@@ -16,8 +15,6 @@ import { assetsRouter } from "./routes/assets";
 import { integrationsRouter } from "./routes/integrations";
 import { publicRouter } from "./routes/public";
 import { notificationsRouter } from "./routes/notifications";
-import { startEventWorker } from "./workers/event-worker";
-import { startWorker as startInboundProcessor } from "./processors/worker";
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
@@ -115,29 +112,6 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-// Static asset serving (no auth) — uploaded marketing materials live under
-// backend/uploads/<tenantId>/<file>. Files are addressed by random ids so
-// listing without auth is fine; affiliates need plain URLs to download.
-//
-// Content-Disposition is opt-in: only force a browser download when the
-// request carries ?download=1. Without it, the browser renders inline so
-// the Preview/eye button can show images/PDFs in a new tab. The HTML
-// `download` attribute alone is ignored cross-origin (dev:3000 ↔ :3001),
-// so the attachment intent has to be signalled by the server.
-// Mount a tiny pre-middleware that sets Content-Disposition: attachment when
-// the caller passes ?download=1. Express.static then serves the file with
-// that header intact. Using express.static's own setHeaders hook with
-// res.locals wasn't reliable in practice — setting the header directly on
-// the response before static runs is simpler and works.
-app.use("/uploads", (req, res, next) => {
-  if (req.query.download === "1") {
-    const filename = path.basename(req.path);
-    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-  }
-  next();
-});
-app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
-
 // Auth routes (no auth required, rate-limited)
 app.use("/api/auth", authLimiter);
 app.use(authRouter);
@@ -176,14 +150,8 @@ app.use(assetsRouter);
 app.use(integrationsRouter);
 app.use(notificationsRouter);
 
-// Start durable event worker (BullMQ) — consumes domain events, updates aggregates
-startEventWorker();
-
-// Start inbound event processor — turns InboundEvent(pending) into Sale/Attribution/Commission
-startInboundProcessor().catch((err) => {
-  console.error("[inbound-processor] crashed:", err);
-  process.exit(1);
-});
+// Workers run as separate processes in production (see .do/app.yaml).
+// Start them locally with `npm run worker` and `npm run worker:events`.
 
 app.listen(PORT, () => {
   console.log(`[backend] Listening on http://localhost:${PORT}`);
