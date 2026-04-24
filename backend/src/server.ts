@@ -21,6 +21,10 @@ const PORT = process.env.PORT ?? 3001;
 const LOCALHOST_ORIGIN = /^http:\/\/localhost:\d+$/;
 const VERCEL_ORIGIN = /^https:\/\/[a-z0-9-]+(?:-[a-z0-9-]+)*\.vercel\.app$/i;
 
+// DigitalOcean/Cloudflare terminate TLS before the request reaches Express.
+// Trust one proxy hop so express-rate-limit can safely read X-Forwarded-For.
+app.set("trust proxy", 1);
+
 function getAllowedOrigins(): Set<string> {
   const configuredOrigins = [
     process.env.APP_URL,
