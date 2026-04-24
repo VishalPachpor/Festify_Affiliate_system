@@ -305,14 +305,24 @@ export default function AdminMaterialsPage() {
                 key={mat.id}
                 className="flex min-h-[24rem] w-full flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.06)] bg-transparent transition-colors duration-[var(--duration-normal)] hover:border-[rgba(255,255,255,0.10)]"
               >
-                {/* Thumbnail — Figma: branded gradient band with centered
-                    type icon. Never a file preview — the card is a type-badge
-                    identity, not an image thumbnail. Gradient from
-                    /styles/gradients.ts. */}
+                {/* Thumbnail — branded gradient band with centered type icon.
+                    For image uploads we layer the actual file on top so a real
+                    banner shows its content; gradient + icon remain for
+                    non-image types or if the image fails to load. Mirrors the
+                    affiliate /dashboard/materials card behaviour. */}
                 <div
                   className="relative flex h-[12rem] shrink-0 items-center justify-center overflow-hidden"
                   style={{ background: mat.thumbnailGradient }}
                 >
+                  {mat.mimeType.startsWith("image/") ? (
+                    <img
+                      src={mat.fileUrl}
+                      alt={mat.title}
+                      className="absolute inset-0 h-full w-full object-cover"
+                      loading="lazy"
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                    />
+                  ) : null}
                   <ThumbIcon />
                 </div>
 
