@@ -17,7 +17,7 @@ function getReconnectDelay(attempt: number): number {
 }
 
 function getStreamUrl(tenantId: string): string {
-  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
   return `${base}/events/stream?tenantId=${encodeURIComponent(tenantId)}`;
 }
 
