@@ -113,10 +113,11 @@ workers:
 
 jobs:
   # Runs once per deploy, before the services start — applies prisma schema
-  # changes to the external Neon Postgres. Seed is NOT run here; invoke
-  # `npm run db:seed` manually when you need fixtures.
+  # changes to the external Neon Postgres.
   #
-  # No `envs:` block — DATABASE_URL is inherited from the app-level envs above.
+  # DO gotcha: PRE_DEPLOY jobs do NOT inherit app-level env vars (unlike
+  # services/workers). DATABASE_URL must be declared here, and its value set
+  # separately at this component's env-var panel, not at app-level.
   - name: migrate
     kind: PRE_DEPLOY
     github:
@@ -126,3 +127,5 @@ jobs:
     build_command: npm ci && npm run build
     run_command: npm run deploy:migrate
     instance_size_slug: basic-xxs
+    envs:
+      - { key: DATABASE_URL, type: SECRET }
