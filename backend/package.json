@@ -13,6 +13,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "ts-node prisma/seed.ts",
+    "db:bootstrap-admin": "ts-node prisma/bootstrap-admin.ts",
     "test": "ts-node --transpile-only tests/tier-rate.unit.test.ts && ts-node --transpile-only tests/payouts.integration.test.ts",
     "test:unit": "ts-node --transpile-only tests/tier-rate.unit.test.ts"
   },
