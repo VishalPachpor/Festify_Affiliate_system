@@ -212,6 +212,7 @@ export default function AdminMaterialsPage() {
       size: a.sizeLabel,
       visible: a.visible,
       fileUrl: a.fileUrl,
+      previewUrl: a.previewUrl ?? null,
       downloadUrl: a.downloadUrl,
       mimeType: a.mimeType,
       addedAt: formatAddedAt(a.addedAt),
@@ -314,9 +315,9 @@ export default function AdminMaterialsPage() {
                   className="relative flex h-[12rem] shrink-0 items-center justify-center overflow-hidden"
                   style={{ background: mat.thumbnailGradient }}
                 >
-                  {mat.mimeType.startsWith("image/") ? (
+                  {mat.previewUrl ? (
                     <img
-                      src={mat.fileUrl}
+                      src={mat.previewUrl}
                       alt={mat.title}
                       className="absolute inset-0 h-full w-full object-cover"
                       loading="lazy"

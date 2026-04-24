@@ -90,15 +90,18 @@ function buildObjectKey(tenantId: string, originalFilename: string): string {
   return `${tenantId}/${random}${ext}`;
 }
 
-function serializeAsset(asset: {
-  id: string;
-  title: string;
-  type: AssetType;
-  sizeBytes: number;
-  mimeType: string;
-  visible: boolean;
-  createdAt: Date;
-}) {
+function serializeAsset(
+  asset: {
+    id: string;
+    title: string;
+    type: AssetType;
+    sizeBytes: number;
+    mimeType: string;
+    visible: boolean;
+    createdAt: Date;
+  },
+  previewUrl: string | null = null,
+) {
   const base = publicApiUrl();
   const viewUrl = `${base}/api/assets/${asset.id}/view`;
   return {
@@ -110,6 +113,11 @@ function serializeAsset(asset: {
     fileUrl: viewUrl,
     viewUrl,
     downloadUrl: `${base}/api/assets/${asset.id}/download`,
+    // Direct presigned GET to Spaces, only emitted for image MIME types so
+    // browsers can render <img> thumbnails without going through apiAuth
+    // (which <img> tags can't satisfy — they send cookies only, no Bearer).
+    // Null for non-images; the frontend falls back to the type-icon gradient.
+    previewUrl,
     sizeBytes: asset.sizeBytes,
     sizeLabel: formatBytes(asset.sizeBytes),
     mimeType: asset.mimeType,
@@ -117,6 +125,23 @@ function serializeAsset(asset: {
     addedAt: asset.createdAt.toISOString(),
     thumbnailBg: thumbnailBgFor(asset.type, asset.title),
   };
+}
+
+async function signPreviewUrl(
+  key: string,
+  mimeType: string,
+): Promise<string | null> {
+  if (!mimeType.startsWith("image/")) return null;
+  try {
+    return await getSignedUrl(
+      s3,
+      new GetObjectCommand({ Bucket: SPACES_BUCKET, Key: key }),
+      { expiresIn: VIEW_URL_TTL_SECONDS },
+    );
+  } catch (err) {
+    console.warn("[assets] preview URL sign failed for key=%s: %s", key, err);
+    return null;
+  }
 }
 
 // ─── GET /api/assets ────────────────────────────────────────────────────────
@@ -132,7 +157,12 @@ router.get("/api/assets", async (req: Request, res: Response) => {
     if (visibleQ === "true") where.visible = true;
 
     const assets = await prisma.asset.findMany({ where, orderBy: { createdAt: "desc" } });
-    res.status(200).json({ assets: assets.map(serializeAsset), total: assets.length });
+    const serialized = await Promise.all(
+      assets.map(async (a) =>
+        serializeAsset(a, await signPreviewUrl(a.fileUrl, a.mimeType)),
+      ),
+    );
+    res.status(200).json({ assets: serialized, total: assets.length });
   } catch (err) {
     console.error("[assets] List query failed:", err);
     res.status(500).json({ error: "Failed to load assets" });
@@ -235,7 +265,9 @@ router.post("/api/assets/confirm", async (req: Request, res: Response) => {
       },
     });
 
-    res.status(201).json(serializeAsset(asset));
+    res.status(201).json(
+      serializeAsset(asset, await signPreviewUrl(asset.fileUrl, asset.mimeType)),
+    );
   } catch (err) {
     console.error("[assets] Confirm failed:", err);
     res.status(500).json({ error: "Failed to confirm upload" });
@@ -324,7 +356,9 @@ router.patch("/api/assets/:id/visibility", async (req: Request, res: Response) =
     }
 
     const updated = await prisma.asset.update({ where: { id }, data: { visible } });
-    res.status(200).json(serializeAsset(updated));
+    res.status(200).json(
+      serializeAsset(updated, await signPreviewUrl(updated.fileUrl, updated.mimeType)),
+    );
   } catch (err) {
     console.error("[assets] Visibility update failed:", err);
     res.status(500).json({ error: "Failed to update asset visibility" });

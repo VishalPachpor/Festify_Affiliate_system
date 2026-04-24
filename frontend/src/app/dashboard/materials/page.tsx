@@ -99,7 +99,7 @@ function formatAddedDate(iso: string) {
 }
 
 function AssetCard({ asset }: { asset: Asset }) {
-  const isImage = asset.mimeType.startsWith("image/");
+  const previewUrl = asset.previewUrl ?? null;
   return (
     <article className="h-full overflow-hidden rounded-[8px] border border-[rgba(255,255,255,0.05)] bg-[rgba(15,22,40,0.5)] p-px">
       {/* Preview — matches admin behaviour: render the actual image on top of
@@ -111,9 +111,9 @@ function AssetCard({ asset }: { asset: Asset }) {
         style={{ background: getMaterialGradient(asset.thumbnailBg) }}
         aria-hidden="true"
       >
-        {isImage ? (
+        {previewUrl ? (
           <img
-            src={asset.fileUrl}
+            src={previewUrl}
             alt={asset.title}
             className="absolute inset-0 h-full w-full object-cover"
             onError={(e) => { e.currentTarget.style.display = "none"; }}

@@ -11,6 +11,9 @@ export const assetSchema = z.object({
   fileUrl: z.string(),
   viewUrl: z.string(),
   downloadUrl: z.string(),
+  // Direct presigned GET to Spaces, only present for image MIME types.
+  // Use this for <img src> to avoid apiAuth (which image tags can't satisfy).
+  previewUrl: z.string().nullable().optional(),
   sizeBytes: z.number(),
   sizeLabel: z.string(),
   mimeType: z.string(),
