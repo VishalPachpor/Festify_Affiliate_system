@@ -4,14 +4,19 @@ import bcrypt from "bcryptjs";
 // Minimal, idempotent admin bootstrap for production.
 //
 // Creates ONLY:
-//   • tenant_demo (upsert) — required as FK target for the admin user
-//   • admin@festify.io (upsert) — role=admin, pre-verified so login works
+//   • tenant_demo (create-if-missing) — required as FK target for the admin
+//   • admin@festify.io (create-if-missing) — role=admin, pre-verified
 //
 // Deliberately skips everything else the full seed does — milestones,
 // campaigns, demo assets, etc. — so re-running this against a live tenant
 // does not overwrite URLs or wipe real data.
 //
-// Run once against production:
+// Safe to run on every deploy: if the admin user already exists, the row is
+// left untouched (passwords, email verification, role — all preserved). This
+// lets the script sit in the PRE_DEPLOY pipeline without ever clobbering a
+// password that an admin changed after the first deploy.
+//
+// Manual run:
 //   DATABASE_URL="<neon url>" npx ts-node prisma/bootstrap-admin.ts
 
 const TENANT_ID = "tenant_demo";
@@ -33,17 +38,21 @@ async function main() {
     },
   });
 
-  const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
-
-  const user = await prisma.user.upsert({
+  const existing = await prisma.user.findUnique({
     where: { email: ADMIN_EMAIL },
-    update: {
-      passwordHash,
-      role: "admin",
-      tenantId: TENANT_ID,
-      emailVerifiedAt: new Date(),
-    },
-    create: {
+    select: { id: true, email: true },
+  });
+
+  if (existing) {
+    console.log(
+      `[bootstrap-admin] ${existing.email} already exists (id=${existing.id}) — leaving row untouched.`,
+    );
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
+  const user = await prisma.user.create({
+    data: {
       email: ADMIN_EMAIL,
       fullName: "Demo Admin",
       passwordHash,
@@ -53,7 +62,9 @@ async function main() {
     },
   });
 
-  console.log(`[bootstrap-admin] ok — ${user.email} (id=${user.id}) is ready. Password: ${ADMIN_PASSWORD}`);
+  console.log(
+    `[bootstrap-admin] created ${user.email} (id=${user.id}) with default demo password.`,
+  );
 }
 
 main()
