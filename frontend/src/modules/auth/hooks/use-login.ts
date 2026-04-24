@@ -2,6 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ApiError } from "@/services/api/client";
 import { useAuth, destinationForRole } from "../provider";
 import type { LoginFormValues } from "../schemas";
 
@@ -22,6 +23,11 @@ export function useLoginMutation() {
           : null;
 
       router.push(next ?? destinationForRole(user.role));
+    },
+    onError: (error, variables) => {
+      if (error instanceof ApiError && error.code === "EMAIL_NOT_VERIFIED") {
+        router.push(`/verify-email?email=${encodeURIComponent(variables.email)}`);
+      }
     },
   });
 }
