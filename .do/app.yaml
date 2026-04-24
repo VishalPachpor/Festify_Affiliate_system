@@ -26,7 +26,11 @@
 #     migrate (job):      DATABASE_URL
 #
 #   - Spaces bucket (passtrack-assets) CORS must allow https://passtrack.xyz,
-#     https://www.passtrack.xyz, http://localhost:3000.
+#     https://www.passtrack.xyz, http://localhost:3000. Apply with:
+#       cd backend && SPACES_KEY=… SPACES_SECRET=… SPACES_BUCKET=passtrack-assets \
+#         CORS_ORIGIN="https://passtrack.xyz,https://www.passtrack.xyz" \
+#         npm run spaces:cors
+#     (source: backend/scripts/configure-spaces-cors.ts — idempotent, POST-only)
 #   - After first green deploy, add `api.passtrack.xyz` in DO → Settings →
 #     Domains and paste the CNAME into your DNS provider.
 
