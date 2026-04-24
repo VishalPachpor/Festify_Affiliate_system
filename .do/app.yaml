@@ -23,12 +23,12 @@
 #                         GOOGLE_CLIENT_SECRET
 #     event-worker:       DATABASE_URL, REDIS_URL, RESEND_API_KEY
 #     inbound-processor:  DATABASE_URL, REDIS_URL
-#     migrate (job):      DATABASE_URL, SPACES_BUCKET, SPACES_KEY, SPACES_SECRET
+#     migrate (job):      DATABASE_URL
 #
-#   - Spaces bucket (passtrack-assets) CORS is applied automatically by the
-#     migrate PRE_DEPLOY job (backend/scripts/configure-spaces-cors.ts). It
-#     allows POST from https://passtrack.xyz, https://www.passtrack.xyz, and
-#     http://localhost:3000. No manual bucket setup required.
+#   - Spaces bucket (passtrack-assets) CORS is one-time manual setup — either
+#     via DO dashboard (Spaces → passtrack-assets → Settings → CORS) or via
+#     `npm run spaces:cors` with a Full Access Spaces key. Needs POST from
+#     https://passtrack.xyz, https://www.passtrack.xyz, http://localhost:3000.
 #   - After first green deploy, add `api.passtrack.xyz` in DO → Settings →
 #     Domains and paste the CNAME into your DNS provider.
 
@@ -122,18 +122,22 @@ workers:
       - { key: REDIS_URL, type: SECRET }
 
 jobs:
-  # Runs once per deploy, before services start.
+  # Runs once per deploy, before services start — `prisma db push` against
+  # Neon. Demo fixtures (seed, admin bootstrap, sales/payouts) and
+  # infrastructure setup (Spaces bucket CORS) are NOT run here; they are
+  # one-time bootstrap tasks invoked manually against production:
   #
-  # Chain (fail-fast):
-  #   1. prisma db push          — apply schema to Neon
-  #   2. spaces:cors             — put CORS on the passtrack-assets bucket
-  #                                (idempotent; see backend/scripts/configure-spaces-cors.ts)
-  #   3. db:bootstrap-admin      — create admin@festify.io if missing (no-op otherwise;
-  #                                never clobbers an existing password)
+  #   npm run db:seed               — demo tenant, campaign, milestones, assets
+  #   npm run db:bootstrap-admin    — just the admin@festify.io row
+  #   npm run db:seed-sales-payouts — a few sales + pending payouts for QA
   #
-  # The demo fixture seed (milestones, campaigns, demo assets) is NOT run here
-  # — it would overwrite live tenant state. Invoke `npm run db:seed` manually
-  # against a fresh tenant if you need it.
+  # Bucket CORS was attempted in a deploy chain earlier but failed with 403
+  # AccessDenied — the standard Spaces access key only grants object-level
+  # read/write. PutBucketCors requires a Full Access scoped key (generate
+  # one-off from DO Account → API → Spaces keys, run `npm run spaces:cors`
+  # locally, revoke the key). Easier path: configure via DO Spaces dashboard
+  # UI directly (Spaces Object Storage → passtrack-assets → Settings → CORS
+  # Configurations). Both end-states are identical.
   - name: migrate
     kind: PRE_DEPLOY
     github:
@@ -141,14 +145,7 @@ jobs:
       branch: main
     source_dir: backend
     build_command: npm ci && npm run build
-    run_command: npm run deploy:migrate && npm run spaces:cors && npm run db:bootstrap-admin
+    run_command: npm run deploy:migrate
     instance_size_slug: basic-xxs
     envs:
       - { key: DATABASE_URL, type: SECRET }
-      # Needed for step 2 (configure-spaces-cors).
-      - { key: SPACES_REGION, value: sgp1 }
-      - { key: SPACES_ENDPOINT, value: https://sgp1.digitaloceanspaces.com }
-      - { key: SPACES_BUCKET, type: SECRET }
-      - { key: SPACES_KEY, type: SECRET }
-      - { key: SPACES_SECRET, type: SECRET }
-      - { key: CORS_ORIGIN, value: "https://passtrack.xyz,https://www.passtrack.xyz" }
