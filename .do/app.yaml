@@ -1,16 +1,19 @@
 # DigitalOcean App Platform spec.
 #
+# Both Postgres and Redis are hosted EXTERNALLY (free-tier friendly):
+#   - DATABASE_URL → Neon (https://neon.tech, Singapore region, Postgres 16).
+#     DO's inline dev Postgres doesn't grant CREATE on the public schema under
+#     PG16's new defaults, so prisma db push failed. Neon gives us real DB
+#     ownership and costs nothing on the free plan.
+#   - REDIS_URL → Upstash (https://upstash.com, Singapore, rediss:// TLS URL).
+#
 # Before deploying:
 #   - After first deploy, in DO panel → App → Settings → Domains, add
 #     `api.passtrack.xyz` as a custom domain (creates a CNAME record for you
 #     to paste into your DNS provider).
-#   - Fill these SECRETs via DO panel after first push (don't commit):
-#       JWT_SECRET, REDIS_URL, SPACES_BUCKET, SPACES_KEY, SPACES_SECRET,
-#       RESEND_API_KEY, GOOGLE_CLIENT_SECRET
-#   - REDIS_URL is an external Upstash Redis instance (free tier for demo).
-#     Create at https://upstash.com, pick Singapore region, copy the
-#     `rediss://...` URL, and paste it as REDIS_URL on all three components
-#     (backend, event-worker, inbound-processor).
+#   - Fill these SECRETs via DO panel (app-level env vars, Encrypt checked):
+#       DATABASE_URL, REDIS_URL, JWT_SECRET, SPACES_BUCKET, SPACES_KEY,
+#       SPACES_SECRET, RESEND_API_KEY, GOOGLE_CLIENT_SECRET
 #   - Confirm the Spaces bucket (passtrack-assets) has CORS rules for
 #     https://passtrack.xyz, https://www.passtrack.xyz, http://localhost:3000
 
@@ -36,10 +39,9 @@ services:
       - { key: NODE_ENV, value: production }
       - { key: PORT, value: "3001" }
       - { key: APP_NAME, value: Passtrack }
-      - { key: DATABASE_URL, value: "${db.DATABASE_URL}" }
-      # REDIS_URL points at an external Upstash instance (free tier for demo).
-      # Set via DO panel → App → Settings → App-Level Env Vars. Use the
-      # `rediss://...` URL (TLS).
+      # DATABASE_URL → Neon (external). REDIS_URL → Upstash (external).
+      # Both set via DO panel → App-Level Env Vars with Encrypt enabled.
+      - { key: DATABASE_URL, type: SECRET }
       - { key: REDIS_URL, type: SECRET }
       - { key: JWT_SECRET, type: SECRET }
 
@@ -80,7 +82,7 @@ workers:
     instance_size_slug: basic-xxs
     envs:
       - { key: NODE_ENV, value: production }
-      - { key: DATABASE_URL, value: "${db.DATABASE_URL}" }
+      - { key: DATABASE_URL, type: SECRET }
       - { key: REDIS_URL, type: SECRET }
       # Email delivery — event-worker sends affiliate welcome emails via Resend.
       - { key: APP_NAME, value: Passtrack }
@@ -100,13 +102,13 @@ workers:
     instance_size_slug: basic-xxs
     envs:
       - { key: NODE_ENV, value: production }
-      - { key: DATABASE_URL, value: "${db.DATABASE_URL}" }
+      - { key: DATABASE_URL, type: SECRET }
       - { key: REDIS_URL, type: SECRET }
 
 jobs:
   # Runs once per deploy, before the services start — applies prisma schema
-  # changes to the managed Postgres. Seed is NOT run here; invoke
-  # `npm run db:seed` manually against dev DBs when you need fixtures.
+  # changes to the external Neon Postgres. Seed is NOT run here; invoke
+  # `npm run db:seed` manually when you need fixtures.
   - name: migrate
     kind: PRE_DEPLOY
     github:
@@ -117,7 +119,4 @@ jobs:
     run_command: npm run deploy:migrate
     instance_size_slug: basic-xxs
     envs:
-      - { key: DATABASE_URL, value: "${db.DATABASE_URL}" }
-
-databases:
-  - { name: db, engine: PG, version: "16" }
+      - { key: DATABASE_URL, type: SECRET }
