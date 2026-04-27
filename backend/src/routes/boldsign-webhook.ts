@@ -69,12 +69,32 @@ function isCompletionEvent(eventType: string): boolean {
   return normalized.includes("completed");
 }
 
+// BoldSign's webhook setup UI sends a verification POST before it reveals
+// the signing secret to the operator — there is no way for our backend to
+// have the secret at that point. When BOLDSIGN_WEBHOOK_SECRET is not yet
+// configured we accept the ping with 200 so verification succeeds; once the
+// operator fills the secret in DO, strict signature verification resumes on
+// the next deploy. The setup window cannot be abused for activation because
+// activateAffiliateFromMou requires a real MOU row keyed by providerDocumentId.
+router.get("/api/webhooks/boldsign", (_req: Request, res: Response) => {
+  res.status(200).send("ok");
+});
+
 router.post("/api/webhooks/boldsign", async (req: Request, res: Response) => {
   const rawBody = Buffer.isBuffer(req.body)
     ? req.body
     : Buffer.from(JSON.stringify(req.body ?? {}), "utf8");
 
   try {
+    const configuredSecret = process.env.BOLDSIGN_WEBHOOK_SECRET?.trim();
+    if (!configuredSecret) {
+      console.warn(
+        "[boldsign-webhook] BOLDSIGN_WEBHOOK_SECRET not configured — accepting unverified ping (initial setup only). Fill the secret in DO to enable strict verification.",
+      );
+      res.status(200).send("ok (unverified — secret not yet configured)");
+      return;
+    }
+
     const signature = req.header("x-boldsign-signature") ?? req.header("X-BoldSign-Signature") ?? undefined;
     if (!verifyBoldSignWebhook(rawBody, signature)) {
       console.warn("[boldsign-webhook] invalid signature", {
