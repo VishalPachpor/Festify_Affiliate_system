@@ -76,9 +76,15 @@ services:
       - { key: SPACES_KEY, type: SECRET }
       - { key: SPACES_SECRET, type: SECRET }
 
-      # Email (Resend via send.passtrack.xyz)
+      # Email — Resend.
+      # The verified domain in Resend is `passtrack.xyz` (apex). Resend strictly
+      # checks the From-header domain matches a verified entry — sending from
+      # `@send.passtrack.xyz` returned 403 "domain is not verified" even though
+      # the apex was verified, because Resend does not auto-allow subdomains.
+      # If you want to send from `@send.passtrack.xyz` instead, add and verify
+      # that subdomain separately in Resend → Domains.
       - { key: EMAIL_PROVIDER, value: resend }
-      - { key: EMAIL_FROM, value: "no-reply@send.passtrack.xyz" }
+      - { key: EMAIL_FROM, value: "no-reply@passtrack.xyz" }
       - { key: EMAIL_FROM_NAME, value: Passtrack }
       - { key: RESEND_API_KEY, type: SECRET }
 
@@ -101,9 +107,10 @@ workers:
       - { key: DATABASE_URL, type: SECRET }
       - { key: REDIS_URL, type: SECRET }
       # Affiliate welcome emails go through Resend from this worker.
+      # Match backend: From must use the verified apex `passtrack.xyz`.
       - { key: APP_NAME, value: Passtrack }
       - { key: EMAIL_PROVIDER, value: resend }
-      - { key: EMAIL_FROM, value: "no-reply@send.passtrack.xyz" }
+      - { key: EMAIL_FROM, value: "no-reply@passtrack.xyz" }
       - { key: EMAIL_FROM_NAME, value: Passtrack }
       - { key: RESEND_API_KEY, type: SECRET }
 
