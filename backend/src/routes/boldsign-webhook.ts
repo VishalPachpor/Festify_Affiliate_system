@@ -65,8 +65,18 @@ function mapMouStatus(eventType: string): "sent" | "viewed" | "signed" | "declin
 }
 
 function isCompletionEvent(eventType: string): boolean {
+  // BoldSign delivers both "Signed" and "Completed" for a single-signer
+  // document, in that order, ~2s apart. Either is the actual signed signal —
+  // route both through activateAffiliateFromMou. The second call idempotently
+  // bails via the processedWebhookEvent unique constraint OR via the existing
+  // mou.status==="signed" guard once activation has run.
+  //
+  // Earlier behaviour: only "completed" matched here, and "Signed" went
+  // through the non-completion path which prematurely set mou.status="signed".
+  // The subsequent "Completed" event then bailed with "mou_already_signed",
+  // leaving the application stuck in approved_pending_mou.
   const normalized = eventType.trim().toLowerCase();
-  return normalized.includes("completed");
+  return normalized.includes("completed") || normalized.includes("signed");
 }
 
 // BoldSign's webhook setup UI sends a verification POST before it reveals
