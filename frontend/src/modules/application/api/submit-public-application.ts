@@ -7,7 +7,7 @@ export type PublicApplicationPayload = ApplicationSubmission & {
 
 export type PublicApplicationResponse = {
   id: string;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved_pending_mou" | "approved" | "rejected";
   duplicate: boolean;
 };
 

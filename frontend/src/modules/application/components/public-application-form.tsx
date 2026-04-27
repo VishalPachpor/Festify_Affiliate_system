@@ -149,6 +149,8 @@ export function PublicApplicationForm({
         <p className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.6] text-[var(--color-text-secondary)]">
           {result.status === "approved"
             ? `You're approved for ${eventName}. Check your email for your referral link and dashboard access.`
+            : result.status === "approved_pending_mou"
+              ? `Your application for ${eventName} is approved. Check your email to sign the MOU and activate access.`
             : result.status === "rejected"
               ? `Unfortunately your application for ${eventName} was not approved this time.`
               : `Thanks for applying to ${eventName}. The ${organizerName} team will review your application and get back to you by email.`}

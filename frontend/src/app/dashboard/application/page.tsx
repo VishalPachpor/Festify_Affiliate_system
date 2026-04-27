@@ -57,6 +57,16 @@ export default function AffiliateApplicationPage() {
     );
   }
 
+  if (status === "approved_pending_mou") {
+    return (
+      <DashboardContainer>
+        <DashboardStageCanvas centered>
+          <ApplicationStatusCard variant="mou_required" />
+        </DashboardStageCanvas>
+      </DashboardContainer>
+    );
+  }
+
   if (status === "approved") {
     return (
       <DashboardContainer>

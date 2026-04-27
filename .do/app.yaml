@@ -20,7 +20,8 @@
 #
 #     backend:            DATABASE_URL, REDIS_URL, JWT_SECRET, SPACES_BUCKET,
 #                         SPACES_KEY, SPACES_SECRET, RESEND_API_KEY,
-#                         GOOGLE_CLIENT_SECRET
+#                         GOOGLE_CLIENT_SECRET, BOLDSIGN_API_KEY,
+#                         BOLDSIGN_MOU_TEMPLATE_ID, BOLDSIGN_WEBHOOK_SECRET
 #     event-worker:       DATABASE_URL, REDIS_URL, RESEND_API_KEY
 #     inbound-processor:  DATABASE_URL, REDIS_URL
 #     migrate (job):      DATABASE_URL
@@ -31,6 +32,9 @@
 #     https://passtrack.xyz, https://www.passtrack.xyz, http://localhost:3000.
 #   - After first green deploy, add `api.passtrack.xyz` in DO → Settings →
 #     Domains and paste the CNAME into your DNS provider.
+#   - After `prisma db push` adds the MouAgreement table, run
+#     `npm run db:migrate-mou-current-unique` once against Neon to add the
+#     partial unique index that Prisma can't express in schema.prisma.
 
 name: festify
 region: sgp
@@ -91,6 +95,17 @@ services:
       # Google OAuth
       - { key: GOOGLE_CLIENT_ID, value: "577415178954-hb4i21df2huk7233e7o06hhhs7p01uja.apps.googleusercontent.com" }
       - { key: GOOGLE_CLIENT_SECRET, type: SECRET }
+
+      # BoldSign — affiliate MOU signing.
+      # DISABLE_EMAILS=true so BoldSign does NOT send its own signing email;
+      # the dashboard email from sendAffiliateMouEmail is the only one the
+      # affiliate sees, pointing at /dashboard/application/mou. Flipping this
+      # to false would result in two emails with two different signing URLs.
+      - { key: BOLDSIGN_BASE_URL, value: "https://api.boldsign.com" }
+      - { key: BOLDSIGN_DISABLE_EMAILS, value: "true" }
+      - { key: BOLDSIGN_API_KEY, type: SECRET }
+      - { key: BOLDSIGN_MOU_TEMPLATE_ID, type: SECRET }
+      - { key: BOLDSIGN_WEBHOOK_SECRET, type: SECRET }
 
 workers:
   - name: event-worker

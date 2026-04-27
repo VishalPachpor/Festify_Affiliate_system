@@ -15,11 +15,21 @@ import { assetsRouter } from "./routes/assets";
 import { integrationsRouter } from "./routes/integrations";
 import { publicRouter } from "./routes/public";
 import { notificationsRouter } from "./routes/notifications";
+import { mouRouter } from "./routes/mou";
+import { boldSignWebhookRouter } from "./routes/boldsign-webhook";
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
 const LOCALHOST_ORIGIN = /^http:\/\/localhost:\d+$/;
 const VERCEL_ORIGIN = /^https:\/\/[a-z0-9-]+(?:-[a-z0-9-]+)*\.vercel\.app$/i;
+
+const boldSignWebhookLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  limit: 120,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "Too many webhook requests" },
+});
 
 // DigitalOcean/Cloudflare terminate TLS before the request reaches Express.
 // Trust one proxy hop so express-rate-limit can safely read X-Forwarded-For.
@@ -68,6 +78,15 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// BoldSign signs the exact raw JSON payload. Mount this before express.json()
+// so the signature verifier receives the original bytes.
+app.use(
+  "/api/webhooks/boldsign",
+  boldSignWebhookLimiter,
+  express.raw({ type: "application/json", limit: "2mb" }),
+);
+app.use(boldSignWebhookRouter);
 
 // Parse JSON bodies with size limit.
 // The `verify` callback captures the raw body for webhook signature validation.
@@ -137,6 +156,7 @@ app.use("/api/attribution", apiLimiter, apiAuth);
 app.use("/api/milestones", apiLimiter, apiAuth);
 app.use("/api/application", apiLimiter, apiAuth);
 app.use("/api/applications", apiLimiter, apiAuth);
+app.use("/api/mou", apiLimiter, apiAuth);
 app.use("/api/assets", apiLimiter, apiAuth);
 app.use("/api/integrations", apiLimiter, apiAuth);
 app.use("/api/notifications", apiLimiter, apiAuth);
@@ -150,6 +170,7 @@ app.use(attributionRouter);
 app.use(milestonesRouter);
 app.use(applicationRouter);
 app.use(applicationsRouter);
+app.use(mouRouter);
 app.use(assetsRouter);
 app.use(integrationsRouter);
 app.use(notificationsRouter);

@@ -29,9 +29,13 @@ export function ApplicationGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (needsRedirect) {
-      router.replace("/dashboard/application");
+      router.replace(
+        status === "approved_pending_mou"
+          ? "/dashboard/application/mou"
+          : "/dashboard/application",
+      );
     }
-  }, [needsRedirect, router]);
+  }, [needsRedirect, router, status]);
 
   if (needsRedirect) return null;
 

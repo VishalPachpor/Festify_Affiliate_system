@@ -71,6 +71,9 @@ const NAV_ITEMS = [
   { href: "/dashboard/sales",      label: "Sales",      Icon: IconSales      },
 ] as const;
 
+const RESTRICTED_HOME_ITEM = { ...NAV_ITEMS[0], label: "Home" } as const;
+const MOU_NAV_ITEM = { href: "/dashboard/application/mou", label: "Sign MOU", Icon: IconMaterials } as const;
+
 function isNavActive(href: string, pathname: string): boolean {
   if (href === "/dashboard") {
     return pathname === "/dashboard" || pathname.startsWith("/dashboard/application");
@@ -86,9 +89,12 @@ export function AppSidebar() {
   const { user } = useAuth();
   const { data, isLoading } = useApplicationStatus(tenant?.id);
   const isApproved = data?.status === "approved";
+  const requiresMou = data?.status === "approved_pending_mou";
   const isRestrictedAffiliate = user?.role === "affiliate" && (!isApproved || isLoading);
   const visibleNavItems = isRestrictedAffiliate
-    ? [{ ...NAV_ITEMS[0], label: "Home" }]
+    ? requiresMou
+      ? [RESTRICTED_HOME_ITEM, MOU_NAV_ITEM]
+      : [RESTRICTED_HOME_ITEM]
     : NAV_ITEMS;
   const brandSubtitle = tenant?.name?.startsWith("TOKEN2049")
     ? (() => {

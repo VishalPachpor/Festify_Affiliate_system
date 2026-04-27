@@ -3,6 +3,7 @@ import { z } from "zod";
 export const applicationStatusSchema = z.enum([
   "not_applied",
   "pending",
+  "approved_pending_mou",
   "approved",
   "rejected",
 ]);
@@ -11,6 +12,19 @@ export type ApplicationStatus = z.infer<typeof applicationStatusSchema>;
 
 export const applicationStatusResponseSchema = z.object({
   status: applicationStatusSchema,
+  applicationId: z.string().nullable().optional(),
+  mouStatus: z.enum([
+    "created",
+    "sent",
+    "viewed",
+    "signed",
+    "declined",
+    "expired",
+    "voided",
+    "failed",
+  ]).nullable().optional(),
+  mouSignerEmail: z.string().nullable().optional(),
+  mouSignerName: z.string().nullable().optional(),
 });
 
 export type ApplicationStatusResponse = z.infer<typeof applicationStatusResponseSchema>;

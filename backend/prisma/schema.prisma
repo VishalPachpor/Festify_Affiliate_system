@@ -42,8 +42,20 @@ enum ProviderConnectionStatus {
 
 enum ApplicationStatus {
   pending
+  approved_pending_mou
   approved
   rejected
+}
+
+enum MouStatus {
+  created
+  sent
+  viewed
+  signed
+  declined
+  expired
+  voided
+  failed
 }
 
 enum ApplicationApplicantType {
@@ -96,6 +108,7 @@ model Tenant {
   attributionStats        AttributionStats?
   providerConnections     ProviderConnection[]
   applications            Application[]
+  mouAgreements           MouAgreement[]
   milestones              Milestone[]
   affiliateProgress       AffiliateMilestoneProgress[]
   notifications           Notification[]
@@ -360,6 +373,26 @@ model ProcessedEvent {
   @@index([createdAt])
 }
 
+// ─── Processed Webhook Event ─────────────────────────────────────────────────
+// Provider-level idempotency for external webhooks. This is intentionally
+// separate from ProcessedEvent because providers retry independently of our
+// internal durable event bus.
+
+model ProcessedWebhookEvent {
+  id          String   @id @default(cuid())
+  provider    String
+  eventId     String
+  eventType   String
+  documentId  String?
+  tenantId    String?
+  payload     Json?
+  processedAt DateTime @default(now())
+
+  @@unique([provider, eventId])
+  @@index([provider, documentId])
+  @@index([tenantId])
+}
+
 // ─── Aggregate: Dashboard Stats ──────────────────────────────────────────────
 // Precomputed. Updated by event handlers, read by API endpoints.
 
@@ -450,6 +483,8 @@ model Application {
 
   status         ApplicationStatus @default(pending)
   reviewedAt     DateTime?
+  activatedAt    DateTime?
+  welcomeEmailSentAt DateTime?
   /// Set when status transitions to approved — links to the created CampaignAffiliate.
   affiliateId    String?
 
@@ -458,10 +493,53 @@ model Application {
 
   tenant   Tenant   @relation(fields: [tenantId], references: [id])
   campaign Campaign @relation(fields: [campaignId], references: [id])
+  mouAgreements MouAgreement[]
 
   @@unique([tenantId, campaignId, email])
   @@index([tenantId, status])
   @@index([campaignId])
+}
+
+// ─── MOU Agreement ───────────────────────────────────────────────────────────
+// Tracks legal acceptance between organizer and affiliate applicant. A row is
+// created when an admin commercially approves an application; affiliate access
+// is only activated when the current MOU reaches `signed` via a verified
+// BoldSign webhook.
+
+model MouAgreement {
+  id                 String    @id @default(cuid())
+  tenantId           String
+  applicationId      String
+  provider           String    @default("boldsign")
+  providerDocumentId String?   @unique
+  providerTemplateId String
+  version            Int       @default(1)
+  isCurrent          Boolean   @default(true)
+
+  signerName         String
+  signerEmail        String
+
+  status             MouStatus @default(created)
+  sentAt             DateTime?
+  viewedAt           DateTime?
+  signedAt           DateTime?
+  declinedAt         DateTime?
+  expiredAt          DateTime?
+  voidedAt           DateTime?
+  failedAt           DateTime?
+  lastError          String?
+  resendCount        Int       @default(0)
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, isCurrent])
+  @@index([tenantId])
+  @@index([status])
+  @@index([providerDocumentId])
 }
 
 // ─── Milestone ───────────────────────────────────────────────────────────────

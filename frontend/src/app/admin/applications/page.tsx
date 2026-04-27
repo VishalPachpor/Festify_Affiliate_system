@@ -31,8 +31,11 @@ type Application = {
   experience: string | null;
   fitReason: string | null;
   requestedCode: string | null;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved_pending_mou" | "approved" | "rejected";
   affiliateId: string | null;
+  mouStatus: "created" | "sent" | "viewed" | "signed" | "declined" | "expired" | "voided" | "failed" | null;
+  mouSignerEmail: string | null;
+  mouSignerName: string | null;
   campaignId: string;
   campaignName: string;
   campaignSlug: string;
@@ -46,7 +49,7 @@ type ApplicationsListResponse = {
 
 export default function ApplicationsReviewPage() {
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState<"pending" | "approved" | "rejected" | "all">("pending");
+  const [filter, setFilter] = useState<"pending" | "approved_pending_mou" | "approved" | "rejected" | "all">("pending");
   const searchParams = useSearchParams();
   const searchTerm = (searchParams.get("search") ?? "").trim().toLowerCase();
 
@@ -94,6 +97,16 @@ export default function ApplicationsReviewPage() {
     },
   });
 
+  const resendMouMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiClient<{ id: string; status: string; mouStatus: string }>(`/applications/${id}/mou/resend`, {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["applications"] });
+    },
+  });
+
   const errorMessage = error instanceof Error ? error.message : null;
   const reviewError = reviewMutation.error instanceof Error ? reviewMutation.error.message : null;
 
@@ -109,7 +122,7 @@ export default function ApplicationsReviewPage() {
           </p>
         </div>
         <div className="flex items-center gap-[var(--space-2)]">
-          {(["pending", "approved", "rejected", "all"] as const).map((f) => (
+          {(["pending", "approved_pending_mou", "approved", "rejected", "all"] as const).map((f) => (
             <button
               key={f}
               type="button"
@@ -120,7 +133,7 @@ export default function ApplicationsReviewPage() {
                   : "border border-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.70)] hover:border-[rgba(255,255,255,0.24)]"
               }`}
             >
-              {f}
+              {f.replaceAll("_", " ")}
             </button>
           ))}
         </div>
@@ -264,6 +277,32 @@ export default function ApplicationsReviewPage() {
               </div>
             )}
 
+            {app.status === "approved_pending_mou" && (
+              <div className="mt-[var(--space-4)] flex flex-wrap items-center gap-[var(--space-3)]">
+                {(app.mouStatus === "failed" || app.mouStatus === "expired" || app.mouStatus === "declined") ? (
+                  <div className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-3)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[#FCA5A5]">
+                    <span aria-hidden="true" className="inline-block size-[6px] rounded-full bg-[#EF4444]" />
+                    MOU {app.mouStatus} — click Resend MOU to issue a new document
+                  </div>
+                ) : (
+                  <div className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
+                    MOU {app.mouStatus ?? "created"} · signer:{" "}
+                    <span className="text-[var(--color-text-primary)]">
+                      {app.mouSignerName ?? "Unknown"} {app.mouSignerEmail ? `· ${app.mouSignerEmail}` : ""}
+                    </span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => resendMouMutation.mutate(app.id)}
+                  disabled={resendMouMutation.isPending}
+                  className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.18)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.32)] disabled:opacity-50"
+                >
+                  Resend MOU
+                </button>
+              </div>
+            )}
+
             {app.status === "approved" && app.affiliateId && (
               <div className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
                 Approved · affiliate id: <code className="text-[var(--color-text-primary)]">{app.affiliateId}</code>
@@ -276,9 +315,10 @@ export default function ApplicationsReviewPage() {
   );
 }
 
-function StatusBadge({ status }: { status: "pending" | "approved" | "rejected" }) {
+function StatusBadge({ status }: { status: "pending" | "approved_pending_mou" | "approved" | "rejected" }) {
   const styles = {
     pending: "border-[rgba(255,255,255,0.18)] bg-[rgba(255,255,255,0.04)] text-[rgba(255,255,255,0.70)]",
+    approved_pending_mou: "border-[rgba(59,130,246,0.30)] bg-[rgba(59,130,246,0.12)] text-[#93C5FD]",
     approved: "border-[rgba(34,197,94,0.30)] bg-[rgba(34,197,94,0.12)] text-[#22C55E]",
     rejected: "border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.10)] text-[#FCA5A5]",
   } as const;
@@ -286,7 +326,7 @@ function StatusBadge({ status }: { status: "pending" | "approved" | "rejected" }
     <span
       className={`inline-flex items-center gap-[var(--space-1)] rounded-full border px-[var(--space-3)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium capitalize ${styles[status]}`}
     >
-      {status}
+      {status.replaceAll("_", " ")}
     </span>
   );
 }
