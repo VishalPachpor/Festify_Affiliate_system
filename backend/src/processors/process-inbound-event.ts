@@ -293,32 +293,44 @@ async function executeGoldenFlow(event: InboundEvent): Promise<void> {
   });
 
   // ── Emit domain events AFTER transaction commits ──────────────────────
-  // Events drive aggregate table updates. Only fire if transaction succeeded
-  // and actually created a new sale (not a duplicate skip).
+  // Events drive aggregate table updates. The transaction has already
+  // committed by this point — Sale, AttributionClaim, and CommissionLedgerEntry
+  // are persisted. Wrap emit calls in a try/catch so a transient Redis
+  // hiccup (Upstash flap, network blip) doesn't propagate up and cause the
+  // outer processor to mark this InboundEvent as `failed` even though the
+  // core data landed cleanly. Aggregate updates can be recomputed later;
+  // marking the event as failed would be misleading.
   if (txResult) {
-    await emitEvent("order.created", {
-      tenantId,
-      amountMinor: txResult.saleAmount,
-      attributed: txResult.attributed,
-    });
+    try {
+      await emitEvent("order.created", {
+        tenantId,
+        amountMinor: txResult.saleAmount,
+        attributed: txResult.attributed,
+      });
 
-    if (affiliate) {
-      const totalEarned = txResult.commissionAmount + txResult.tierAdjustmentTotal;
-      if (totalEarned > 0) {
-        await emitEvent("commission.earned", {
-          tenantId,
-          amountMinor: totalEarned,
-        });
-      }
+      if (affiliate) {
+        const totalEarned = txResult.commissionAmount + txResult.tierAdjustmentTotal;
+        if (totalEarned > 0) {
+          await emitEvent("commission.earned", {
+            tenantId,
+            amountMinor: totalEarned,
+          });
+        }
 
-      // ── Milestone progression ─────────────────────────────────────────
-      // Recompute the affiliate's attributed-revenue total and emit one
-      // milestone.progressed event per defined tier. The handler is
-      // idempotent + only flips unlockedAt on the locked → unlocked edge,
-      // so re-emitting tiers the affiliate already passed is safe.
-      if (txResult.commissionAmount > 0 || txResult.tierAdjustmentTotal > 0) {
-        await emitMilestoneProgress(tenantId, affiliate.affiliateId);
+        // ── Milestone progression ─────────────────────────────────────────
+        // Recompute the affiliate's attributed-revenue total and emit one
+        // milestone.progressed event per defined tier. The handler is
+        // idempotent + only flips unlockedAt on the locked → unlocked edge,
+        // so re-emitting tiers the affiliate already passed is safe.
+        if (txResult.commissionAmount > 0 || txResult.tierAdjustmentTotal > 0) {
+          await emitMilestoneProgress(tenantId, affiliate.affiliateId);
+        }
       }
+    } catch (emitErr) {
+      const msg = emitErr instanceof Error ? emitErr.message : String(emitErr);
+      console.warn(
+        `[processor] post-commit event emission failed (non-fatal — Sale already persisted): ${msg}`,
+      );
     }
   }
 }

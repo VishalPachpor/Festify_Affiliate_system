@@ -233,6 +233,10 @@ router.get("/api/sales", async (req: Request, res: Response) => {
         affiliateId,
         affiliateName,
         campaignId: sale.campaignId,
+        // Raw referral code captured from the webhook (whatever the buyer
+        // typed at checkout). Useful in the admin UI to debug attribution
+        // mismatches; null when no code was on the inbound payload.
+        referralCode: sale.referralCode,
         status: sale.status,
         createdAt: sale.createdAt.toISOString(),
         payoutDate,
