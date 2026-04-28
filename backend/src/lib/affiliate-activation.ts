@@ -241,6 +241,20 @@ export async function syncCouponToLuma(args: {
     return { status: "verified", error: null };
   }
 
+  // Idempotent path — Luma rejects with 400 "You already have a coupon with
+  // this code. Please try another code." when the code is already on the
+  // event. That's the desired end state (the coupon exists, sales referencing
+  // it will get tracked), so treat it as verified rather than surfacing an
+  // error. Common scenarios: admin pre-created the code manually before the
+  // auto-sync was wired, or a previous activation race.
+  if (isAlreadyExistsError(result.message)) {
+    await prisma.campaignAffiliate.updateMany({
+      where: { tenantId: args.tenantId, affiliateId: args.affiliateId },
+      data: { codeStatus: "verified", codeSyncError: null },
+    });
+    return { status: "verified", error: null };
+  }
+
   // Failure path — record the error so the admin UI can show it.
   console.warn(
     `[luma-sync] coupon create failed for affiliate=${args.affiliateId} code=${args.referralCode}: ${result.message}`,
@@ -250,4 +264,8 @@ export async function syncCouponToLuma(args: {
     data: { codeStatus: "unverified", codeSyncError: result.message },
   });
   return { status: "unverified", error: result.message };
+}
+
+function isAlreadyExistsError(message: string): boolean {
+  return /already have a coupon with this code/i.test(message);
 }
