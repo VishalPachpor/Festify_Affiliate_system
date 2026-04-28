@@ -130,6 +130,15 @@ model Campaign {
   /// Commission rate in basis points. 1000 = 10%, 500 = 5%.
   commissionRateBps Int
 
+  /// Luma event_api_id (e.g. "evt-D15DTJJimYz2w9V") this campaign is tied to.
+  /// Used to call Luma's coupon-create API on affiliate activation. Null
+  /// disables auto-sync — coupons remain manual until the admin sets it.
+  lumaEventId String?
+  /// Default percent_off applied to the coupon when auto-creating it in Luma.
+  /// 0 = tracking-only coupon (no discount). Per-affiliate override could
+  /// be added later if needed.
+  referralCouponPercentOff Int @default(10)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -157,9 +166,14 @@ model CampaignAffiliate {
   affiliateId  String
   referralCode String
   /// Tracks whether the coupon code has been created in Luma.
-  /// pending = awaiting approval, unverified = approved but not confirmed in Luma,
-  /// verified = admin confirmed coupon exists in Luma.
+  /// pending = awaiting approval, unverified = activated but not yet
+  /// synced to Luma (auto-sync failed or campaign has no lumaEventId),
+  /// verified = coupon exists in Luma and is live.
   codeStatus   CodeStatus @default(pending)
+  /// Last error from a Luma sync attempt — surfaced in admin UI so an
+  /// operator can diagnose ("Code already exists", "Invalid event_id"
+  /// etc.) before clicking retry. Null when never attempted or success.
+  codeSyncError String?
 
   createdAt DateTime @default(now())
 

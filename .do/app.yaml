@@ -21,7 +21,8 @@
 #     backend:            DATABASE_URL, REDIS_URL, JWT_SECRET, SPACES_BUCKET,
 #                         SPACES_KEY, SPACES_SECRET, RESEND_API_KEY,
 #                         GOOGLE_CLIENT_SECRET, BOLDSIGN_API_KEY,
-#                         BOLDSIGN_MOU_TEMPLATE_ID, BOLDSIGN_WEBHOOK_SECRET
+#                         BOLDSIGN_MOU_TEMPLATE_ID, BOLDSIGN_WEBHOOK_SECRET,
+#                         LUMA_API_KEY
 #     event-worker:       DATABASE_URL, REDIS_URL, RESEND_API_KEY
 #     inbound-processor:  DATABASE_URL, REDIS_URL
 #     migrate (job):      DATABASE_URL
@@ -106,6 +107,12 @@ services:
       - { key: BOLDSIGN_API_KEY, type: SECRET }
       - { key: BOLDSIGN_MOU_TEMPLATE_ID, type: SECRET }
       - { key: BOLDSIGN_WEBHOOK_SECRET, type: SECRET }
+
+      # Luma — outbound API for auto-creating affiliate coupons after MOU
+      # activation. Calendar-scoped key (Luma Plus required). Without this
+      # set, syncCouponToLuma silently skips and codes stay unverified.
+      # Per-campaign Luma event mapping lives in Campaign.lumaEventId.
+      - { key: LUMA_API_KEY, type: SECRET }
 
 workers:
   - name: event-worker

@@ -5,6 +5,7 @@ import { invalidateCache } from "../lib/cache";
 import { createMouFromTemplate, getBoldSignTemplateId, remindBoldSignDocument, voidBoldSignDocument } from "../lib/boldsign";
 import { deriveMouSigner, MouSignerError } from "../lib/mou-signer";
 import { sendAffiliateMouEmail, sendApplicationRejectedEmail } from "../lib/email";
+import { syncCouponToLuma } from "../lib/affiliate-activation";
 
 const router = Router();
 
@@ -206,8 +207,16 @@ router.post("/api/applications/:id/mou/resend", async (req: Request, res: Respon
 // ─────────────────────────────────────────────────────────────────────────────
 // PATCH /api/affiliates/:affiliateId/verify-code
 //
-// Admin confirms the coupon code has been created in Luma.
-// Transitions codeStatus from unverified → verified.
+// Retry the Luma coupon sync for an affiliate that was activated but whose
+// auto-sync failed (or whose campaign got its lumaEventId set after the fact).
+// On success: codeStatus → verified, codeSyncError cleared.
+// On failure: codeStatus stays unverified, codeSyncError holds the latest
+// reason so the admin UI can surface it.
+//
+// If the campaign has no lumaEventId, the response is `skipped` and the
+// admin still has to either configure the campaign or mirror the code in
+// Luma manually — the codeStatus is then a manual flip via the same call
+// (handled by passing ?force=true).
 // ─────────────────────────────────────────────────────────────────────────────
 
 router.patch("/api/affiliates/:affiliateId/verify-code", async (req: Request, res: Response) => {
@@ -219,6 +228,7 @@ router.patch("/api/affiliates/:affiliateId/verify-code", async (req: Request, re
     }
 
     const affiliateId = String(req.params.affiliateId);
+    const force = String(req.query.force ?? "").toLowerCase() === "true";
 
     const affiliate = await prisma.campaignAffiliate.findFirst({
       where: { tenantId, affiliateId },
@@ -228,12 +238,39 @@ router.patch("/api/affiliates/:affiliateId/verify-code", async (req: Request, re
       return;
     }
 
-    await prisma.campaignAffiliate.update({
-      where: { id: affiliate.id },
-      data: { codeStatus: "verified" },
+    // Pre-fetch application's first name for nicer Luma coupon naming.
+    const application = await prisma.application.findFirst({
+      where: { tenantId, affiliateId },
+      select: { firstName: true },
     });
 
-    res.status(200).json({ success: true, affiliateId, codeStatus: "verified" });
+    const sync = await syncCouponToLuma({
+      tenantId,
+      affiliateId,
+      campaignId: affiliate.campaignId,
+      referralCode: affiliate.referralCode,
+      affiliateName: application?.firstName ?? undefined,
+    });
+
+    // Force-verify: when sync was skipped (no lumaEventId on campaign) or
+    // failed but the operator confirms they created the coupon manually in
+    // Luma, allow flipping the flag without an outbound call.
+    if (force && sync.status !== "verified") {
+      await prisma.campaignAffiliate.update({
+        where: { id: affiliate.id },
+        data: { codeStatus: "verified", codeSyncError: null },
+      });
+      res.status(200).json({ success: true, affiliateId, codeStatus: "verified", forced: true });
+      return;
+    }
+
+    res.status(sync.status === "verified" ? 200 : 202).json({
+      success: sync.status === "verified",
+      affiliateId,
+      codeStatus: sync.status === "verified" ? "verified" : "unverified",
+      syncStatus: sync.status,
+      error: sync.error,
+    });
   } catch (err) {
     console.error("[affiliates] verify-code failed:", err);
     res.status(500).json({ error: "Failed to verify code" });
