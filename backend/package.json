@@ -19,6 +19,8 @@
     "db:migrate-mou-current-unique": "ts-node prisma/migrations-manual/2026-04-mou-current-partial-unique.ts",
     "db:retro-attribute": "ts-node prisma/retro-attribute-orphans.ts",
     "db:set-luma-event-demo": "ts-node prisma/set-luma-event-on-demo.ts",
+    "db:consolidate-tenants": "ts-node prisma/consolidate-tenants.ts",
+    "db:check-affiliate": "ts-node prisma/check-affiliate-state.ts",
     "spaces:cors": "ts-node scripts/configure-spaces-cors.ts",
     "test": "ts-node --transpile-only tests/tier-rate.unit.test.ts && ts-node --transpile-only tests/payouts.integration.test.ts",
     "test:unit": "ts-node --transpile-only tests/tier-rate.unit.test.ts"

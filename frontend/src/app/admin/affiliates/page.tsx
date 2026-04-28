@@ -213,7 +213,6 @@ export default function AdminAffiliatesPage() {
   const [approveTarget, setApproveTarget] = useState<{ id: string; name: string; requestedCode: string } | null>(null);
   const [approveCode, setApproveCode] = useState("");
   const [postApprovalCode, setPostApprovalCode] = useState<string | null>(null);
-  const [codeCopied, setCodeCopied] = useState(false);
 
   const reviewMutation = useMutation({
     mutationFn: ({ id, status, referralCode }: { id: string; status: "approved" | "rejected"; referralCode?: string }) =>
@@ -611,69 +610,40 @@ export default function AdminAffiliatesPage() {
         </div>
       )}
 
-      {/* Post-approval: Luma instructions modal */}
+      {/* Post-approval: confirmation. The Luma coupon is created automatically
+          by the backend after the affiliate signs the MOU (syncCouponToLuma in
+          activateAffiliateFromMou). If sync fails the admin can retry from
+          the affiliate's More → Verify Code action. */}
       {postApprovalCode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,0,0.60)]">
-          <div className="w-full max-w-[30rem] rounded-[0.75rem] border border-[rgba(34,197,94,0.20)] bg-[#111525] px-[2rem] py-[1.75rem]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,0,0.60)]" onClick={() => setPostApprovalCode(null)}>
+          <div className="w-full max-w-[28rem] rounded-[0.75rem] border border-[rgba(34,197,94,0.20)] bg-[#111525] px-[2rem] py-[1.75rem]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-[0.5rem]">
               <span className="flex size-[1.5rem] items-center justify-center rounded-full bg-[rgba(34,197,94,0.15)]">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7l3 3 5-5" /></svg>
               </span>
               <h2 className="font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
-                Affiliate Approved!
+                Application Approved
               </h2>
             </div>
-            <p className="mt-[0.6rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.55)]">
-              Now create this coupon code in Luma so ticket sales are tracked.
+
+            <p className="mt-[0.75rem] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.4rem] text-[rgba(255,255,255,0.65)]">
+              The applicant will receive an MOU email. Once they sign it, their referral coupon{" "}
+              <code className="rounded-[0.25rem] bg-[rgba(0,0,0,0.30)] px-[0.4rem] py-[0.05rem] font-mono text-[#22C55E]">
+                {postApprovalCode}
+              </code>
+              {" "}will be created in Luma automatically.
+            </p>
+            <p className="mt-[0.75rem] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.40)]">
+              If auto-sync fails, retry from the affiliate&apos;s More → Verify Code menu.
             </p>
 
-            {/* Code to copy */}
-            <div className="mt-[1rem] flex items-center gap-[0.5rem] rounded-[var(--radius)] border border-[rgba(255,255,255,0.10)] bg-[rgba(0,0,0,0.25)] px-[var(--space-4)] py-[0.6rem]">
-              <code className="flex-1 font-mono text-[var(--text-lg)] font-bold text-[#22C55E]">{postApprovalCode}</code>
-              <button
-                type="button"
-                onClick={() => { navigator.clipboard.writeText(postApprovalCode); setCodeCopied(true); setTimeout(() => setCodeCopied(false), 2000); }}
-                className={`rounded-[var(--radius)] border px-[0.6rem] py-[0.25rem] font-[var(--font-sans)] text-[var(--text-xs)] transition-colors ${codeCopied ? "border-[rgba(34,197,94,0.40)] text-[#22C55E]" : "border-[rgba(255,255,255,0.12)] text-[var(--color-text-primary)] hover:border-[rgba(255,255,255,0.20)]"}`}
-              >
-                {codeCopied ? "Copied!" : "Copy"}
-              </button>
-            </div>
-
-            {/* Steps */}
-            <ol className="mt-[1rem] flex flex-col gap-[0.5rem]">
-              {[
-                "Go to Luma → Calendar → Settings → Developer",
-                "Create a new coupon with the code above",
-                "Set discount amount (0% for tracking only, or a real discount)",
-                "Come back and click Confirm below",
-              ].map((step, i) => (
-                <li key={i} className="flex items-start gap-[0.5rem]">
-                  <span className="flex size-[1.3rem] shrink-0 items-center justify-center rounded-full bg-[rgba(91,141,239,0.15)] font-[var(--font-sans)] text-[var(--text-xs)] font-semibold text-[#5B8DEF]">{i + 1}</span>
-                  <span className="font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.3rem] text-[rgba(255,255,255,0.70)]">{step}</span>
-                </li>
-              ))}
-            </ol>
-
-            <div className="mt-[1.25rem] flex gap-[var(--space-3)]">
+            <div className="mt-[1.5rem] flex">
               <button
                 type="button"
                 onClick={() => setPostApprovalCode(null)}
-                className="flex-1 rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.20)]"
+                className="ml-auto rounded-[var(--radius)] bg-[#22C55E] px-[var(--space-5)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-white transition-colors hover:bg-[#16A34A]"
               >
-                I'll do it later
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  // Find the just-approved affiliate and verify
-                  const latest = affiliates.find(a => a.referralCode === postApprovalCode);
-                  if (latest) verifyCodeMutation.mutate(latest.id);
-                  else setPostApprovalCode(null);
-                }}
-                disabled={verifyCodeMutation.isPending}
-                className="flex-1 rounded-[var(--radius)] bg-[#22C55E] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-white transition-colors hover:bg-[#16A34A] disabled:opacity-50"
-              >
-                {verifyCodeMutation.isPending ? "Confirming..." : "Confirm — Created in Luma"}
+                Done
               </button>
             </div>
           </div>
