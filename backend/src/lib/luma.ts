@@ -46,10 +46,17 @@ export async function createEventCoupon(input: CreateCouponInput): Promise<Creat
     };
   }
 
+  // Luma's POST shape requires `discount` as a discriminated object even
+  // though GET /v1/event/coupons flattens percent_off / cents_off to the top
+  // level. Probed the live API on 2026-04-28:
+  //   discount: { discount_type: "percent", percent_off: 10 }   → 200
+  //   discount: { percent_off: 10 }                              → 400
+  //     "discount.discount_type: Invalid input"
+  // The cents_off variant uses { discount_type: "cents", cents_off, currency }.
   const body: Record<string, unknown> = {
     event_api_id: input.eventId,
     code: input.code,
-    percent_off: input.percentOff,
+    discount: { discount_type: "percent", percent_off: input.percentOff },
   };
   if (input.maxUses != null) body.max_uses = input.maxUses;
   if (input.name) body.name = input.name;
@@ -87,8 +94,14 @@ export async function createEventCoupon(input: CreateCouponInput): Promise<Creat
     // Some Luma endpoints return empty bodies on success. Treat as ok.
   }
 
+  // Live response shape: { coupon: { api_id, code, ... } }. Older shapes
+  // also seen: top-level api_id / coupon_api_id. Tolerate both.
+  const coupon = (raw.coupon && typeof raw.coupon === "object")
+    ? (raw.coupon as Record<string, unknown>)
+    : raw;
   const couponApiId =
-    typeof raw.api_id === "string" ? raw.api_id :
+    typeof coupon.api_id === "string" ? coupon.api_id :
+    typeof coupon.id === "string" ? coupon.id :
     typeof raw.coupon_api_id === "string" ? raw.coupon_api_id :
     null;
 
