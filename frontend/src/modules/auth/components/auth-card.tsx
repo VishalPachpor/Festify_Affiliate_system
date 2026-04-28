@@ -21,6 +21,7 @@ export function AuthCard({
   showGoogle = true,
   showTabs = true,
   googleMode = "login",
+  hideRequiredHint = false,
 }: {
   title: string;
   subtitle?: string;
@@ -31,6 +32,7 @@ export function AuthCard({
   showGoogle?: boolean;
   showTabs?: boolean;
   googleMode?: "login" | "affiliate_signup";
+  hideRequiredHint?: boolean;
 }) {
   return (
     <div className="mx-auto flex w-[min(var(--card-w),90vw)] flex-col items-center gap-[1rem]">
@@ -68,9 +70,11 @@ export function AuthCard({
               {subtitle}
             </p>
           )}
-          <p className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] tracking-[var(--tracking-caption)] uppercase text-[var(--color-text-secondary)]">
-            Required fields marked with *
-          </p>
+          {!hideRequiredHint && (
+            <p className="font-[var(--font-sans)] text-[var(--text-xs)] leading-[var(--leading-caption)] tracking-[var(--tracking-caption)] uppercase text-[var(--color-text-secondary)]">
+              Required fields marked with *
+            </p>
+          )}
         </div>
 
         {/* Google + Divider + Form */}
