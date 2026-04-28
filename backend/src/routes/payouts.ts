@@ -461,12 +461,19 @@ router.patch("/api/payouts/:id/status", async (req: Request, res: Response) => {
       return up;
     });
 
-    await emitEvent("payout.status_changed", {
-      tenantId,
-      fromStatus: payout.status,
-      toStatus: status,
-      amountMinor: payout.amountMinor,
-    });
+    // Post-commit side-effect — non-fatal. The payout state has already
+    // changed in the DB; a Redis flap on emitEvent must not bubble up as a
+    // 500 since the user's intent succeeded.
+    try {
+      await emitEvent("payout.status_changed", {
+        tenantId,
+        fromStatus: payout.status,
+        toStatus: status,
+        amountMinor: payout.amountMinor,
+      });
+    } catch (e) {
+      console.warn("[payouts] emit event failed (non-fatal):", e);
+    }
 
     res.status(200).json({
       id: updated.id,
