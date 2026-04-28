@@ -399,7 +399,11 @@ async function approveApplication(args: ApplicationActionArgs): Promise<{
     throw err;
   }
 
-  await invalidateCache(args.tenantId, "applications:list");
+  try {
+    await invalidateCache(args.tenantId, "applications:list");
+  } catch (e) {
+    console.warn("[applications] cache invalidate failed (non-fatal):", e);
+  }
   return { id: claimed.applicationId, status: "approved_pending_mou", mouStatus: "sent" };
 }
 
@@ -500,7 +504,11 @@ async function reissueMou(args: { applicationId: string; tenantId: string }): Pr
     throw err;
   }
 
-  await invalidateCache(args.tenantId, "applications:list");
+  try {
+    await invalidateCache(args.tenantId, "applications:list");
+  } catch (e) {
+    console.warn("[applications] cache invalidate failed (non-fatal):", e);
+  }
   return { id: application.id, status: application.status, mouStatus: "sent" };
 }
 
@@ -552,7 +560,11 @@ async function rejectApplication(args: ApplicationActionArgs): Promise<void> {
     campaignName: application.campaign.name,
   }).catch((err) => console.warn("[applications] rejection email failed:", err));
 
-  await invalidateCache(args.tenantId, "applications:list");
+  try {
+    await invalidateCache(args.tenantId, "applications:list");
+  } catch (e) {
+    console.warn("[applications] cache invalidate failed (non-fatal):", e);
+  }
 }
 
 class ApplicationActionError extends Error {
