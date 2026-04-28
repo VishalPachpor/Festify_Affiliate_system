@@ -221,14 +221,37 @@ export default function AdminAffiliatesPage() {
     },
   });
 
-  const verifyCodeMutation = useMutation({
+  const [verifyResult, setVerifyResult] = useState<
+    | { kind: "ok"; message: string }
+    | { kind: "warn"; message: string }
+    | { kind: "error"; message: string }
+    | null
+  >(null);
+
+  const verifyCodeMutation = useMutation<
+    { success?: boolean; codeStatus?: string; syncStatus?: string; error?: string | null },
+    Error,
+    string
+  >({
     mutationFn: (affiliateId: string) =>
       apiClient(`/affiliates/${affiliateId}/verify-code`, {
         method: "PATCH",
       }),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["affiliates"] });
       setPostApprovalCode(null);
+      if (data?.codeStatus === "verified") {
+        setVerifyResult({ kind: "ok", message: "Coupon verified in Luma." });
+      } else if (data?.syncStatus === "skipped") {
+        setVerifyResult({ kind: "warn", message: "Skipped — campaign has no Luma event linked." });
+      } else {
+        setVerifyResult({ kind: "warn", message: data?.error ?? "Sync did not complete." });
+      }
+      window.setTimeout(() => setVerifyResult(null), 6000);
+    },
+    onError: (err) => {
+      setVerifyResult({ kind: "error", message: err.message || "Verify failed." });
+      window.setTimeout(() => setVerifyResult(null), 8000);
     },
   });
 
@@ -393,11 +416,12 @@ export default function AdminAffiliatesPage() {
                               <div className="absolute right-0 top-[calc(100%+0.4rem)] z-30 min-w-[11rem] overflow-hidden rounded-[0.5rem] border border-[rgba(255,255,255,0.10)] bg-[#1c2035] shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
                                 <button
                                   type="button"
+                                  disabled={verifyCodeMutation.isPending}
                                   onClick={() => { verifyCodeMutation.mutate(aff.id); setMoreMenuAffiliate(null); }}
-                                  className="flex w-full items-center gap-[0.5rem] px-[0.85rem] py-[0.55rem] text-left font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.06)]"
+                                  className="flex w-full items-center gap-[0.5rem] px-[0.85rem] py-[0.55rem] text-left font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] transition-colors hover:bg-[rgba(255,255,255,0.06)] disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 7l3 3 5-5" /></svg>
-                                  Verify Code
+                                  {verifyCodeMutation.isPending ? "Syncing..." : "Verify Code"}
                                 </button>
                                 <div className="mx-[0.5rem] h-px bg-[rgba(255,255,255,0.06)]" />
                                 <button
@@ -629,6 +653,22 @@ export default function AdminAffiliatesPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Verify-code result toast — bottom-right, auto-dismissing. */}
+      {verifyResult && (
+        <div
+          role="status"
+          className={`fixed bottom-[var(--space-6)] right-[var(--space-6)] z-50 max-w-[24rem] rounded-[var(--radius)] border px-[var(--space-4)] py-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] shadow-[0_8px_24px_rgba(0,0,0,0.45)] ${
+            verifyResult.kind === "ok"
+              ? "border-[rgba(34,197,94,0.30)] bg-[rgba(34,197,94,0.10)] text-[#86EFAC]"
+              : verifyResult.kind === "warn"
+                ? "border-[rgba(234,179,8,0.30)] bg-[rgba(234,179,8,0.10)] text-[#FDE68A]"
+                : "border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.10)] text-[#FCA5A5]"
+          }`}
+        >
+          {verifyResult.message}
         </div>
       )}
     </DashboardStageCanvas>
