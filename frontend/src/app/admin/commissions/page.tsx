@@ -196,6 +196,9 @@ export default function AdminCommissionsPage() {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
       queryClient.invalidateQueries({ queryKey: ["payouts"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      // Clear stale errors from sibling actions on the same page.
+      settlePendingPayoutMutation.reset();
+      approveMutation.reset();
     },
     onError: () => {
       setPayingSaleId(null);
@@ -213,6 +216,8 @@ export default function AdminCommissionsPage() {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
       queryClient.invalidateQueries({ queryKey: ["payouts"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      markPaidMutation.reset();
+      approveMutation.reset();
     },
     onError: () => {
       setPayingSaleId(null);
@@ -231,11 +236,19 @@ export default function AdminCommissionsPage() {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
       queryClient.invalidateQueries({ queryKey: ["payouts"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      markPaidMutation.reset();
+      settlePendingPayoutMutation.reset();
     },
     onError: () => {
       setPayingSaleId(null);
     },
   });
+
+  const dismissMutationError = () => {
+    markPaidMutation.reset();
+    settlePendingPayoutMutation.reset();
+    approveMutation.reset();
+  };
 
   // Generate page numbers
   const pageNumbers: number[] = [];
@@ -351,11 +364,21 @@ export default function AdminCommissionsPage() {
 
         {/* Mutation feedback — surfaces errors from either action */}
         {(markPaidMutation.isError || settlePendingPayoutMutation.isError || approveMutation.isError) && (
-          <div className="rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[#FCA5A5]">
-            {(markPaidMutation.error instanceof Error && markPaidMutation.error.message) ||
-              (settlePendingPayoutMutation.error instanceof Error && settlePendingPayoutMutation.error.message) ||
-              (approveMutation.error instanceof Error && approveMutation.error.message) ||
-              "Action failed"}
+          <div className="flex items-center gap-[var(--space-3)] rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[#FCA5A5]">
+            <span className="flex-1">
+              {(markPaidMutation.error instanceof Error && markPaidMutation.error.message) ||
+                (settlePendingPayoutMutation.error instanceof Error && settlePendingPayoutMutation.error.message) ||
+                (approveMutation.error instanceof Error && approveMutation.error.message) ||
+                "Action failed"}
+            </span>
+            <button
+              type="button"
+              aria-label="Dismiss error"
+              onClick={dismissMutationError}
+              className="rounded-[0.25rem] px-[0.5rem] py-[0.15rem] text-[#FCA5A5] transition-colors hover:bg-[rgba(239,68,68,0.15)]"
+            >
+              ×
+            </button>
           </div>
         )}
 
