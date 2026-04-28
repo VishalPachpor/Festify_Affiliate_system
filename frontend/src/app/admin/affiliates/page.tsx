@@ -54,14 +54,6 @@ const REFERRAL_CODE_STYLE = { bg: "rgba(255,255,255,0.04)", text: "rgba(255,255,
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
-function IconSearch() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
-      <circle cx="6" cy="6" r="4" />
-      <path d="M9.5 9.5L13 13" />
-    </svg>
-  );
-}
 
 function IconChevronDown() {
   return (
@@ -282,19 +274,9 @@ export default function AdminAffiliatesPage() {
         </div>
 
         {/* Search + Filters */}
-        <div className="flex items-center gap-[var(--space-3)]">
-          <div className="relative flex-1">
-            <span className="pointer-events-none absolute left-[var(--space-3)] top-1/2 -translate-y-1/2 text-[rgba(255,255,255,0.40)]">
-              <IconSearch />
-            </span>
-            <input
-              type="search"
-              placeholder="Search affiliates..."
-              value={filters.search ?? ""}
-              onChange={(e) => { setFilters({ search: e.target.value || undefined }); }}
-              className="h-[2.5rem] w-full rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] pl-[2.2rem] pr-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-primary)] placeholder:text-[rgba(255,255,255,0.35)] focus:border-[var(--color-ring)] focus:outline-none transition-colors"
-            />
-          </div>
+        {/* Search lives in AdminHeader (top-right) — wired to the same ?search
+            URL param. Page bar only owns the contextual filters. */}
+        <div className="flex items-center justify-end gap-[var(--space-3)]">
           <button
             type="button"
             onClick={() => { const next = !filters.status ? "approved" : filters.status === "approved" ? "pending" : undefined; setFilters({ status: next }); }}
