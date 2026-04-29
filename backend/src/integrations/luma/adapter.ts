@@ -150,9 +150,8 @@ function verifyStandardWebhooks(
   rawBody: Buffer,
   secret: string,
 ): boolean {
-  // Svix-based services (which Luma uses) send headers under either the
-  // `webhook-*` namespace (Standard Webhooks) or the legacy `svix-*`
-  // namespace. Try both — accept whichever set is present.
+  // Headers can land under either the `webhook-*` namespace (Standard
+  // Webhooks) or the legacy `svix-*` namespace. Try both.
   const webhookId =
     getHeader(headers, "webhook-id") ?? getHeader(headers, "svix-id");
   const webhookTimestamp =
@@ -160,51 +159,125 @@ function verifyStandardWebhooks(
   const webhookSignature =
     getHeader(headers, "webhook-signature") ?? getHeader(headers, "svix-signature");
 
-  if (!webhookId || !webhookTimestamp || !webhookSignature) {
+  if (!webhookSignature) {
     console.warn(
-      `[luma-adapter] Standard Webhooks headers missing — id=${!!webhookId} ts=${!!webhookTimestamp} sig=${!!webhookSignature}. Header keys present: ${Object.keys(headers).join(", ")}`,
+      `[luma-adapter] Webhook signature header missing. Header keys present: ${Object.keys(headers).join(", ")}`,
     );
     return false;
   }
 
-  // Replay-attack guard. Timestamp is unix seconds. Accept ms format too —
-  // some providers deviate from the spec; gracefully normalize.
-  let tsSeconds = Number(webhookTimestamp);
+  // Two header formats observed in the wild:
+  //   A. Standard Webhooks: "v1,<base64sig> v1,<base64sig>"
+  //      (separate webhook-id + webhook-timestamp headers)
+  //   B. Stripe-style:      "t=<unix-ts>,v1=<hexsig>[,v1=<hexsig>...]"
+  //      (id absent; ts inline)
+  // Detect by sniffing the first token.
+  const isStripeStyle = webhookSignature.includes("t=") && webhookSignature.includes(",v1=");
+
+  let timestamp: string;
+  const candidateSigs: string[] = [];
+
+  if (isStripeStyle) {
+    // Parse t=<ts>,v1=<sig>[,v1=<sig>]
+    let ts: string | null = null;
+    for (const part of webhookSignature.split(",")) {
+      const eq = part.indexOf("=");
+      if (eq < 0) continue;
+      const key = part.slice(0, eq).trim();
+      const value = part.slice(eq + 1).trim();
+      if (key === "t") ts = value;
+      else if (key === "v1") candidateSigs.push(value);
+    }
+    if (!ts || candidateSigs.length === 0) {
+      console.warn(`[luma-adapter] Stripe-style header malformed: ${webhookSignature.slice(0, 64)}`);
+      return false;
+    }
+    timestamp = ts;
+  } else {
+    // Standard Webhooks: requires id + ts headers AND v1,<sig> entries.
+    if (!webhookId || !webhookTimestamp) {
+      console.warn(
+        `[luma-adapter] Standard Webhooks headers missing — id=${!!webhookId} ts=${!!webhookTimestamp}. Header keys: ${Object.keys(headers).join(", ")}`,
+      );
+      return false;
+    }
+    timestamp = webhookTimestamp;
+    for (const candidate of webhookSignature.split(" ")) {
+      const [version, sig] = candidate.split(",", 2);
+      if (version === "v1" && sig) candidateSigs.push(sig);
+    }
+    if (candidateSigs.length === 0) {
+      console.warn(`[luma-adapter] No v1 signatures in header: ${webhookSignature.slice(0, 64)}`);
+      return false;
+    }
+  }
+
+  // Replay-attack guard. Timestamp is unix seconds; tolerate ms format.
+  let tsSeconds = Number(timestamp);
   if (!Number.isFinite(tsSeconds)) return false;
-  if (tsSeconds > 1e12) tsSeconds = Math.floor(tsSeconds / 1000); // ms → s
+  if (tsSeconds > 1e12) tsSeconds = Math.floor(tsSeconds / 1000);
   const nowSeconds = Math.floor(Date.now() / 1000);
   const skew = Math.abs(nowSeconds - tsSeconds);
   if (skew > STANDARD_WEBHOOK_REPLAY_WINDOW_SECONDS) {
     console.warn(
-      `[luma-adapter] Standard Webhooks timestamp outside replay window (delta=${nowSeconds - tsSeconds}s, ts=${webhookTimestamp})`,
+      `[luma-adapter] Webhook timestamp outside replay window (delta=${nowSeconds - tsSeconds}s, ts=${timestamp})`,
     );
     return false;
   }
 
-  // The HMAC key is the base64-decoded portion after the `whsec_` prefix.
-  const secretBytes = Buffer.from(secret.slice("whsec_".length), "base64");
-  const signedContent = `${webhookId}.${webhookTimestamp}.${rawBody.toString("utf8")}`;
-  const expected = crypto
-    .createHmac("sha256", secretBytes)
-    .update(signedContent)
-    .digest("base64");
-  const expectedBuf = Buffer.from(expected);
+  // Build candidate HMAC keys + signed payloads + output encodings. Different
+  // platforms differ on all three axes; until we confirm Luma's exact choice,
+  // try every plausible combo. Each compare is constant-time, so trying
+  // multiple is safe — the worst case is a few extra HMACs per request.
+  const secretAfterPrefix = secret.startsWith("whsec_") ? secret.slice("whsec_".length) : secret;
+  const keyVariants: { name: string; key: Buffer | string }[] = [
+    { name: "raw-full", key: secret },
+    { name: "raw-suffix", key: secretAfterPrefix },
+    { name: "base64-decoded-suffix", key: Buffer.from(secretAfterPrefix, "base64") },
+  ];
 
-  // Header may carry multiple sigs (key rotation). Format: "v1,<sig> v1,<sig>".
-  // Accept the message if ANY of them matches.
-  const candidates = webhookSignature.split(" ");
-  for (const candidate of candidates) {
-    const [version, sig] = candidate.split(",", 2);
-    if (version !== "v1" || !sig) continue;
-    const sigBuf = Buffer.from(sig);
-    if (sigBuf.length !== expectedBuf.length) continue;
-    if (crypto.timingSafeEqual(sigBuf, expectedBuf)) return true;
+  const stripeSigned = `${timestamp}.${rawBody.toString("utf8")}`;
+  const stdWebhooksSigned = webhookId
+    ? `${webhookId}.${timestamp}.${rawBody.toString("utf8")}`
+    : null;
+
+  const payloadVariants: { name: string; signed: string }[] = isStripeStyle
+    ? [{ name: "stripe(<ts>.<body>)", signed: stripeSigned }]
+    : stdWebhooksSigned
+      ? [
+          { name: "stdwebhooks(<id>.<ts>.<body>)", signed: stdWebhooksSigned },
+          { name: "stripe(<ts>.<body>)", signed: stripeSigned },
+        ]
+      : [{ name: "stripe(<ts>.<body>)", signed: stripeSigned }];
+
+  const encodings: ("hex" | "base64")[] = ["hex", "base64"];
+
+  for (const sig of candidateSigs) {
+    for (const { name: keyName, key } of keyVariants) {
+      for (const { name: payloadName, signed } of payloadVariants) {
+        for (const encoding of encodings) {
+          let computed: string;
+          try {
+            computed = crypto.createHmac("sha256", key).update(signed).digest(encoding);
+          } catch {
+            continue;
+          }
+          const sigBuf = Buffer.from(sig);
+          const compBuf = Buffer.from(computed);
+          if (sigBuf.length !== compBuf.length) continue;
+          if (crypto.timingSafeEqual(sigBuf, compBuf)) {
+            console.log(
+              `[luma-adapter] signature MATCH via key=${keyName} payload=${payloadName} encoding=${encoding}`,
+            );
+            return true;
+          }
+        }
+      }
+    }
   }
 
-  // Mismatch — log enough context to diagnose without leaking the secret.
-  // Truncate sigs to first 12 chars so logs are searchable but not credentialy.
   console.warn(
-    `[luma-adapter] Standard Webhooks signature mismatch — id=${webhookId} ts=${webhookTimestamp} bodyLen=${rawBody.length} sigsTried=${candidates.length} expectedPrefix=${expected.slice(0, 12)} headerSigPrefix=${webhookSignature.slice(0, 16)}`,
+    `[luma-adapter] signature mismatch across all combos — id=${webhookId ?? "<absent>"} ts=${timestamp} bodyLen=${rawBody.length} sigsTried=${candidateSigs.length} headerSigPrefix=${webhookSignature.slice(0, 24)}`,
   );
   return false;
 }
