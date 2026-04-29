@@ -4,8 +4,23 @@ import { getTenantId } from "../middleware/auth";
 import { buildCacheKey, getCache, setCache } from "../lib/cache";
 import { createdAtFilter } from "../lib/time-filters";
 import { COMMISSION_CREDIT_TYPES } from "../lib/commission-types";
+import { pickTierRateBps } from "../processors/process-inbound-event";
 
 const router = Router();
+
+// Resolve the requester's affiliateId when they're not an admin. Falls back
+// to a User.affiliateId lookup for tokens that didn't embed the claim.
+// Returns null when the caller is admin or not associated with an affiliate.
+async function resolveAffiliateId(req: Request, tenantId: string): Promise<string | null> {
+  if (req.userRole === "admin") return null;
+  if (req.affiliateId) return req.affiliateId;
+  if (!req.userId) return null;
+  const user = await prisma.user.findFirst({
+    where: { id: req.userId, tenantId },
+    select: { affiliateId: true },
+  });
+  return user?.affiliateId ?? null;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/sales/summary
@@ -17,11 +32,81 @@ const router = Router();
 router.get("/api/sales/summary", async (req: Request, res: Response) => {
   try {
     const tenantId = getTenantId(req);
+    const affiliateId = await resolveAffiliateId(req, tenantId);
+    const isAffiliate = !!affiliateId;
 
     const dateFilter = createdAtFilter(req);
-    const cacheKey = buildCacheKey(tenantId, "sales:summary", req.query as Record<string, unknown>);
+    const cacheKey = buildCacheKey(
+      tenantId,
+      isAffiliate ? `sales:summary:aff:${affiliateId}` : "sales:summary",
+      req.query as Record<string, unknown>,
+    );
     const cached = await getCache(cacheKey);
     if (cached) { res.status(200).json(cached); return; }
+
+    if (isAffiliate) {
+      // Sales attributed to this affiliate via AttributionClaim.
+      const saleWhere = {
+        tenantId,
+        attributionClaim: { affiliateId: affiliateId! },
+        ...dateFilter,
+      };
+      const [
+        totalCount,
+        revenueSummary,
+        commissionSummary,
+        confirmedCount,
+      ] = await Promise.all([
+        prisma.sale.count({ where: saleWhere }),
+        prisma.sale.aggregate({ where: saleWhere, _sum: { amountMinor: true } }),
+        prisma.commissionLedgerEntry.aggregate({
+          where: { tenantId, affiliateId: affiliateId!, type: { in: COMMISSION_CREDIT_TYPES }, ...dateFilter },
+          _sum: { amountMinor: true },
+        }),
+        // Affiliates only see their own sales — every one is "attributed" to
+        // them by definition. Use the count itself as confirmed.
+        prisma.sale.count({ where: { ...saleWhere, status: { in: ["approved", "paid"] } } }),
+      ]);
+
+      // Resolve the affiliate's current tier rate so the UI can show the
+      // accurate "Commission Rate" for them (Starter 2.5% / Riser 5% / etc.).
+      // Tier is keyed off lifetime attributed revenue, not the date-filtered
+      // window — so we run a separate unfiltered aggregate.
+      const [lifetimeRevenue, tiers, campaign] = await Promise.all([
+        prisma.sale.aggregate({
+          where: { tenantId, attributionClaim: { affiliateId: affiliateId! } },
+          _sum: { amountMinor: true },
+        }),
+        prisma.milestone.findMany({
+          where: { tenantId },
+          orderBy: { sortOrder: "asc" },
+          select: { targetMinor: true, commissionRateBps: true },
+        }),
+        prisma.campaign.findFirst({
+          where: { tenantId },
+          orderBy: { createdAt: "asc" },
+          select: { commissionRateBps: true },
+        }),
+      ]);
+      const lifetimeRevenueMinor = lifetimeRevenue._sum.amountMinor ?? 0;
+      const campaignRateBps = campaign?.commissionRateBps ?? 1000;
+      const commissionRateBps = pickTierRateBps(tiers, lifetimeRevenueMinor, campaignRateBps);
+
+      const result = {
+        totalSales: totalCount,
+        totalRevenue: revenueSummary._sum.amountMinor ?? 0,
+        totalCommissions: commissionSummary._sum.amountMinor ?? 0,
+        currency: "USD",
+        confirmedCount,
+        pendingCount: 0,
+        rejectedCount: 0,
+        commissionRateBps,
+      };
+
+      await setCache(cacheKey, result, 60);
+      res.status(200).json(result);
+      return;
+    }
 
     const where = { tenantId, ...dateFilter };
 
@@ -89,10 +174,16 @@ router.get("/api/sales", async (req: Request, res: Response) => {
     const pageSize = Math.min(100, Math.max(1, parseInt(String(req.query.pageSize ?? "20"), 10) || 20));
     const status = req.query.status as string | undefined;
     const search = req.query.search as string | undefined;
-    const affiliateId = typeof req.query.affiliateId === "string" && req.query.affiliateId.trim().length > 0
+    const requestedAffiliateId = typeof req.query.affiliateId === "string" && req.query.affiliateId.trim().length > 0
       ? req.query.affiliateId.trim()
       : undefined;
     const dateFilter = createdAtFilter(req);
+
+    // Affiliate users are pinned to their own affiliateId — admin filter
+    // params can't widen the scope. Admin users use whatever they passed
+    // (or no scope when omitted).
+    const callerAffiliateId = await resolveAffiliateId(req, tenantId);
+    const affiliateId = callerAffiliateId ?? requestedAffiliateId;
 
     // Build where clause
     const where: Record<string, unknown> = { tenantId, ...dateFilter };

@@ -467,9 +467,15 @@ export default function SalesPage() {
               <SummaryCard
                 label="Commission Rate"
                 value={
-                  summaryData && summaryData.totalRevenue > 0
-                    ? `${Math.round((summaryData.totalCommissions / summaryData.totalRevenue) * 100)}%`
-                    : "10%"
+                  // Affiliate views: backend returns the affiliate's current
+                  // tier rate (in bps) — render that directly so Starter
+                  // shows 2.5% even before they've earned a single sale.
+                  // Admin views: average effective rate across the tenant.
+                  summaryData?.commissionRateBps !== undefined
+                    ? `${(summaryData.commissionRateBps / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}%`
+                    : summaryData && summaryData.totalRevenue > 0
+                      ? `${Math.round((summaryData.totalCommissions / summaryData.totalRevenue) * 100)}%`
+                      : "10%"
                 }
                 accentColor={SALES_COLORS.accentCommission}
               />

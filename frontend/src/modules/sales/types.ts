@@ -47,6 +47,9 @@ export const salesSummarySchema = z.object({
   confirmedCount: z.number(),
   pendingCount: z.number(),
   rejectedCount: z.number(),
+  // Affiliate's current tier rate (in basis points). Only present when the
+  // caller is an affiliate; admin views compute their own averaged rate.
+  commissionRateBps: z.number().optional(),
 });
 
 export type SalesSummary = z.infer<typeof salesSummarySchema>;
