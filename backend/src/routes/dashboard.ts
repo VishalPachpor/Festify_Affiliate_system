@@ -23,14 +23,34 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
     const dateRange = extractDateRange(req);
     const hasDateFilter = !!dateRange.gte || !!dateRange.lte;
 
-    const cacheKey = buildCacheKey(tenantId, "dashboard:summary", req.query as Record<string, unknown>);
+    // Resolve affiliateId for affiliate-scoped views. The affiliate dashboard
+    // hits the same endpoint as admin — without this scoping, an affiliate
+    // sees tenant-wide sales/commissions/payouts (i.e. other affiliates'
+    // numbers) on their own KPI cards.
+    let affiliateId = req.affiliateId ?? null;
+    if (!affiliateId && req.userId && req.userRole !== "admin") {
+      const user = await prisma.user.findFirst({
+        where: { id: req.userId, tenantId },
+        select: { affiliateId: true },
+      });
+      affiliateId = user?.affiliateId ?? null;
+    }
+    const isAffiliate = !!affiliateId;
+
+    const cacheKey = buildCacheKey(
+      tenantId,
+      isAffiliate ? `dashboard:summary:aff:${affiliateId}` : "dashboard:summary",
+      req.query as Record<string, unknown>,
+    );
     const cached = await getCache(cacheKey);
     if (cached) { res.status(200).json(cached); return; }
 
     let result;
 
-    if (!hasDateFilter) {
+    if (!hasDateFilter && !isAffiliate) {
       // ── FAST PATH: read from aggregate table ────────────────────────────
+      // Tenant-wide only. DashboardStats holds running totals across the
+      // tenant, so it can't serve an affiliate-scoped view.
       const stats = await prisma.dashboardStats.findUnique({ where: { tenantId } });
 
       if (stats) {
@@ -59,38 +79,83 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
     // ── SLOW PATH: on-demand aggregation (first load or date-filtered) ────
     if (!result) {
       const dateFilter = hasDateFilter ? { createdAt: dateRange } : {};
-      const where = { tenantId, ...dateFilter };
 
-      const [revenueSummary, salesCount, commissionSummary, attributedCount, affiliateCount, paidOutSummary, pendingApprovals] =
-        await Promise.all([
-          prisma.sale.aggregate({ where, _sum: { amountMinor: true } }),
-          prisma.sale.count({ where }),
-          prisma.commissionLedgerEntry.aggregate({ where: { tenantId, type: { in: COMMISSION_CREDIT_TYPES }, ...dateFilter }, _sum: { amountMinor: true } }),
-          prisma.attributionClaim.count({ where: { tenantId, ...dateFilter } }),
-          prisma.campaignAffiliate.count({ where: { tenantId } }),
-          prisma.payout.aggregate({ where: { tenantId, status: "paid" }, _sum: { amountMinor: true } }),
-          prisma.application.count({ where: { tenantId, status: "pending" } }),
-        ]);
+      if (isAffiliate) {
+        // Sales attributed to this affiliate (via AttributionClaim).
+        const saleWhere = {
+          tenantId,
+          attributionClaim: { affiliateId: affiliateId! },
+          ...dateFilter,
+        };
 
-      const totalRevenue = revenueSummary._sum.amountMinor ?? 0;
-      const totalSales = salesCount;
-      const conversionRate = totalSales > 0
-        ? Math.round((attributedCount / totalSales) * 1000) / 10
-        : 0;
+        const [revenueSummary, salesCount, commissionSummary, paidOutSummary] =
+          await Promise.all([
+            prisma.sale.aggregate({ where: saleWhere, _sum: { amountMinor: true } }),
+            prisma.sale.count({ where: saleWhere }),
+            prisma.commissionLedgerEntry.aggregate({
+              where: { tenantId, affiliateId: affiliateId!, type: { in: COMMISSION_CREDIT_TYPES }, ...dateFilter },
+              _sum: { amountMinor: true },
+            }),
+            prisma.payout.aggregate({
+              where: { tenantId, affiliateId: affiliateId!, status: "paid" },
+              _sum: { amountMinor: true },
+            }),
+          ]);
 
-      const now = new Date();
-      result = {
-        totalRevenue,
-        totalCommissions: commissionSummary._sum.amountMinor ?? 0,
-        totalAffiliates: affiliateCount,
-        conversionRate,
-        paidOut: paidOutSummary._sum.amountMinor ?? 0,
-        pendingApprovals,
-        milestonesUnlocked: 0,
-        currency: "USD",
-        periodStart: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0],
-        periodEnd: now.toISOString().split("T")[0],
-      };
+        const totalRevenue = revenueSummary._sum.amountMinor ?? 0;
+        // For an affiliate view, every sale they see is already attributed to
+        // them — conversion rate as "attributed/total" collapses to 100% and
+        // isn't meaningful, so report 0 and let the UI hide it.
+        const conversionRate = 0;
+
+        const now = new Date();
+        result = {
+          totalRevenue,
+          totalCommissions: commissionSummary._sum.amountMinor ?? 0,
+          totalAffiliates: 0,
+          conversionRate,
+          paidOut: paidOutSummary._sum.amountMinor ?? 0,
+          pendingApprovals: 0,
+          milestonesUnlocked: 0,
+          currency: "USD",
+          periodStart: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0],
+          periodEnd: now.toISOString().split("T")[0],
+          totalSales: salesCount,
+        };
+      } else {
+        const where = { tenantId, ...dateFilter };
+
+        const [revenueSummary, salesCount, commissionSummary, attributedCount, affiliateCount, paidOutSummary, pendingApprovals] =
+          await Promise.all([
+            prisma.sale.aggregate({ where, _sum: { amountMinor: true } }),
+            prisma.sale.count({ where }),
+            prisma.commissionLedgerEntry.aggregate({ where: { tenantId, type: { in: COMMISSION_CREDIT_TYPES }, ...dateFilter }, _sum: { amountMinor: true } }),
+            prisma.attributionClaim.count({ where: { tenantId, ...dateFilter } }),
+            prisma.campaignAffiliate.count({ where: { tenantId } }),
+            prisma.payout.aggregate({ where: { tenantId, status: "paid" }, _sum: { amountMinor: true } }),
+            prisma.application.count({ where: { tenantId, status: "pending" } }),
+          ]);
+
+        const totalRevenue = revenueSummary._sum.amountMinor ?? 0;
+        const totalSales = salesCount;
+        const conversionRate = totalSales > 0
+          ? Math.round((attributedCount / totalSales) * 1000) / 10
+          : 0;
+
+        const now = new Date();
+        result = {
+          totalRevenue,
+          totalCommissions: commissionSummary._sum.amountMinor ?? 0,
+          totalAffiliates: affiliateCount,
+          conversionRate,
+          paidOut: paidOutSummary._sum.amountMinor ?? 0,
+          pendingApprovals,
+          milestonesUnlocked: 0,
+          currency: "USD",
+          periodStart: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0],
+          periodEnd: now.toISOString().split("T")[0],
+        };
+      }
     }
 
     // ── Revenue change % (current 30 days vs previous 30 days) ──────────
@@ -100,23 +165,24 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
     const prevStart = new Date(currentStart);
     prevStart.setDate(currentStart.getDate() - 30);
 
+    const revWhereCurrent = isAffiliate
+      ? { tenantId, attributionClaim: { affiliateId: affiliateId! }, createdAt: { gte: currentStart, lte: now } }
+      : { tenantId, createdAt: { gte: currentStart, lte: now } };
+    const revWherePrev = isAffiliate
+      ? { tenantId, attributionClaim: { affiliateId: affiliateId! }, createdAt: { gte: prevStart, lt: currentStart } }
+      : { tenantId, createdAt: { gte: prevStart, lt: currentStart } };
+    const commWhereCurrent = isAffiliate
+      ? { tenantId, affiliateId: affiliateId!, type: { in: COMMISSION_CREDIT_TYPES }, createdAt: { gte: currentStart, lte: now } }
+      : { tenantId, type: { in: COMMISSION_CREDIT_TYPES }, createdAt: { gte: currentStart, lte: now } };
+    const commWherePrev = isAffiliate
+      ? { tenantId, affiliateId: affiliateId!, type: { in: COMMISSION_CREDIT_TYPES }, createdAt: { gte: prevStart, lt: currentStart } }
+      : { tenantId, type: { in: COMMISSION_CREDIT_TYPES }, createdAt: { gte: prevStart, lt: currentStart } };
+
     const [currentRev, prevRev, currentComm, prevComm] = await Promise.all([
-      prisma.sale.aggregate({
-        where: { tenantId, createdAt: { gte: currentStart, lte: now } },
-        _sum: { amountMinor: true },
-      }),
-      prisma.sale.aggregate({
-        where: { tenantId, createdAt: { gte: prevStart, lt: currentStart } },
-        _sum: { amountMinor: true },
-      }),
-      prisma.commissionLedgerEntry.aggregate({
-        where: { tenantId, type: { in: COMMISSION_CREDIT_TYPES }, createdAt: { gte: currentStart, lte: now } },
-        _sum: { amountMinor: true },
-      }),
-      prisma.commissionLedgerEntry.aggregate({
-        where: { tenantId, type: { in: COMMISSION_CREDIT_TYPES }, createdAt: { gte: prevStart, lt: currentStart } },
-        _sum: { amountMinor: true },
-      }),
+      prisma.sale.aggregate({ where: revWhereCurrent, _sum: { amountMinor: true } }),
+      prisma.sale.aggregate({ where: revWherePrev, _sum: { amountMinor: true } }),
+      prisma.commissionLedgerEntry.aggregate({ where: commWhereCurrent, _sum: { amountMinor: true } }),
+      prisma.commissionLedgerEntry.aggregate({ where: commWherePrev, _sum: { amountMinor: true } }),
     ]);
 
     const curVal = currentRev._sum.amountMinor ?? 0;
