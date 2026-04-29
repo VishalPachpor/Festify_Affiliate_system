@@ -27,13 +27,20 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
     // hits the same endpoint as admin — without this scoping, an affiliate
     // sees tenant-wide sales/commissions/payouts (i.e. other affiliates'
     // numbers) on their own KPI cards.
-    let affiliateId = req.affiliateId ?? null;
-    if (!affiliateId && req.userId && req.userRole !== "admin") {
-      const user = await prisma.user.findFirst({
-        where: { id: req.userId, tenantId },
-        select: { affiliateId: true },
-      });
-      affiliateId = user?.affiliateId ?? null;
+    //
+    // Role check comes first: an admin who happens to have an affiliateId
+    // claim on their JWT must still see tenant-wide totals. Treat the
+    // request as affiliate-scoped only when the caller is non-admin.
+    let affiliateId: string | null = null;
+    if (req.userRole !== "admin") {
+      affiliateId = req.affiliateId ?? null;
+      if (!affiliateId && req.userId) {
+        const user = await prisma.user.findFirst({
+          where: { id: req.userId, tenantId },
+          select: { affiliateId: true },
+        });
+        affiliateId = user?.affiliateId ?? null;
+      }
     }
     const isAffiliate = !!affiliateId;
 

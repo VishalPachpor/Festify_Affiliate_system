@@ -331,7 +331,6 @@ export default function AdminAffiliatesPage() {
         </div>
 
         {/* Table */}
-        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent" onClick={handlePageClick}>
           <div className="overflow-x-auto px-[var(--space-6)] py-[var(--space-5)]">
             <table className="w-full border-collapse font-[var(--font-sans)]" aria-label="Marketing partners">
