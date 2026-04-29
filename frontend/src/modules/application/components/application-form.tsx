@@ -184,9 +184,9 @@ function toPayload(values: FormValues): ApplicationSubmission {
 }
 
 const STEPS = [
-  { n: 1, label: "Applicant" },
-  { n: 2, label: "Promotion" },
-  { n: 3, label: "Finalize" },
+  { n: 1, label: "Basic" },
+  { n: 2, label: "Marketing channels" },
+  { n: 3, label: "Review" },
 ] as const;
 
 // Fields that live on each step — used to show per-step validation errors and
@@ -203,6 +203,7 @@ const STEP_FIELDS: Record<1 | 2 | 3, (keyof ApplicationSubmission)[]> = {
     "signatoryName",
     "signatoryEmail",
     "contactPersonTelegramUsername",
+    "requestedCode",
   ],
   2: [
     "communicationChannels",
@@ -213,8 +214,9 @@ const STEP_FIELDS: Record<1 | 2 | 3, (keyof ApplicationSubmission)[]> = {
     "linkedInLink",
     "instagramAccountLink",
     "discordServerLink",
+    "experience",
   ],
-  3: ["experience", "requestedCode"],
+  3: [],
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -326,7 +328,7 @@ export function ApplicationForm() {
   }
 
   const ctaLabel =
-    step === 1 ? "Continue to Promotion" : step === 2 ? "Review Application" : "Submit Application";
+    step === 1 ? "Continue to Marketing Channels" : step === 2 ? "Review Application" : "Submit Application";
 
   return (
     <div className="relative z-10 mx-auto max-w-[48rem]">
@@ -334,26 +336,12 @@ export function ApplicationForm() {
           full content area (and all other admin/affiliate pages use the same
           treatment). No per-form backdrop here — it would double up. */}
 
-      {/* Subtle top-left back link — unobtrusive, keeps the primary action free
-          to live on the right without an awkward mirrored pair at the bottom. */}
-      <button
-        type="button"
-        onClick={handleBack}
-        className={`group -ml-1 mb-[var(--space-4)] inline-flex items-center gap-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.55)] transition-colors hover:text-[var(--color-text-primary)] ${step === 1 ? "pointer-events-none opacity-0" : ""}`}
-        aria-hidden={step === 1 ? true : undefined}
-      >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:-translate-x-0.5">
-          <path d="M8.5 3L4 7l4.5 4" />
-        </svg>
-        Back
-      </button>
-
       <header>
-        <h2 className="font-[var(--font-display)] text-[2.5rem] font-bold leading-[1.08] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
-          Become an Affiliate
+        <h2 className="font-[var(--font-display)] font-bold text-[var(--text-2xl)] leading-[var(--leading-tight)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
+          Become a Marketing Partner
         </h2>
         <p className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-base)] leading-[1.6] text-[var(--color-text-secondary)]">
-          Join the affiliate program and earn 10% commission on every ticket sold.
+          Join the marketing partner program and earn commission on every TOKEN2049 ticket sold.
         </p>
       </header>
 
@@ -433,9 +421,6 @@ export function ApplicationForm() {
             );
           })}
         </ol>
-        <p className="mt-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[var(--tracking-caption)] text-[var(--color-text-secondary)]">
-          Required fields marked with *
-        </p>
       </nav>
 
       <form
@@ -452,15 +437,14 @@ export function ApplicationForm() {
                 reveals the matching detail fields below. */}
             <div>
               <p className="font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)]">
-                Who are you applying as?
-                <span className="ml-[var(--space-1)] text-[var(--color-error)]">*</span>
+                Applying as?
               </p>
               <div className="mt-[var(--space-3)] grid grid-cols-2 gap-[var(--space-3)]">
                 {([
                   {
                     value: "individual" as const,
                     title: "Individual",
-                    description: "Applying as yourself. You'll sign the MOU.",
+                    description: "MOU will be signed by the individual.",
                     icon: (
                       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <circle cx="11" cy="8" r="4" />
@@ -471,7 +455,7 @@ export function ApplicationForm() {
                   {
                     value: "company" as const,
                     title: "Company",
-                    description: "A business is the partner. Signatory signs for it.",
+                    description: "MOU will be signed by the signatory of the business.",
                     icon: (
                       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <rect x="3" y="4" width="16" height="15" rx="2" />
@@ -697,6 +681,26 @@ export function ApplicationForm() {
                 </FormField>
               </div>
             )}
+
+            <FormField
+              label="Preferred Referral Code (e.g. SATOSHI2049)"
+              required
+              error={errors.requestedCode}
+            >
+              {(a11y) => (
+                <TextInput
+                  {...a11y}
+                  name="requestedCode"
+                  placeholder="SATOSHI2049"
+                  autoComplete="off"
+                  maxLength={20}
+                  value={values.requestedCode}
+                  onChange={(e) =>
+                    setField("requestedCode", e.target.value.toUpperCase())
+                  }
+                />
+              )}
+            </FormField>
           </fieldset>
         )}
 
@@ -912,6 +916,24 @@ export function ApplicationForm() {
                 )}
               </div>
             )}
+
+            <FormField
+              label="Previous Marketing Partnership Experience at events (if any)"
+              error={errors.experience}
+            >
+              {(a11y) => (
+                <textarea
+                  id={a11y.id}
+                  name="experience"
+                  aria-invalid={a11y["aria-invalid"]}
+                  aria-describedby={a11y["aria-describedby"]}
+                  className={textareaClass}
+                  placeholder="Tell us about past marketing partnership work for conferences or events."
+                  value={values.experience}
+                  onChange={(e) => setField("experience", e.target.value)}
+                />
+              )}
+            </FormField>
           </fieldset>
         )}
 
@@ -942,48 +964,12 @@ export function ApplicationForm() {
                 Almost there
               </h3>
               <p className="mx-auto mt-[var(--space-2)] max-w-[28rem] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.55] text-[var(--color-text-secondary)]">
-                You&apos;re about to join the TOKEN2049 affiliates. Two more
-                details and we&apos;ll get your application in front of the team.
+                You&apos;re about to join the TOKEN2049 marketing partners.
+                Review your answers below — submit when everything looks right.
               </p>
             </div>
 
-            <FormField
-              label="Previous Affiliate Partnership Experience at events (if any)"
-              error={errors.experience}
-            >
-              {(a11y) => (
-                <textarea
-                  id={a11y.id}
-                  name="experience"
-                  aria-invalid={a11y["aria-invalid"]}
-                  aria-describedby={a11y["aria-describedby"]}
-                  className={textareaClass}
-                  placeholder="Tell us about past affiliate work for conferences or events."
-                  value={values.experience}
-                  onChange={(e) => setField("experience", e.target.value)}
-                />
-              )}
-            </FormField>
-
-            <FormField
-              label="Preferred Referral Code (e.g. SATOSHI2049)"
-              required
-              error={errors.requestedCode}
-            >
-              {(a11y) => (
-                <TextInput
-                  {...a11y}
-                  name="requestedCode"
-                  placeholder="SATOSHI2049"
-                  autoComplete="off"
-                  maxLength={20}
-                  value={values.requestedCode}
-                  onChange={(e) =>
-                    setField("requestedCode", e.target.value.toUpperCase())
-                  }
-                />
-              )}
-            </FormField>
+            <ReviewSummary values={values} />
 
             {errorMessage && (
               <div className="rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-4)] py-[0.6rem] font-[var(--font-sans)] text-[var(--text-sm)] text-[#FCA5A5]">
@@ -993,9 +979,23 @@ export function ApplicationForm() {
           </fieldset>
         )}
 
-        {/* Primary CTA. Gradient fill + strong blue shadow turns it into a
-            visual anchor — the single brightest element on the page. */}
-        <div className="flex items-center justify-end gap-[var(--space-4)]">
+        {/* Footer actions. Back stays bottom-left as a secondary action;
+            primary CTA gets the gradient + glow on the right. */}
+        <div className="flex items-center justify-between gap-[var(--space-4)]">
+          {step > 1 ? (
+            <button
+              type="button"
+              onClick={handleBack}
+              className="group inline-flex h-[2.75rem] items-center gap-[var(--space-2)] rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] px-[var(--space-5)] font-[var(--font-sans)] text-[var(--text-sm)] font-semibold text-[var(--color-text-primary)] transition-all hover:border-[rgba(255,255,255,0.20)] hover:bg-[rgba(255,255,255,0.06)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-page)]"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-hover:-translate-x-0.5">
+                <path d="M11 7H3M7 3L3 7l4 4" />
+              </svg>
+              Back
+            </button>
+          ) : (
+            <span aria-hidden="true" />
+          )}
           {step < 3 ? (
             <button
               type="button"
@@ -1037,5 +1037,102 @@ export function ApplicationForm() {
       </form>
       </div>
     </div>
+  );
+}
+
+// ─── Review summary ──────────────────────────────────────────────────────────
+// Read-only list of every value the applicant filled in. Step 3 ("Review") is
+// purely confirmation — fields live on earlier steps and the user goes back to
+// edit them.
+
+function ReviewSummary({ values }: { values: FormValues }) {
+  const channelLabelByValue = new Map(
+    COMMUNICATION_CHANNEL_OPTIONS.map((c) => [c.value, c.label]),
+  );
+  const channelLabels = values.communicationChannels
+    .map((c) => channelLabelByValue.get(c) ?? c)
+    .join(", ");
+
+  const channelLinks: Array<{ label: string; value: string }> = [];
+  if (values.emailDatabaseSize) channelLinks.push({ label: "Email Database Size", value: values.emailDatabaseSize });
+  if (values.telegramGroupLink) channelLinks.push({ label: "Telegram Group", value: values.telegramGroupLink });
+  if (values.xProfileLink) channelLinks.push({ label: "X (Twitter)", value: values.xProfileLink });
+  if (values.redditProfileLink) channelLinks.push({ label: "Reddit", value: values.redditProfileLink });
+  if (values.linkedInLink) channelLinks.push({ label: "LinkedIn", value: values.linkedInLink });
+  if (values.instagramAccountLink) channelLinks.push({ label: "Instagram", value: values.instagramAccountLink });
+  if (values.discordServerLink) channelLinks.push({ label: "Discord", value: values.discordServerLink });
+
+  const identityRows: Array<{ label: string; value: string }> =
+    values.applyingAs === "individual"
+      ? [
+          { label: "Applying as", value: "Individual" },
+          { label: "Full name", value: values.fullName || "—" },
+          { label: "Email", value: values.email || "—" },
+          { label: "Telegram", value: values.telegramUsername || "—" },
+        ]
+      : [
+          { label: "Applying as", value: "Company" },
+          { label: "Company name", value: values.companyName || "—" },
+          { label: "Contact person", value: values.contactPersonName || "—" },
+          { label: "Contact email", value: values.contactPersonEmail || "—" },
+          { label: "Contact Telegram", value: values.contactPersonTelegramUsername || "—" },
+          { label: "Signatory name", value: values.signatoryName || "—" },
+          { label: "Signatory email", value: values.signatoryEmail || "—" },
+        ];
+
+  identityRows.push({ label: "Referral code", value: values.requestedCode || "—" });
+
+  return (
+    <div className="flex flex-col gap-[var(--space-5)]">
+      <ReviewSection title="Basic">
+        <ReviewRows rows={identityRows} />
+      </ReviewSection>
+
+      <ReviewSection title="Marketing channels">
+        <ReviewRows
+          rows={[
+            { label: "Channels", value: channelLabels || "—" },
+            ...channelLinks,
+            {
+              label: "Previous experience",
+              value: values.experience || "—",
+            },
+          ]}
+        />
+      </ReviewSection>
+    </div>
+  );
+}
+
+function ReviewSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div
+      className="rounded-[var(--radius-md)] border p-[var(--space-5)]"
+      style={{
+        borderColor: "rgba(255,255,255,0.08)",
+        background: "rgba(255,255,255,0.02)",
+      }}
+    >
+      <p className="font-[var(--font-sans)] text-[var(--text-xs)] font-semibold uppercase tracking-[var(--tracking-caption)] text-[var(--color-text-secondary)]">
+        {title}
+      </p>
+      <div className="mt-[var(--space-3)]">{children}</div>
+    </div>
+  );
+}
+
+function ReviewRows({ rows }: { rows: Array<{ label: string; value: string }> }) {
+  return (
+    <dl className="flex flex-col gap-[var(--space-2)]">
+      {rows.map((row) => (
+        <div
+          key={row.label}
+          className="grid grid-cols-[10rem_1fr] gap-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)]"
+        >
+          <dt className="text-[var(--color-text-secondary)]">{row.label}</dt>
+          <dd className="text-[var(--color-text-primary)] break-words">{row.value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
