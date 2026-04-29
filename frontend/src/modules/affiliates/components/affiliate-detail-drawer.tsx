@@ -1128,10 +1128,61 @@ function ResponsesRows({
             className="break-words"
             style={{ color: "var(--color-text-primary)" }}
           >
-            {row.value && row.value.length > 0 ? row.value : "—"}
+            <ResponseValue value={row.value} />
           </dd>
         </div>
       ))}
     </dl>
   );
+}
+
+// Render values as external links when they look like URLs or handles, so
+// admins can jump straight into the applicant's Telegram channel, X profile,
+// Discord server, etc. instead of copy-pasting.
+function ResponseValue({ value }: { value: string | null | undefined }) {
+  if (!value || value.length === 0) {
+    return <span>—</span>;
+  }
+
+  const href = toExternalHref(value);
+  if (!href) {
+    return <span>{value}</span>;
+  }
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-[4px] underline underline-offset-2 transition-colors"
+      style={{ color: "#A6D1FF" }}
+    >
+      <span className="break-all">{value}</span>
+      <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M5 9l5-5M5.5 4H10v4.5" />
+      </svg>
+    </a>
+  );
+}
+
+function toExternalHref(value: string): string | null {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+
+  // Already a full URL
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+
+  // Bare social domain (e.g. "t.me/foo", "x.com/bar")
+  if (/^(?:t\.me|x\.com|twitter\.com|reddit\.com|linkedin\.com|instagram\.com|discord\.gg|discord\.com)\//i.test(trimmed)) {
+    return `https://${trimmed}`;
+  }
+
+  // Telegram handle "@username" — Telegram resolves t.me/username for both
+  // personal handles and public channels, so this is the right destination
+  // for the contact's personal Telegram or a channel link entered as a handle.
+  if (/^@[A-Za-z0-9_]{3,}$/.test(trimmed)) {
+    return `https://t.me/${trimmed.slice(1)}`;
+  }
+
+  return null;
 }
