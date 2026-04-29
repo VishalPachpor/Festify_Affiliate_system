@@ -233,6 +233,25 @@ export default function AdminAffiliatesPage() {
     },
   });
 
+  // Inline edit of an active marketing partner's referral code. Resets the
+  // codeStatus to unverified so the admin still has to click Verify Code to
+  // push the new code into Luma.
+  const editCodeMutation = useMutation<
+    { id: string; referralCode: string; codeStatus: string; unchanged: boolean },
+    Error,
+    { affiliateId: string; referralCode: string }
+  >({
+    mutationFn: ({ affiliateId, referralCode }) =>
+      apiClient(`/affiliates/${affiliateId}/referral-code`, {
+        method: "PATCH",
+        body: { referralCode },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["affiliates"] });
+      setEditingAffiliate(null);
+    },
+  });
+
   const [verifyResult, setVerifyResult] = useState<
     | { kind: "ok"; message: string }
     | { kind: "warn"; message: string }
@@ -560,6 +579,14 @@ export default function AdminAffiliatesPage() {
               <p className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.40)]">
                 Current: {editingAffiliate.referralCode ?? "—"}
               </p>
+              <p className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.40)]">
+                Saving resets the Luma sync — re-run Verify Code from the partner&apos;s More menu after changing.
+              </p>
+              {editCodeMutation.isError && (
+                <p className="font-[var(--font-sans)] text-[var(--text-xs)] text-[#FCA5A5]">
+                  {editCodeMutation.error?.message ?? "Failed to update code"}
+                </p>
+              )}
             </div>
 
             <div className="mt-[1.25rem] flex gap-[var(--space-3)]">
@@ -572,14 +599,21 @@ export default function AdminAffiliatesPage() {
               </button>
               <button
                 type="button"
-                disabled={!editCode || editCode.length < 3 || editCode === editingAffiliate.referralCode}
-                onClick={() => {
-                  // For now, show feedback that code editing requires backend support
-                  setEditingAffiliate(null);
-                }}
+                disabled={
+                  !editCode ||
+                  editCode.length < 3 ||
+                  editCode === editingAffiliate.referralCode ||
+                  editCodeMutation.isPending
+                }
+                onClick={() =>
+                  editCodeMutation.mutate({
+                    affiliateId: editingAffiliate.id,
+                    referralCode: editCode,
+                  })
+                }
                 className="flex-1 rounded-[var(--radius)] bg-[var(--color-primary)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
               >
-                Save
+                {editCodeMutation.isPending ? "Saving…" : "Save"}
               </button>
             </div>
           </div>

@@ -172,6 +172,7 @@ router.patch("/api/applications/:id/status", async (req: Request, res: Response)
     const tenantId = getTenantId(req);
     const id = String(req.params.id);
     const nextStatus = String(req.body?.status ?? "").trim().toLowerCase();
+    const adminReferralCode = normalizeAdminReferralCode(req.body?.referralCode);
 
     if (nextStatus !== "approved" && nextStatus !== "rejected") {
       res.status(400).json({ error: "status must be 'approved' or 'rejected'" });
@@ -189,7 +190,11 @@ router.patch("/api/applications/:id/status", async (req: Request, res: Response)
       return;
     }
 
-    const result = await approveApplication({ id, tenantId });
+    const result = await approveApplication({
+      id,
+      tenantId,
+      referralCode: adminReferralCode ?? undefined,
+    });
     res.status(200).json(result);
   } catch (err: unknown) {
     handleApplicationActionError(err, res);
@@ -205,6 +210,7 @@ router.post("/api/applications/:id/approve", async (req: Request, res: Response)
     const result = await approveApplication({
       id: String(req.params.id),
       tenantId: getTenantId(req),
+      referralCode: normalizeAdminReferralCode(req.body?.referralCode) ?? undefined,
     });
     res.status(200).json(result);
   } catch (err) {
@@ -349,7 +355,18 @@ router.patch("/api/affiliates/:affiliateId/verify-code", async (req: Request, re
 type ApplicationActionArgs = {
   id: string;
   tenantId: string;
+  referralCode?: string;
 };
+
+// Normalize an admin-supplied referral code to the same shape that
+// generateUniqueReferralCode uses: uppercase, alphanumeric only, 3-20 chars.
+// Returns null when the input doesn't pass — callers treat that as "ignore".
+function normalizeAdminReferralCode(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const cleaned = value.trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 20);
+  if (cleaned.length < 3) return null;
+  return cleaned;
+}
 
 function frontendBaseUrl(): string {
   return (
@@ -388,6 +405,30 @@ async function approveApplication(args: ApplicationActionArgs): Promise<{
     );
   }
 
+  // If the admin overrode the referral code in the approve modal, validate
+  // uniqueness against existing CampaignAffiliate rows in this tenant. The
+  // CampaignAffiliate is created later by the MOU webhook —
+  // generateUniqueReferralCode in affiliate-activation uses
+  // application.requestedCode as the base, so persisting it here is enough
+  // for the new code to flow through the activation path.
+  if (args.referralCode) {
+    const existing = await prisma.campaignAffiliate.findUnique({
+      where: {
+        tenantId_referralCode: {
+          tenantId: args.tenantId,
+          referralCode: args.referralCode,
+        },
+      },
+      select: { id: true },
+    });
+    if (existing) {
+      throw new ApplicationActionError(
+        409,
+        `Referral code "${args.referralCode}" is already in use by another marketing partner`,
+      );
+    }
+  }
+
   const templateId = getBoldSignTemplateId();
 
   const claimed = await prisma.$transaction(async (tx) => {
@@ -410,6 +451,9 @@ async function approveApplication(args: ApplicationActionArgs): Promise<{
       data: {
         status: "approved_pending_mou",
         reviewedAt: new Date(),
+        // Persist the admin's chosen code (if any) on the application so
+        // affiliate-activation picks it up when the MOU webhook fires.
+        ...(args.referralCode ? { requestedCode: args.referralCode } : {}),
       },
     });
 

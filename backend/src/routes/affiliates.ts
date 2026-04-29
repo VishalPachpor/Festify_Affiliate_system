@@ -409,6 +409,81 @@ router.get("/api/affiliates/:id/financials", async (req: Request, res: Response)
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PATCH /api/affiliates/:affiliateId/referral-code
+//
+// Admin updates the live referral code on a CampaignAffiliate. Past sales /
+// attribution / commission history are keyed by affiliateId so they remain
+// intact, but the new code is required for any future referrals to attribute.
+// codeStatus is reset to unverified so the operator must re-run "Verify Code"
+// to push the new code into Luma (the previously-synced coupon for the old
+// code stays in Luma and should be deleted manually if no longer needed).
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.patch("/api/affiliates/:affiliateId/referral-code", async (req: Request, res: Response) => {
+  try {
+    if (!requireAdmin(req, res)) return;
+    const tenantId = getTenantId(req);
+    const affiliateId = String(req.params.affiliateId);
+
+    const raw = typeof req.body?.referralCode === "string" ? req.body.referralCode : "";
+    const next = raw.trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 20);
+    if (next.length < 3) {
+      res.status(400).json({ error: "Referral code must be 3-20 alphanumeric characters" });
+      return;
+    }
+
+    const aff = await prisma.campaignAffiliate.findFirst({
+      where: { tenantId, affiliateId },
+      select: { id: true, referralCode: true, codeStatus: true },
+    });
+    if (!aff) {
+      res.status(404).json({ error: "Marketing partner not found" });
+      return;
+    }
+
+    if (aff.referralCode === next) {
+      res.status(200).json({
+        id: aff.id,
+        referralCode: aff.referralCode,
+        codeStatus: aff.codeStatus,
+        unchanged: true,
+      });
+      return;
+    }
+
+    try {
+      const updated = await prisma.campaignAffiliate.update({
+        where: { id: aff.id },
+        data: {
+          referralCode: next,
+          codeStatus: "unverified",
+          codeSyncError: null,
+        },
+        select: { id: true, referralCode: true, codeStatus: true },
+      });
+      res.status(200).json({
+        id: updated.id,
+        referralCode: updated.referralCode,
+        codeStatus: updated.codeStatus,
+        unchanged: false,
+      });
+    } catch (err: unknown) {
+      // Prisma uniqueness violation on (tenantId, referralCode) when the
+      // requested code is already used by another affiliate in this tenant.
+      const code = (err as { code?: string }).code;
+      if (code === "P2002") {
+        res.status(409).json({ error: `Referral code "${next}" is already in use by another marketing partner` });
+        return;
+      }
+      throw err;
+    }
+  } catch (err) {
+    console.error("[affiliates] referral-code update failed:", err);
+    res.status(500).json({ error: "Failed to update referral code" });
+  }
+});
+
 router.post("/api/affiliates/invite", async (req: Request, res: Response) => {
   try {
     if (!requireAdmin(req, res)) return;

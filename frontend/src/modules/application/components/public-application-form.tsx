@@ -143,7 +143,7 @@ export function PublicApplicationForm({
   if (result) {
     return (
       <div className="relative z-10 mx-auto max-w-[44rem] rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface-card)] px-[var(--space-7)] py-[var(--space-7)]">
-        <h2 className="font-[var(--font-display)] text-[2rem] font-bold leading-[1.1] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
+        <h2 className="font-[var(--font-display)] font-bold text-[var(--text-2xl)] leading-[var(--leading-tight)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
           {result.duplicate ? "You've already applied" : "Application received"}
         </h2>
         <p className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] leading-[1.6] text-[var(--color-text-secondary)]">
@@ -163,22 +163,19 @@ export function PublicApplicationForm({
     <div className="relative z-10 mx-auto max-w-[73rem]">
       <header>
         <p className="font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[var(--tracking-caption)] text-[var(--color-text-secondary)]">
-          {organizerName} · Affiliate Program
+          {organizerName} · Marketing Partner Program
         </p>
-        <h1 className="mt-[var(--space-2)] font-[var(--font-display)] text-[3rem] font-bold leading-[1.08] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
-          Become an Affiliate for {eventName}
+        <h1 className="mt-[var(--space-2)] font-[var(--font-display)] font-bold text-[var(--text-2xl)] leading-[var(--leading-tight)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
+          Become a Marketing Partner for {eventName}
         </h1>
         <p className="mt-[var(--space-3)] max-w-[44rem] font-[var(--font-sans)] text-[var(--text-lg)] leading-[1.6] text-[var(--color-text-secondary)]">
           Earn {commissionPct}% commission on every ticket sold through your referral link.
           Apply below and we&apos;ll review your application by email.
         </p>
-        <p className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[var(--tracking-caption)] text-[var(--color-text-secondary)]">
-          Required fields marked with *
-        </p>
       </header>
 
       <form className="mt-[var(--space-8)] flex flex-col gap-[var(--space-5)]" onSubmit={handleSubmit}>
-        <FormField label="Applying As" required error={errors.applyingAs}>
+        <FormField labelCase="normal" label="Applying As" required error={errors.applyingAs}>
           {() => (
             <select
               name="applyingAs"
@@ -196,10 +193,10 @@ export function PublicApplicationForm({
 
         {applyingAs === "individual" ? (
           <div className="grid gap-[var(--space-4)] lg:grid-cols-2">
-            <FormField label="Full Name (as per passport)" required error={errors.fullName}>
+            <FormField labelCase="normal" label="Full Name (as per passport)" required error={errors.fullName}>
               {(a11y) => <TextInput {...a11y} name="fullName" placeholder="Your full legal name" required />}
             </FormField>
-            <FormField label="Email Address" required error={errors.email}>
+            <FormField labelCase="normal" label="Email Address" required error={errors.email}>
               {(a11y) => (
                 <TextInput
                   {...a11y}
@@ -211,19 +208,19 @@ export function PublicApplicationForm({
                 />
               )}
             </FormField>
-            <FormField label="Telegram Username" required error={errors.telegramUsername}>
+            <FormField labelCase="normal" label="Telegram Username" required error={errors.telegramUsername}>
               {(a11y) => <TextInput {...a11y} name="telegramUsername" placeholder="@yourhandle" required />}
             </FormField>
           </div>
         ) : (
           <div className="grid gap-[var(--space-4)] lg:grid-cols-2">
-            <FormField label="Company Name" required error={errors.companyName}>
+            <FormField labelCase="normal" label="Company Name" required error={errors.companyName}>
               {(a11y) => <TextInput {...a11y} name="companyName" placeholder="Your organization" required />}
             </FormField>
-            <FormField label="Contact Person Name" required error={errors.contactPersonName}>
+            <FormField labelCase="normal" label="Contact Person Name" required error={errors.contactPersonName}>
               {(a11y) => <TextInput {...a11y} name="contactPersonName" placeholder="Primary contact" required />}
             </FormField>
-            <FormField label="Contact Person Email Address" required error={errors.contactPersonEmail}>
+            <FormField labelCase="normal" label="Contact Person Email Address" required error={errors.contactPersonEmail}>
               {(a11y) => (
                 <TextInput
                   {...a11y}
@@ -235,10 +232,10 @@ export function PublicApplicationForm({
                 />
               )}
             </FormField>
-            <FormField label="Signatory Name" required error={errors.signatoryName}>
+            <FormField labelCase="normal" label="Signatory Name" required error={errors.signatoryName}>
               {(a11y) => <TextInput {...a11y} name="signatoryName" placeholder="Authorized signatory" required />}
             </FormField>
-            <FormField label="Signatory Email Address" required error={errors.signatoryEmail}>
+            <FormField labelCase="normal" label="Signatory Email Address" required error={errors.signatoryEmail}>
               {(a11y) => (
                 <TextInput
                   {...a11y}
@@ -250,7 +247,7 @@ export function PublicApplicationForm({
                 />
               )}
             </FormField>
-            <FormField
+            <FormField labelCase="normal"
               label="Contact Person Telegram Username"
               required
               error={errors.contactPersonTelegramUsername}
@@ -267,7 +264,7 @@ export function PublicApplicationForm({
           </div>
         )}
 
-        <FormField
+        <FormField labelCase="normal"
           label={`Which communication channels will you use to promote ${eventName}?`}
           required
           error={errors.communicationChannels}
@@ -294,43 +291,43 @@ export function PublicApplicationForm({
 
         <div className="grid gap-[var(--space-4)] lg:grid-cols-2">
           {selectedChannelSet.has("emails_newsletters") && (
-            <FormField label="Email Database Size" required error={errors.emailDatabaseSize}>
+            <FormField labelCase="normal" label="Email Database Size" required error={errors.emailDatabaseSize}>
               {(a11y) => <TextInput {...a11y} name="emailDatabaseSize" placeholder="e.g. 25,000 subscribers" required />}
             </FormField>
           )}
           {selectedChannelSet.has("telegram") && (
-            <FormField label="Telegram Group/Channel Link" required error={errors.telegramGroupLink}>
+            <FormField labelCase="normal" label="Telegram Group/Channel Link" required error={errors.telegramGroupLink}>
               {(a11y) => <TextInput {...a11y} name="telegramGroupLink" placeholder="https://t.me/yourchannel" required />}
             </FormField>
           )}
           {selectedChannelSet.has("x") && (
-            <FormField label="X (Twitter) Profile Link" required error={errors.xProfileLink}>
+            <FormField labelCase="normal" label="X (Twitter) Profile Link" required error={errors.xProfileLink}>
               {(a11y) => <TextInput {...a11y} name="xProfileLink" placeholder="https://x.com/yourhandle" required />}
             </FormField>
           )}
           {selectedChannelSet.has("reddit") && (
-            <FormField label="Reddit Profile Link" required error={errors.redditProfileLink}>
+            <FormField labelCase="normal" label="Reddit Profile Link" required error={errors.redditProfileLink}>
               {(a11y) => <TextInput {...a11y} name="redditProfileLink" placeholder="https://reddit.com/u/yourprofile" required />}
             </FormField>
           )}
           {selectedChannelSet.has("linkedin") && (
-            <FormField label="LinkedIn Link" required error={errors.linkedInLink}>
+            <FormField labelCase="normal" label="LinkedIn Link" required error={errors.linkedInLink}>
               {(a11y) => <TextInput {...a11y} name="linkedInLink" placeholder="https://linkedin.com/in/yourprofile" required />}
             </FormField>
           )}
           {selectedChannelSet.has("instagram") && (
-            <FormField label="Instagram Account Link" required error={errors.instagramAccountLink}>
+            <FormField labelCase="normal" label="Instagram Account Link" required error={errors.instagramAccountLink}>
               {(a11y) => <TextInput {...a11y} name="instagramAccountLink" placeholder="https://instagram.com/yourhandle" required />}
             </FormField>
           )}
           {selectedChannelSet.has("discord") && (
-            <FormField label="Discord Server Link" required error={errors.discordServerLink}>
+            <FormField labelCase="normal" label="Discord Server Link" required error={errors.discordServerLink}>
               {(a11y) => <TextInput {...a11y} name="discordServerLink" placeholder="https://discord.gg/yourserver" required />}
             </FormField>
           )}
         </div>
 
-        <FormField label="Previous Affiliate Partnership Experience at events (if any)" error={errors.experience}>
+        <FormField labelCase="normal" label="Previous Marketing Partnership Experience at events (if any)" error={errors.experience}>
           {(a11y) => (
             <textarea
               id={a11y.id}
@@ -338,12 +335,12 @@ export function PublicApplicationForm({
               aria-invalid={a11y["aria-invalid"]}
               aria-describedby={a11y["aria-describedby"]}
               className={textareaClass}
-              placeholder="Tell us about past affiliate work for conferences or events."
+              placeholder="Tell us about past marketing partnership work for conferences or events."
             />
           )}
         </FormField>
 
-        <FormField label="Preferred Referral Code (e.g. SATOSHI2049)" required error={errors.requestedCode}>
+        <FormField labelCase="normal" label="Preferred Referral Code (e.g. SATOSHI2049)" required error={errors.requestedCode}>
           {(a11y) => (
             <TextInput
               {...a11y}
