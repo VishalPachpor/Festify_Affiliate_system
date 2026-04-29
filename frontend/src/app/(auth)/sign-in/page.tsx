@@ -11,11 +11,12 @@ export default function SignInPage() {
   return (
     <AuthCard
       title="Log In"
-      subtitle="Sign in as an organizer or affiliate."
+      subtitle="Sign in to your marketing partner account."
       footerText="Don't have an account?"
       footerLinkText="Sign up"
       footerLinkHref="/sign-up"
       googleMode="login"
+      hideRequiredHint
     >
       <LoginForm />
     </AuthCard>
