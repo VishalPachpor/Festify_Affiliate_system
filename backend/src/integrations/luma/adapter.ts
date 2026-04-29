@@ -22,6 +22,14 @@ export const lumaAdapter: ProviderAdapter = {
       return true;
     }
 
+    // Luma delivers webhooks via the Standard Webhooks / Svix scheme when
+    // the secret is in `whsec_<base64>` form. Detect by prefix and route
+    // to the correct verifier — falling back to the legacy single-header
+    // HMAC for any tenant still on an older Luma signing flow.
+    if (secret.startsWith("whsec_")) {
+      return verifyStandardWebhooks(headers, rawBody, secret);
+    }
+
     const signature = headers["x-luma-signature"];
     if (typeof signature !== "string" || signature.length === 0) return false;
 
@@ -110,3 +118,78 @@ export const lumaAdapter: ProviderAdapter = {
     };
   },
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Standard Webhooks (Svix) signature verification
+// https://www.standardwebhooks.com/
+//
+// Luma uses this scheme when the secret is in the `whsec_<base64>` form.
+// Headers:
+//   webhook-id          — unique id per delivery
+//   webhook-timestamp   — unix seconds the payload was signed at
+//   webhook-signature   — space-separated list of `v1,<base64sig>` pairs
+//                         (multiple to support secret rotation)
+//
+// Signed content: `${id}.${timestamp}.${rawBody}`
+// HMAC key: base64-decode the part after `whsec_`
+// Algorithm: HMAC-SHA256, base64 output
+// Replay window: ±5 minutes (rejecting stale timestamps)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const STANDARD_WEBHOOK_REPLAY_WINDOW_SECONDS = 5 * 60;
+
+function getHeader(headers: Record<string, string | string[] | undefined>, name: string): string | null {
+  const raw = headers[name];
+  if (typeof raw === "string" && raw.length > 0) return raw;
+  if (Array.isArray(raw) && raw.length > 0 && typeof raw[0] === "string") return raw[0];
+  return null;
+}
+
+function verifyStandardWebhooks(
+  headers: Record<string, string | string[] | undefined>,
+  rawBody: Buffer,
+  secret: string,
+): boolean {
+  const webhookId = getHeader(headers, "webhook-id");
+  const webhookTimestamp = getHeader(headers, "webhook-timestamp");
+  const webhookSignature = getHeader(headers, "webhook-signature");
+
+  if (!webhookId || !webhookTimestamp || !webhookSignature) {
+    console.warn(
+      `[luma-adapter] Standard Webhooks headers missing — id=${!!webhookId} ts=${!!webhookTimestamp} sig=${!!webhookSignature}`,
+    );
+    return false;
+  }
+
+  // Replay-attack guard. Timestamp is unix seconds.
+  const tsSeconds = Number(webhookTimestamp);
+  if (!Number.isFinite(tsSeconds)) return false;
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (Math.abs(nowSeconds - tsSeconds) > STANDARD_WEBHOOK_REPLAY_WINDOW_SECONDS) {
+    console.warn(
+      `[luma-adapter] Standard Webhooks timestamp outside replay window (delta=${nowSeconds - tsSeconds}s)`,
+    );
+    return false;
+  }
+
+  // The HMAC key is the base64-decoded portion after the `whsec_` prefix.
+  const secretBytes = Buffer.from(secret.slice("whsec_".length), "base64");
+  const signedContent = `${webhookId}.${webhookTimestamp}.${rawBody.toString("utf8")}`;
+  const expected = crypto
+    .createHmac("sha256", secretBytes)
+    .update(signedContent)
+    .digest("base64");
+  const expectedBuf = Buffer.from(expected);
+
+  // Header may carry multiple sigs (key rotation). Format: "v1,<sig> v1,<sig>".
+  // Accept the message if ANY of them matches.
+  const candidates = webhookSignature.split(" ");
+  for (const candidate of candidates) {
+    const [version, sig] = candidate.split(",", 2);
+    if (version !== "v1" || !sig) continue;
+    const sigBuf = Buffer.from(sig);
+    if (sigBuf.length !== expectedBuf.length) continue;
+    if (crypto.timingSafeEqual(sigBuf, expectedBuf)) return true;
+  }
+  return false;
+}
