@@ -519,7 +519,7 @@ export function ApplicationForm() {
 
             {values.applyingAs === "individual" ? (
               <div className="grid gap-[var(--space-6)] lg:grid-cols-2">
-                <FormField
+                <FormField labelCase="normal"
                   label="Full Name (as per passport)"
                   required
                   error={errors.fullName}
@@ -536,7 +536,7 @@ export function ApplicationForm() {
                   )}
                 </FormField>
 
-                <FormField
+                <FormField labelCase="normal"
                   label="Email Address"
                   required
                   error={errors.email}
@@ -556,7 +556,7 @@ export function ApplicationForm() {
                   )}
                 </FormField>
 
-                <FormField
+                <FormField labelCase="normal"
                   label="Telegram Username"
                   required
                   error={errors.telegramUsername}
@@ -575,7 +575,7 @@ export function ApplicationForm() {
               </div>
             ) : (
               <div className="grid gap-[var(--space-6)] lg:grid-cols-2">
-                <FormField label="Company Name" required error={errors.companyName}>
+                <FormField labelCase="normal" label="Company Name" required error={errors.companyName}>
                   {(a11y) => (
                     <TextInput
                       {...a11y}
@@ -588,7 +588,7 @@ export function ApplicationForm() {
                   )}
                 </FormField>
 
-                <FormField
+                <FormField labelCase="normal"
                   label="Contact Person Name"
                   required
                   error={errors.contactPersonName}
@@ -605,7 +605,7 @@ export function ApplicationForm() {
                   )}
                 </FormField>
 
-                <FormField
+                <FormField labelCase="normal"
                   label="Contact Person Email Address"
                   required
                   error={errors.contactPersonEmail}
@@ -624,7 +624,7 @@ export function ApplicationForm() {
                   )}
                 </FormField>
 
-                <FormField
+                <FormField labelCase="normal"
                   label="Signatory Name"
                   required
                   error={errors.signatoryName}
@@ -641,7 +641,7 @@ export function ApplicationForm() {
                   )}
                 </FormField>
 
-                <FormField
+                <FormField labelCase="normal"
                   label="Signatory Email Address"
                   required
                   error={errors.signatoryEmail}
@@ -661,7 +661,7 @@ export function ApplicationForm() {
                   )}
                 </FormField>
 
-                <FormField
+                <FormField labelCase="normal"
                   label="Contact Person Telegram Username"
                   required
                   error={errors.contactPersonTelegramUsername}
@@ -682,7 +682,7 @@ export function ApplicationForm() {
               </div>
             )}
 
-            <FormField
+            <FormField labelCase="normal"
               label="Preferred Referral Code (e.g. SATOSHI2049)"
               required
               error={errors.requestedCode}
@@ -790,7 +790,7 @@ export function ApplicationForm() {
               selectedChannelSet.has("discord")) && (
               <div className="grid gap-[var(--space-6)] lg:grid-cols-2">
                 {selectedChannelSet.has("emails_newsletters") && (
-                  <FormField
+                  <FormField labelCase="normal"
                     label="Email Database Size"
                     required
                     error={errors.emailDatabaseSize}
@@ -808,7 +808,7 @@ export function ApplicationForm() {
                 )}
 
                 {selectedChannelSet.has("telegram") && (
-                  <FormField
+                  <FormField labelCase="normal"
                     label="Telegram Group/Channel Link"
                     required
                     error={errors.telegramGroupLink}
@@ -826,7 +826,7 @@ export function ApplicationForm() {
                 )}
 
                 {selectedChannelSet.has("x") && (
-                  <FormField
+                  <FormField labelCase="normal"
                     label="X (Twitter) Profile Link"
                     required
                     error={errors.xProfileLink}
@@ -844,7 +844,7 @@ export function ApplicationForm() {
                 )}
 
                 {selectedChannelSet.has("reddit") && (
-                  <FormField
+                  <FormField labelCase="normal"
                     label="Reddit Profile Link"
                     required
                     error={errors.redditProfileLink}
@@ -862,7 +862,7 @@ export function ApplicationForm() {
                 )}
 
                 {selectedChannelSet.has("linkedin") && (
-                  <FormField label="LinkedIn Link" required error={errors.linkedInLink}>
+                  <FormField labelCase="normal" label="LinkedIn Link" required error={errors.linkedInLink}>
                     {(a11y) => (
                       <TextInput
                         {...a11y}
@@ -876,7 +876,7 @@ export function ApplicationForm() {
                 )}
 
                 {selectedChannelSet.has("instagram") && (
-                  <FormField
+                  <FormField labelCase="normal"
                     label="Instagram Account Link"
                     required
                     error={errors.instagramAccountLink}
@@ -896,7 +896,7 @@ export function ApplicationForm() {
                 )}
 
                 {selectedChannelSet.has("discord") && (
-                  <FormField
+                  <FormField labelCase="normal"
                     label="Discord Server Link"
                     required
                     error={errors.discordServerLink}
@@ -917,7 +917,7 @@ export function ApplicationForm() {
               </div>
             )}
 
-            <FormField
+            <FormField labelCase="normal"
               label="Previous Marketing Partnership Experience at events (if any)"
               error={errors.experience}
             >
