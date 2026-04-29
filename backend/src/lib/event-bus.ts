@@ -21,7 +21,14 @@ export type DomainEvents = {
     amountMinor: number;
     attributed: boolean;
   };
+  "order.refunded": BaseEvent & {
+    amountMinor: number;
+    attributed: boolean;
+  };
   "commission.earned": BaseEvent & {
+    amountMinor: number;
+  };
+  "commission.reversed": BaseEvent & {
     amountMinor: number;
   };
   "payout.created": BaseEvent & {

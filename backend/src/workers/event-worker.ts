@@ -83,6 +83,67 @@ async function handleOrderCreated(data: DomainEvents["order.created"]): Promise<
   await invalidateCache(tenantId, "dashboard:summary", "sales:summary", "attribution:summary");
 }
 
+async function handleOrderRefunded(data: DomainEvents["order.refunded"]): Promise<void> {
+  const { tenantId, amountMinor, attributed } = data;
+
+  // Mirror handleOrderCreated but in reverse — DashboardStats and
+  // SalesStats are append-incremented on order.created, so a refund
+  // decrements the same fields. Idempotent via ProcessedEvent (eventId
+  // unique) so duplicate jobs from BullMQ retries are safe.
+  await idempotent("order.refunded", data, async (tx) => {
+    await tx.dashboardStats.update({
+      where: { tenantId },
+      data: {
+        totalRevenue: { decrement: amountMinor },
+        totalSales: { decrement: 1 },
+        ...(attributed ? { attributedSales: { decrement: 1 } } : {}),
+      },
+    });
+
+    await tx.salesStats.update({
+      where: { tenantId },
+      data: {
+        totalSales: { decrement: 1 },
+        totalRevenue: { decrement: amountMinor },
+        // Refunded sales were "confirmed" if attributed; the count moves
+        // out of confirmedCount but does NOT move into pendingCount —
+        // they're refunded, not pending.
+        ...(attributed ? { confirmedCount: { decrement: 1 } } : { pendingCount: { decrement: 1 } }),
+      },
+    });
+
+    await tx.attributionStats.update({
+      where: { tenantId },
+      data: attributed
+        ? { attributedSales: { decrement: 1 } }
+        : { unattributedSales: { decrement: 1 } },
+    });
+  });
+
+  await invalidateCache(tenantId, "dashboard:summary", "sales:summary", "attribution:summary");
+}
+
+async function handleCommissionReversed(data: DomainEvents["commission.reversed"]): Promise<void> {
+  const { tenantId, amountMinor } = data;
+
+  // amountMinor here is the POSITIVE size of the reversal (the amount
+  // being clawed back). Decrement totalCommission by it so the cached
+  // aggregate matches the live ledger sum (which already includes the
+  // negative reversal entry via COMMISSION_CREDIT_TYPES).
+  await idempotent("commission.reversed", data, async (tx) => {
+    await tx.dashboardStats.update({
+      where: { tenantId },
+      data: { totalCommission: { decrement: amountMinor } },
+    });
+    await tx.salesStats.update({
+      where: { tenantId },
+      data: { totalCommission: { decrement: amountMinor } },
+    });
+  });
+
+  await invalidateCache(tenantId, "dashboard:summary", "sales:summary");
+}
+
 async function handleCommissionEarned(data: DomainEvents["commission.earned"]): Promise<void> {
   const { tenantId, amountMinor } = data;
 
@@ -246,7 +307,9 @@ async function handleApplicationApproved(data: DomainEvents["application.approve
 
 const HANDLERS: Record<string, (data: AnyEvent) => Promise<void>> = {
   "order.created": handleOrderCreated as (data: AnyEvent) => Promise<void>,
+  "order.refunded": handleOrderRefunded as (data: AnyEvent) => Promise<void>,
   "commission.earned": handleCommissionEarned as (data: AnyEvent) => Promise<void>,
+  "commission.reversed": handleCommissionReversed as (data: AnyEvent) => Promise<void>,
   "payout.created": handlePayoutCreated as (data: AnyEvent) => Promise<void>,
   "payout.status_changed": handlePayoutStatusChanged as (data: AnyEvent) => Promise<void>,
   "affiliate.joined": handleAffiliateJoined as (data: AnyEvent) => Promise<void>,

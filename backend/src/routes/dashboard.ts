@@ -89,9 +89,13 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
 
       if (isAffiliate) {
         // Sales attributed to this affiliate (via AttributionClaim).
+        // Refunded sales are excluded — net revenue/sales-count is what
+        // affiliates and admins want to see; the matching reversal entry
+        // already nets the commission side via COMMISSION_CREDIT_TYPES.
         const saleWhere = {
           tenantId,
           attributionClaim: { affiliateId: affiliateId! },
+          status: { not: "refunded" as const },
           ...dateFilter,
         };
 
@@ -130,14 +134,18 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
           totalSales: salesCount,
         };
       } else {
-        const where = { tenantId, ...dateFilter };
+        // Refunded sales are excluded from headline revenue/sales-count
+        // KPIs. The sales table page intentionally still shows them so
+        // ops can see them with a status badge; this is the dashboard
+        // tile path only.
+        const where = { tenantId, status: { not: "refunded" as const }, ...dateFilter };
 
         const [revenueSummary, salesCount, commissionSummary, attributedCount, affiliateCount, paidOutSummary, pendingApprovals] =
           await Promise.all([
             prisma.sale.aggregate({ where, _sum: { amountMinor: true } }),
             prisma.sale.count({ where }),
             prisma.commissionLedgerEntry.aggregate({ where: { tenantId, type: { in: COMMISSION_CREDIT_TYPES }, ...dateFilter }, _sum: { amountMinor: true } }),
-            prisma.attributionClaim.count({ where: { tenantId, ...dateFilter } }),
+            prisma.attributionClaim.count({ where: { tenantId, sale: { status: { not: "refunded" } }, ...dateFilter } }),
             prisma.campaignAffiliate.count({ where: { tenantId } }),
             prisma.payout.aggregate({ where: { tenantId, status: "paid" }, _sum: { amountMinor: true } }),
             prisma.application.count({ where: { tenantId, status: "pending" } }),
@@ -172,12 +180,13 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
     const prevStart = new Date(currentStart);
     prevStart.setDate(currentStart.getDate() - 30);
 
+    // Net revenue (excluding refunded sales) for the change-% comparison.
     const revWhereCurrent = isAffiliate
-      ? { tenantId, attributionClaim: { affiliateId: affiliateId! }, createdAt: { gte: currentStart, lte: now } }
-      : { tenantId, createdAt: { gte: currentStart, lte: now } };
+      ? { tenantId, attributionClaim: { affiliateId: affiliateId! }, status: { not: "refunded" as const }, createdAt: { gte: currentStart, lte: now } }
+      : { tenantId, status: { not: "refunded" as const }, createdAt: { gte: currentStart, lte: now } };
     const revWherePrev = isAffiliate
-      ? { tenantId, attributionClaim: { affiliateId: affiliateId! }, createdAt: { gte: prevStart, lt: currentStart } }
-      : { tenantId, createdAt: { gte: prevStart, lt: currentStart } };
+      ? { tenantId, attributionClaim: { affiliateId: affiliateId! }, status: { not: "refunded" as const }, createdAt: { gte: prevStart, lt: currentStart } }
+      : { tenantId, status: { not: "refunded" as const }, createdAt: { gte: prevStart, lt: currentStart } };
     const commWhereCurrent = isAffiliate
       ? { tenantId, affiliateId: affiliateId!, type: { in: COMMISSION_CREDIT_TYPES }, createdAt: { gte: currentStart, lte: now } }
       : { tenantId, type: { in: COMMISSION_CREDIT_TYPES }, createdAt: { gte: currentStart, lte: now } };
@@ -231,7 +240,7 @@ router.get("/api/dashboard/top-affiliates", async (req: Request, res: Response) 
     // No N+1 — one DB call regardless of affiliate count.
     const grouped = await prisma.attributionClaim.groupBy({
       by: ["affiliateId"],
-      where: { tenantId },
+      where: { tenantId, sale: { status: { not: "refunded" } } },
       _count: { _all: true },
     });
 
@@ -244,7 +253,11 @@ router.get("/api/dashboard/top-affiliates", async (req: Request, res: Response) 
 
     // Fetch revenue per affiliate via one aggregated query using the relation
     const sales = await prisma.sale.findMany({
-      where: { tenantId, attributionClaim: { affiliateId: { in: affiliateIds } } },
+      where: {
+        tenantId,
+        attributionClaim: { affiliateId: { in: affiliateIds } },
+        status: { not: "refunded" },
+      },
       select: { amountMinor: true, attributionClaim: { select: { affiliateId: true } } },
     });
 
@@ -351,7 +364,7 @@ router.get("/api/dashboard/trend", async (req: Request, res: Response) => {
 
       const [revAgg, commAgg] = await Promise.all([
         prisma.sale.aggregate({
-          where: { tenantId, createdAt: { gte: dayStart, lte: dayEnd } },
+          where: { tenantId, status: { not: "refunded" }, createdAt: { gte: dayStart, lte: dayEnd } },
           _sum: { amountMinor: true },
         }),
         prisma.commissionLedgerEntry.aggregate({

@@ -242,6 +242,10 @@ enum SaleStatus {
   pending
   approved
   paid
+  /// Set by executeRefundFlow when a ticket.refunded webhook arrives.
+  /// Revenue and sales-count aggregations exclude rows in this state;
+  /// the matching reversal CommissionLedgerEntry handles commission netting.
+  refunded
 }
 
 model Sale {

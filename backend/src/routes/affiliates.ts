@@ -85,9 +85,15 @@ router.get("/api/affiliates/me", async (req: Request, res: Response) => {
         where: { tenantId, affiliateId, type: { in: COMMISSION_CREDIT_TYPES } },
         _sum: { amountMinor: true },
       }),
-      prisma.attributionClaim.count({ where: { tenantId, affiliateId } }),
+      prisma.attributionClaim.count({
+        where: { tenantId, affiliateId, sale: { status: { not: "refunded" } } },
+      }),
       prisma.sale.findMany({
-        where: { tenantId, attributionClaim: { affiliateId } },
+        where: {
+          tenantId,
+          attributionClaim: { affiliateId },
+          status: { not: "refunded" },
+        },
         select: { amountMinor: true },
       }),
     ]);
@@ -185,11 +191,19 @@ router.get("/api/affiliates", async (req: Request, res: Response) => {
         }),
         prisma.attributionClaim.groupBy({
           by: ["affiliateId"],
-          where: { tenantId, affiliateId: { in: affiliateIds } },
+          where: {
+            tenantId,
+            affiliateId: { in: affiliateIds },
+            sale: { status: { not: "refunded" } },
+          },
           _count: { _all: true },
         }),
         prisma.sale.findMany({
-          where: { tenantId, attributionClaim: { affiliateId: { in: affiliateIds } } },
+          where: {
+            tenantId,
+            attributionClaim: { affiliateId: { in: affiliateIds } },
+            status: { not: "refunded" },
+          },
           select: { amountMinor: true, attributionClaim: { select: { affiliateId: true } } },
         }),
       ]);

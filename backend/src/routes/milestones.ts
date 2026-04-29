@@ -135,7 +135,11 @@ router.get("/api/milestones/progress", async (req: Request, res: Response) => {
     let totalRevenue = 0;
     if (affiliateId) {
       const agg = await prisma.sale.aggregate({
-        where: { tenantId, attributionClaim: { affiliateId } },
+        where: {
+          tenantId,
+          attributionClaim: { affiliateId },
+          status: { not: "refunded" },
+        },
         _sum: { amountMinor: true },
       });
       totalRevenue = agg._sum.amountMinor ?? 0;
