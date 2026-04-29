@@ -96,7 +96,7 @@ router.get("/api/affiliates/me", async (req: Request, res: Response) => {
     const totalCommissionMinor = commissionAgg._sum.amountMinor ?? 0;
 
     // Build a copy-friendly referral URL. Uses ?coupon= for Luma compatibility.
-    const referralBase = process.env.REFERRAL_LINK_BASE ?? "https://event.festify.io";
+    const referralBase = (process.env.REFERRAL_LINK_BASE ?? "https://event.festify.io").trim();
     const referralUrl = `${referralBase}?coupon=${encodeURIComponent(membership.referralCode)}`;
 
     res.status(200).json({
