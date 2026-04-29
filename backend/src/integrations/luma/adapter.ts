@@ -150,24 +150,33 @@ function verifyStandardWebhooks(
   rawBody: Buffer,
   secret: string,
 ): boolean {
-  const webhookId = getHeader(headers, "webhook-id");
-  const webhookTimestamp = getHeader(headers, "webhook-timestamp");
-  const webhookSignature = getHeader(headers, "webhook-signature");
+  // Svix-based services (which Luma uses) send headers under either the
+  // `webhook-*` namespace (Standard Webhooks) or the legacy `svix-*`
+  // namespace. Try both — accept whichever set is present.
+  const webhookId =
+    getHeader(headers, "webhook-id") ?? getHeader(headers, "svix-id");
+  const webhookTimestamp =
+    getHeader(headers, "webhook-timestamp") ?? getHeader(headers, "svix-timestamp");
+  const webhookSignature =
+    getHeader(headers, "webhook-signature") ?? getHeader(headers, "svix-signature");
 
   if (!webhookId || !webhookTimestamp || !webhookSignature) {
     console.warn(
-      `[luma-adapter] Standard Webhooks headers missing — id=${!!webhookId} ts=${!!webhookTimestamp} sig=${!!webhookSignature}`,
+      `[luma-adapter] Standard Webhooks headers missing — id=${!!webhookId} ts=${!!webhookTimestamp} sig=${!!webhookSignature}. Header keys present: ${Object.keys(headers).join(", ")}`,
     );
     return false;
   }
 
-  // Replay-attack guard. Timestamp is unix seconds.
-  const tsSeconds = Number(webhookTimestamp);
+  // Replay-attack guard. Timestamp is unix seconds. Accept ms format too —
+  // some providers deviate from the spec; gracefully normalize.
+  let tsSeconds = Number(webhookTimestamp);
   if (!Number.isFinite(tsSeconds)) return false;
+  if (tsSeconds > 1e12) tsSeconds = Math.floor(tsSeconds / 1000); // ms → s
   const nowSeconds = Math.floor(Date.now() / 1000);
-  if (Math.abs(nowSeconds - tsSeconds) > STANDARD_WEBHOOK_REPLAY_WINDOW_SECONDS) {
+  const skew = Math.abs(nowSeconds - tsSeconds);
+  if (skew > STANDARD_WEBHOOK_REPLAY_WINDOW_SECONDS) {
     console.warn(
-      `[luma-adapter] Standard Webhooks timestamp outside replay window (delta=${nowSeconds - tsSeconds}s)`,
+      `[luma-adapter] Standard Webhooks timestamp outside replay window (delta=${nowSeconds - tsSeconds}s, ts=${webhookTimestamp})`,
     );
     return false;
   }
@@ -191,5 +200,11 @@ function verifyStandardWebhooks(
     if (sigBuf.length !== expectedBuf.length) continue;
     if (crypto.timingSafeEqual(sigBuf, expectedBuf)) return true;
   }
+
+  // Mismatch — log enough context to diagnose without leaking the secret.
+  // Truncate sigs to first 12 chars so logs are searchable but not credentialy.
+  console.warn(
+    `[luma-adapter] Standard Webhooks signature mismatch — id=${webhookId} ts=${webhookTimestamp} bodyLen=${rawBody.length} sigsTried=${candidates.length} expectedPrefix=${expected.slice(0, 12)} headerSigPrefix=${webhookSignature.slice(0, 16)}`,
+  );
   return false;
 }
