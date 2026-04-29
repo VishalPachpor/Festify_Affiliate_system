@@ -25,6 +25,7 @@ const statusStyles: Record<AffiliateStatus, string> = {
   approved: "text-[var(--color-success)]",
   pending: "text-[var(--color-warning)]",
   rejected: "text-[var(--color-error)]",
+  mou_pending: "text-[var(--color-warning)]",
 };
 
 function TableSkeleton() {

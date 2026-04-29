@@ -72,7 +72,7 @@ function IconChevron() {
 
 const NAV_ITEMS = [
   { href: "/admin",              label: "Dashboard",    Icon: IconDashboard    },
-  { href: "/admin/affiliates",   label: "Affiliates",   Icon: IconAffiliates   },
+  { href: "/admin/affiliates",   label: "Marketing Partners", Icon: IconAffiliates },
   { href: "/admin/materials",    label: "Materials",     Icon: IconMaterials    },
   { href: "/admin/milestones",   label: "Milestones",   Icon: IconMilestones   },
   { href: "/admin/commissions",  label: "Commissions",  Icon: IconCommissions  },

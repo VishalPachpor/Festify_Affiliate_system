@@ -126,15 +126,21 @@ router.get("/api/affiliates", async (req: Request, res: Response) => {
     const statusFilter = req.query.status as string | undefined; // "approved" | "pending" | "rejected"
     const tierFilter = String(req.query.tier ?? "").trim().toLowerCase() || undefined;
 
-    // When filtering by pending/rejected, query Application table instead.
-    // When filtering by approved or no filter, include CampaignAffiliate (approved)
-    // plus applications for pending/rejected rows.
+    // When filtering by pending/rejected/mou_pending, query Application table.
+    // When filtering by approved or no filter, include CampaignAffiliate (active)
+    // plus applications for pending/rejected/mou_pending rows.
+    //
+    // mou_pending = application has been approved by admin but the affiliate
+    // hasn't signed the BoldSign MOU yet (no CampaignAffiliate row exists).
+    // Without surfacing these, an applicant disappears from the list between
+    // approval and MOU signing — confusing for admins.
 
     type AffiliateRow = {
       id: string;
+      applicationId: string | null;
       name: string;
       email: string;
-      status: "approved" | "pending" | "rejected";
+      status: "approved" | "pending" | "rejected" | "mou_pending";
       totalRevenue: number;
       totalCommission: number;
       totalSales: number;
@@ -198,7 +204,9 @@ router.get("/api/affiliates", async (req: Request, res: Response) => {
       }
 
       // Resolve real names/emails from User table (linked by affiliateId)
-      // and Application table (linked by affiliateId on approval).
+      // and Application table (linked by affiliateId on approval). The
+      // application id is also exposed so the admin drawer can fetch the
+      // original form responses for active affiliates.
       const [users, applications] = await Promise.all([
         prisma.user.findMany({
           where: { tenantId, affiliateId: { in: affiliateIds } },
@@ -206,7 +214,7 @@ router.get("/api/affiliates", async (req: Request, res: Response) => {
         }),
         prisma.application.findMany({
           where: { tenantId, affiliateId: { in: affiliateIds }, status: "approved" },
-          select: { affiliateId: true, firstName: true, email: true },
+          select: { id: true, affiliateId: true, firstName: true, email: true },
         }),
       ]);
 
@@ -221,6 +229,7 @@ router.get("/api/affiliates", async (req: Request, res: Response) => {
 
         rows.push({
           id: aff.affiliateId,
+          applicationId: app?.id ?? null,
           name,
           email,
           status: "approved",
@@ -235,11 +244,21 @@ router.get("/api/affiliates", async (req: Request, res: Response) => {
       }
     }
 
-    // ── Pending / rejected applications ───────────────────────────────────
-    if (!statusFilter || statusFilter === "pending" || statusFilter === "rejected") {
-      const appStatuses = statusFilter
-        ? [statusFilter as "pending" | "rejected"]
-        : ["pending" as const, "rejected" as const];
+    // ── Pending / rejected / approved-pending-MOU applications ────────────
+    // approved_pending_mou rows are admin-approved applications waiting on
+    // the BoldSign signature. We surface them as status "mou_pending" so the
+    // affiliate doesn't disappear between approval and MOU completion.
+    if (
+      !statusFilter ||
+      statusFilter === "pending" ||
+      statusFilter === "rejected" ||
+      statusFilter === "mou_pending"
+    ) {
+      const requestedAppStatus =
+        statusFilter === "mou_pending" ? "approved_pending_mou" : statusFilter;
+      const appStatuses = requestedAppStatus
+        ? [requestedAppStatus as "pending" | "rejected" | "approved_pending_mou"]
+        : ["pending" as const, "rejected" as const, "approved_pending_mou" as const];
 
       const appWhere: Record<string, unknown> = {
         tenantId,
@@ -258,17 +277,23 @@ router.get("/api/affiliates", async (req: Request, res: Response) => {
       });
 
       for (const app of applications) {
+        const rowStatus =
+          app.status === "approved_pending_mou"
+            ? "mou_pending"
+            : (app.status as "pending" | "rejected");
+
         rows.push({
           id: app.id,
+          applicationId: app.id,
           name: app.firstName,
           email: app.email,
-          status: app.status as "pending" | "rejected",
+          status: rowStatus,
           totalRevenue: 0,
           totalCommission: 0,
           totalSales: 0,
           currency: "USD",
           joinedAt: app.createdAt.toISOString(),
-          referralCode: null,
+          referralCode: rowStatus === "mou_pending" ? app.requestedCode : null,
           tier: null,
           requestedCode: app.requestedCode,
         });
@@ -279,10 +304,18 @@ router.get("/api/affiliates", async (req: Request, res: Response) => {
       ? rows.filter((row) => (row.tier ?? "none") === tierFilter)
       : rows;
 
-    // Sort: pending first, then by date descending
+    // Sort: pending → mou_pending → others, each group by date descending.
+    // Action-required rows (pending review, MOU outstanding) bubble to the
+    // top so the admin sees what's waiting on them.
+    const STATUS_RANK: Record<AffiliateRow["status"], number> = {
+      pending: 0,
+      mou_pending: 1,
+      approved: 2,
+      rejected: 3,
+    };
     filteredRows.sort((a, b) => {
-      if (a.status === "pending" && b.status !== "pending") return -1;
-      if (b.status === "pending" && a.status !== "pending") return 1;
+      const rankDiff = STATUS_RANK[a.status] - STATUS_RANK[b.status];
+      if (rankDiff !== 0) return rankDiff;
       return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime();
     });
 

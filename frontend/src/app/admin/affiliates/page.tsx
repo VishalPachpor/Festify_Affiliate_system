@@ -147,7 +147,7 @@ function ReferralCodeBadge({ code }: { code: string }) {
   );
 }
 
-function StatusCell({ status }: { status: "active" | "pending" | "rejected" }) {
+function StatusCell({ status }: { status: "active" | "pending" | "rejected" | "mou_pending" }) {
   if (status === "active") {
     return (
       <span
@@ -165,6 +165,18 @@ function StatusCell({ status }: { status: "active" | "pending" | "rejected" }) {
         style={{ background: "rgba(234,179,8,0.14)", color: "#EAB308" }}
       >
         pending
+      </span>
+    );
+  }
+  if (status === "mou_pending") {
+    // Distinct amber so the admin can tell at a glance which rows are
+    // waiting on the applicant's BoldSign signature vs. waiting on review.
+    return (
+      <span
+        className="inline-block whitespace-nowrap rounded-[var(--space-1)] px-[var(--space-2)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium"
+        style={{ background: "rgba(245,158,11,0.14)", color: "#F59E0B" }}
+      >
+        MOU pending
       </span>
     );
   }
@@ -289,10 +301,10 @@ export default function AdminAffiliatesPage() {
         {/* Page header */}
         <div>
           <h2 className="font-[var(--font-display)] text-[1.75rem] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
-            Affiliate Management
+            Marketing Partner Management
           </h2>
           <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
-            Manage and monitor all affiliates
+            Manage and monitor all marketing partners
           </p>
         </div>
 
@@ -322,7 +334,7 @@ export default function AdminAffiliatesPage() {
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent" onClick={handlePageClick}>
           <div className="overflow-x-auto px-[var(--space-6)] py-[var(--space-5)]">
-            <table className="w-full border-collapse font-[var(--font-sans)]" aria-label="Affiliates">
+            <table className="w-full border-collapse font-[var(--font-sans)]" aria-label="Marketing partners">
               <thead>
                 <tr>
                   {["Name", "Referral Code", "Tier", "Referrals", "Revenue", "Status", "Actions"].map((col) => (
@@ -341,19 +353,25 @@ export default function AdminAffiliatesPage() {
                   const initials = aff.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
                   return (
                   <tr key={aff.id} className="border-t transition-colors duration-150 hover:bg-[rgba(255,255,255,0.03)]" style={{ borderColor: "rgba(255,255,255,0.04)", background: "linear-gradient(180deg, rgba(255,255,255,0.015), transparent)" }}>
-                    {/* Name + email */}
+                    {/* Name + email — clickable, opens the detail drawer
+                        with the full application responses for this row. */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] whitespace-nowrap">
-                      <div className="flex items-center gap-[var(--space-3)]">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedAffiliate(aff)}
+                        className="group flex items-center gap-[var(--space-3)] rounded-[var(--radius-sm)] text-left transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)]"
+                        aria-label={`View ${aff.name}'s application responses`}
+                      >
                         <Avatar initials={initials} />
                         <div>
-                          <p className="font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)]">
+                          <p className="font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] underline-offset-4 group-hover:underline">
                             {aff.name}
                           </p>
                           <p className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.45)]">
                             {aff.email}
                           </p>
                         </div>
-                      </div>
+                      </button>
                     </td>
                     {/* Referral Code */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] whitespace-nowrap">
@@ -383,6 +401,10 @@ export default function AdminAffiliatesPage() {
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] whitespace-nowrap">
                       <StatusCell status={aff.status === "approved" ? "active" : aff.status} />
                     </td>
+                    {/* mou_pending falls through StatusCell which renders
+                        the amber "MOU pending" badge. No Approve/Reject
+                        actions for that state — the applicant is the next
+                        actor (BoldSign). */}
                     {/* Actions */}
                     <td className="py-[var(--space-3)] whitespace-nowrap">
                       <div className="flex items-center gap-[0.5rem]">
@@ -449,7 +471,7 @@ export default function AdminAffiliatesPage() {
           {totalPages > 0 && (
             <div className="flex items-center justify-between border-t px-[var(--space-6)] py-[var(--space-4)]" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
               <p className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.45)]">
-                Showing {startItem}-{endItem} of {total} affiliates
+                Showing {startItem}-{endItem} of {total} marketing partners
               </p>
               <div className="flex gap-[var(--space-2)]">
                 <button
@@ -501,7 +523,7 @@ export default function AdminAffiliatesPage() {
           <div className="w-full max-w-[26rem] rounded-[0.75rem] border border-[rgba(255,255,255,0.08)] bg-[#111525] px-[2rem] py-[1.75rem]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h2 className="font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
-                Edit Affiliate
+                Edit Marketing Partner
               </h2>
               <button
                 type="button"
@@ -640,7 +662,7 @@ export default function AdminAffiliatesPage() {
               {" "}will be created in Luma automatically.
             </p>
             <p className="mt-[0.75rem] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.40)]">
-              If auto-sync fails, retry from the affiliate&apos;s More → Verify Code menu.
+              If auto-sync fails, retry from the partner&apos;s More → Verify Code menu.
             </p>
 
             <div className="mt-[1.5rem] flex">

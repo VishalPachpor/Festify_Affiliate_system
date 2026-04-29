@@ -90,6 +90,75 @@ router.get("/api/applications", async (req: Request, res: Response) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// GET /api/applications/:idOrAffiliateId/responses
+//
+// Single-application form response lookup. Accepts either the application id
+// (used for pending / rejected / approved_pending_mou rows) or the affiliateId
+// (used for fully-active CampaignAffiliate rows in the admin Affiliates list)
+// — admin needs one click on the affiliate's name to inspect what they
+// originally submitted, regardless of which lifecycle stage they're in.
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get("/api/applications/:idOrAffiliateId/responses", async (req: Request, res: Response) => {
+  try {
+    if (req.userRole !== "admin") {
+      res.status(403).json({ error: "Admin access required" });
+      return;
+    }
+    const tenantId = getTenantId(req);
+    const key = String(req.params.idOrAffiliateId);
+
+    const application = await prisma.application.findFirst({
+      where: {
+        tenantId,
+        OR: [{ id: key }, { affiliateId: key }],
+      },
+      include: {
+        campaign: { select: { id: true, name: true, slug: true } },
+      },
+    });
+    if (!application) {
+      res.status(404).json({ error: "Application not found" });
+      return;
+    }
+
+    res.status(200).json({
+      id: application.id,
+      affiliateId: application.affiliateId,
+      applyingAs: application.applyingAs,
+      firstName: application.firstName,
+      email: application.email,
+      individualFullName: application.individualFullName,
+      telegramUsername: application.telegramUsername,
+      companyName: application.companyName,
+      contactPersonName: application.contactPersonName,
+      contactPersonEmail: application.contactPersonEmail,
+      signatoryName: application.signatoryName,
+      signatoryEmail: application.signatoryEmail,
+      contactPersonTelegramUsername: application.contactPersonTelegramUsername,
+      communicationChannels: application.communicationChannels,
+      emailDatabaseSize: application.emailDatabaseSize,
+      telegramGroupLink: application.telegramGroupLink,
+      xProfileLink: application.xProfileLink,
+      redditProfileLink: application.redditProfileLink,
+      linkedInProfileLink: application.linkedInProfileLink,
+      instagramAccountLink: application.instagramAccountLink,
+      discordServerLink: application.discordServerLink,
+      experience: application.experience,
+      requestedCode: application.requestedCode,
+      status: application.status,
+      campaignId: application.campaignId,
+      campaignName: application.campaign.name,
+      createdAt: application.createdAt.toISOString(),
+      reviewedAt: application.reviewedAt?.toISOString() ?? null,
+    });
+  } catch (err) {
+    console.error("[applications] responses query failed:", err);
+    res.status(500).json({ error: "Failed to load application responses" });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PATCH /api/applications/:id/status
 //
 // Backwards-compatible review endpoint. Approval now means "commercially

@@ -17,7 +17,7 @@ function IconSearch() {
 const PAGE_TITLES: Record<string, string> = {
   "/admin":              "Admin Dashboard",
   "/admin/applications": "Applications",
-  "/admin/affiliates":   "Affiliates",
+  "/admin/affiliates":   "Marketing Partners",
   "/admin/materials":    "Materials",
   "/admin/milestones":   "Milestones",
   "/admin/commissions":  "Commissions",

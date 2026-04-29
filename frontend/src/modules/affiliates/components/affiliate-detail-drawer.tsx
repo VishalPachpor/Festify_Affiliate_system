@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Affiliate } from "@/modules/affiliates/types";
+import { useTenant } from "@/modules/tenant-shell";
+import type { Affiliate, ApplicationResponses } from "@/modules/affiliates/types";
 import {
   useAffiliateFinancials,
   usePayAllApproved,
 } from "@/modules/affiliates/hooks/use-affiliate-financials";
+import { useApplicationResponses } from "@/modules/affiliates/hooks/use-application-responses";
 import type { AffiliatePayoutLog } from "@/modules/affiliates/api/get-affiliate-financials";
 
 // ── Tier palette ─────────────────────────────────────────────────────────────
@@ -191,6 +193,12 @@ export function AffiliateDetailDrawer({ affiliate, onClose, currency }: Props) {
   // affiliate is null via the `enabled` flag on the underlying useQuery.
   const { data: financials } = useAffiliateFinancials(affiliate?.id ?? null);
   const payAllMutation = usePayAllApproved(affiliate?.id ?? null);
+  const { tenant } = useTenant();
+  // Prefer applicationId for the lookup since it's the stable key for every
+  // lifecycle stage; fall back to id for active rows where applicationId
+  // isn't surfaced by the list.
+  const responsesKey = affiliate?.applicationId ?? affiliate?.id ?? null;
+  const { data: responses } = useApplicationResponses(tenant?.id, responsesKey);
 
   if (!affiliate) return null;
 
@@ -206,14 +214,20 @@ export function AffiliateDetailDrawer({ affiliate, onClose, currency }: Props) {
   const cur = currency ?? affiliate.currency ?? "USD";
 
   const statusDisplay =
-    affiliate.status === "approved" ? "active" : affiliate.status;
+    affiliate.status === "approved"
+      ? "active"
+      : affiliate.status === "mou_pending"
+        ? "MOU pending"
+        : affiliate.status;
 
   const statusStyle =
     statusDisplay === "active"
       ? { dot: "#22C55E", text: "rgba(34,197,94,0.85)", bg: "rgba(34,197,94,0.10)" }
       : statusDisplay === "pending"
         ? { dot: "#EAB308", text: "#EAB308", bg: "rgba(234,179,8,0.12)" }
-        : { dot: "#EF4444", text: "#EF4444", bg: "rgba(239,68,68,0.12)" };
+        : statusDisplay === "MOU pending"
+          ? { dot: "#F59E0B", text: "#F59E0B", bg: "rgba(245,158,11,0.12)" }
+          : { dot: "#EF4444", text: "#EF4444", bg: "rgba(239,68,68,0.12)" };
 
   const handleCopyCode = () => {
     if (!affiliate.referralCode) return;
@@ -237,7 +251,7 @@ export function AffiliateDetailDrawer({ affiliate, onClose, currency }: Props) {
         style={{ borderLeft: `1px solid var(--color-border)` }}
         role="dialog"
         aria-modal="true"
-        aria-label="Affiliate details"
+        aria-label="Marketing partner details"
       >
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto">
@@ -530,6 +544,14 @@ export function AffiliateDetailDrawer({ affiliate, onClose, currency }: Props) {
                 </p>
               )}
             </div>
+          )}
+
+          {/* ── Application responses ─────────────────────────────
+              The form answers from when this person applied. Useful for
+              admins reviewing pending applications and for cross-checking
+              an active affiliate's promotion channels. */}
+          {responses && (
+            <ApplicationResponsesSection responses={responses} />
           )}
 
           {/* ── Recent Sales section ─────────────────────────────── */}
@@ -973,5 +995,143 @@ function PayoutRow({
         {statusStyle.label}
       </span>
     </div>
+  );
+}
+
+// ─── Application responses section ──────────────────────────────────────────
+
+const CHANNEL_LABELS: Record<string, string> = {
+  emails_newsletters: "Emails / Newsletters",
+  telegram: "Telegram Channel/Group",
+  whatsapp: "WhatsApp Group",
+  x: "X (Twitter)",
+  reddit: "Reddit",
+  linkedin: "LinkedIn",
+  instagram: "Instagram",
+  discord: "Discord",
+};
+
+function ApplicationResponsesSection({ responses }: { responses: ApplicationResponses }) {
+  const isCompany = responses.applyingAs === "company";
+
+  const identityRows: Array<{ label: string; value: string | null | undefined }> = isCompany
+    ? [
+        { label: "Applying as", value: "Company" },
+        { label: "Company name", value: responses.companyName },
+        { label: "Contact person", value: responses.contactPersonName },
+        { label: "Contact email", value: responses.contactPersonEmail },
+        { label: "Contact Telegram", value: responses.contactPersonTelegramUsername },
+        { label: "Signatory name", value: responses.signatoryName },
+        { label: "Signatory email", value: responses.signatoryEmail },
+      ]
+    : [
+        { label: "Applying as", value: "Individual" },
+        { label: "Full name", value: responses.individualFullName ?? responses.firstName },
+        { label: "Email", value: responses.email },
+        { label: "Telegram", value: responses.telegramUsername },
+      ];
+  identityRows.push({ label: "Requested code", value: responses.requestedCode });
+
+  const channelLinks: Array<{ label: string; value: string }> = [];
+  if (responses.emailDatabaseSize) channelLinks.push({ label: "Email DB size", value: responses.emailDatabaseSize });
+  if (responses.telegramGroupLink) channelLinks.push({ label: "Telegram link", value: responses.telegramGroupLink });
+  if (responses.xProfileLink) channelLinks.push({ label: "X profile", value: responses.xProfileLink });
+  if (responses.redditProfileLink) channelLinks.push({ label: "Reddit", value: responses.redditProfileLink });
+  if (responses.linkedInProfileLink) channelLinks.push({ label: "LinkedIn", value: responses.linkedInProfileLink });
+  if (responses.instagramAccountLink) channelLinks.push({ label: "Instagram", value: responses.instagramAccountLink });
+  if (responses.discordServerLink) channelLinks.push({ label: "Discord", value: responses.discordServerLink });
+
+  const channelLabels = responses.communicationChannels
+    .map((c) => CHANNEL_LABELS[c] ?? c)
+    .join(", ");
+
+  return (
+    <div
+      style={{
+        marginLeft: "var(--space-8)",
+        marginRight: "var(--space-8)",
+        marginTop: "var(--space-8)",
+      }}
+    >
+      <h3
+        className="font-bold text-[var(--color-text-primary)]"
+        style={{
+          fontFamily: "var(--font-display)",
+          fontSize: "var(--text-base)",
+          letterSpacing: "-0.02em",
+        }}
+      >
+        Application responses
+      </h3>
+
+      <div className="mt-[var(--space-3)] flex flex-col gap-[var(--space-3)]">
+        <ResponsesGroup title="Basic">
+          <ResponsesRows rows={identityRows} />
+        </ResponsesGroup>
+
+        <ResponsesGroup title="Marketing channels">
+          <ResponsesRows
+            rows={[
+              { label: "Channels", value: channelLabels || "—" },
+              ...channelLinks,
+              { label: "Previous experience", value: responses.experience || "—" },
+            ]}
+          />
+        </ResponsesGroup>
+      </div>
+    </div>
+  );
+}
+
+function ResponsesGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        borderRadius: "var(--radius-md)",
+        background: "rgba(255,255,255,0.02)",
+        border: "1px solid var(--color-border)",
+        padding: "var(--space-4)",
+      }}
+    >
+      <p
+        className="uppercase"
+        style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: 10,
+          letterSpacing: "0.08em",
+          color: "var(--color-text-secondary)",
+          fontWeight: 600,
+        }}
+      >
+        {title}
+      </p>
+      <div className="mt-[var(--space-3)]">{children}</div>
+    </div>
+  );
+}
+
+function ResponsesRows({
+  rows,
+}: {
+  rows: Array<{ label: string; value: string | null | undefined }>;
+}) {
+  return (
+    <dl className="flex flex-col gap-[var(--space-2)]">
+      {rows.map((row, i) => (
+        <div
+          key={`${row.label}-${i}`}
+          className="grid grid-cols-[8.5rem_1fr] gap-[var(--space-3)]"
+          style={{ fontFamily: "var(--font-sans)", fontSize: "var(--text-xs)" }}
+        >
+          <dt style={{ color: "var(--color-text-secondary)" }}>{row.label}</dt>
+          <dd
+            className="break-words"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            {row.value && row.value.length > 0 ? row.value : "—"}
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }
