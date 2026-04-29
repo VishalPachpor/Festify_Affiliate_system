@@ -55,15 +55,39 @@ router.get("/api/milestones/tiers", async (req: Request, res: Response) => {
       orderBy: { sortOrder: "asc" },
     });
 
-    let progressByMilestone = new Map<string, { currentMinor: number; unlockedAt: Date | null }>();
+    const progressByMilestone = new Map<string, { currentMinor: number; unlockedAt: Date | null }>();
 
     if (affiliateId) {
-      const progress = await prisma.affiliateMilestoneProgress.findMany({
-        where: { tenantId, affiliateId, milestoneId: { in: milestones.map((m) => m.id) } },
-      });
-      progressByMilestone = new Map(
-        progress.map((p) => [p.milestoneId, { currentMinor: p.currentMinor, unlockedAt: p.unlockedAt }]),
-      );
+      // Compute attributed revenue live from Sales — the source of truth.
+      // The AffiliateMilestoneProgress table is still useful for the
+      // unlockedAt timestamp (so we know when each tier was first crossed),
+      // but currentMinor must come from the live aggregate, otherwise stale
+      // event-worker state shows the wrong percentage on the milestones page.
+      const [agg, persistedProgress] = await Promise.all([
+        prisma.sale.aggregate({
+          where: {
+            tenantId,
+            attributionClaim: { affiliateId },
+            status: { not: "refunded" },
+          },
+          _sum: { amountMinor: true },
+        }),
+        prisma.affiliateMilestoneProgress.findMany({
+          where: { tenantId, affiliateId, milestoneId: { in: milestones.map((m) => m.id) } },
+          select: { milestoneId: true, unlockedAt: true },
+        }),
+      ]);
+      const totalRevenue = agg._sum.amountMinor ?? 0;
+      const persistedUnlock = new Map(persistedProgress.map((p) => [p.milestoneId, p.unlockedAt]));
+      for (const m of milestones) {
+        const currentMinor = Math.min(totalRevenue, m.targetMinor);
+        // Prefer the persisted unlockedAt (so the timestamp matches when it
+        // first happened); fall back to a live computed unlock if the row
+        // was never written (e.g. event-worker missed an emit).
+        const unlockedAt =
+          persistedUnlock.get(m.id) ?? (totalRevenue >= m.targetMinor ? new Date() : null);
+        progressByMilestone.set(m.id, { currentMinor, unlockedAt });
+      }
     } else {
       // Organizer view: report tenant-wide revenue total against each tier.
       const stats = await prisma.dashboardStats.findUnique({ where: { tenantId } });

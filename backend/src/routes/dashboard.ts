@@ -99,7 +99,7 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
           ...dateFilter,
         };
 
-        const [revenueSummary, salesCount, commissionSummary, paidOutSummary] =
+        const [revenueSummary, salesCount, commissionSummary, paidOutSummary, milestonesAll] =
           await Promise.all([
             prisma.sale.aggregate({ where: saleWhere, _sum: { amountMinor: true } }),
             prisma.sale.count({ where: saleWhere }),
@@ -111,6 +111,10 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
               where: { tenantId, affiliateId: affiliateId!, status: "paid" },
               _sum: { amountMinor: true },
             }),
+            prisma.milestone.findMany({
+              where: { tenantId },
+              select: { targetMinor: true },
+            }),
           ]);
 
         const totalRevenue = revenueSummary._sum.amountMinor ?? 0;
@@ -118,6 +122,15 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
         // them — conversion rate as "attributed/total" collapses to 100% and
         // isn't meaningful, so report 0 and let the UI hide it.
         const conversionRate = 0;
+
+        // "Milestones unlocked" tile: count tiers whose targetMinor is at or
+        // below the affiliate's attributed revenue. Live computation —
+        // independent of the AffiliateMilestoneProgress aggregate so the
+        // tile stays accurate even if the event-worker missed a milestone
+        // emission.
+        const milestonesUnlocked = milestonesAll.filter(
+          (m) => totalRevenue >= m.targetMinor,
+        ).length;
 
         const now = new Date();
         result = {
@@ -127,7 +140,7 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
           conversionRate,
           paidOut: paidOutSummary._sum.amountMinor ?? 0,
           pendingApprovals: 0,
-          milestonesUnlocked: 0,
+          milestonesUnlocked,
           currency: "USD",
           periodStart: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0],
           periodEnd: now.toISOString().split("T")[0],
