@@ -10,28 +10,26 @@ const REDIS_URL = process.env.REDIS_URL ?? "redis://localhost:6379";
 //                                     polls that race with BullMQ blocking
 //                                     ops and fire spurious "Connection
 //                                     is closed" errors against Upstash.
-//   • family: 0                     — let Node DNS resolve both IPv4 (A)
-//                                     and IPv6 (AAAA) records. Upstash on
-//                                     several regions (notably sgp1, our
-//                                     deployment) returns IPv6 addresses;
-//                                     ioredis defaults to family=4 and
-//                                     hangs/ECONNRESETs against an IPv6
-//                                     endpoint. This is the documented
-//                                     fix for Upstash on Fly/DO/Render.
-//                                     Ref: https://community.fly.io/t/i-am-facing-issue-while-connecting-upstash-redis-instance-with-bullmq/18095
 //   • keepAlive: 30s                — TCP-level keepalive so Upstash's
 //                                     idle-connection killer doesn't
 //                                     close the socket every few minutes.
 //   • retryStrategy never returns null — workers stay alive across any
 //                                     network flap; Upstash idle resets
 //                                     and DNS hiccups self-heal.
+//
+// We previously set `family: 0` here on the theory that DO/Upstash's sgp
+// region was serving IPv6 first. That deploy turned every service into a
+// continuous 3s→4s→5s reconnect storm with EPIPE/ECONNRESET on every
+// established socket — the OS was picking an address (likely the AAAA
+// record) that completed TCP but couldn't sustain the session. Reverted
+// to ioredis's default (family=4); if Upstash later moves us to an
+// IPv6-only endpoint, force `family: 6` rather than allowing both.
 const baseOptions: RedisOptions = {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
   lazyConnect: true,
   connectTimeout: 10_000,
   keepAlive: 30_000,
-  family: 0,
   retryStrategy(times) {
     return Math.min(times * 500, 30_000);
   },
