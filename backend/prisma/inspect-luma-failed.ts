@@ -19,7 +19,6 @@ async function main() {
       tenantId: true,
       externalEventId: true,
       lastError: true,
-      retryCount: true,
       createdAt: true,
       payload: true,
     },
@@ -46,7 +45,6 @@ async function main() {
 
     console.log(`\n=== ${event.id} ===`);
     console.log(`  createdAt:    ${event.createdAt.toISOString()}`);
-    console.log(`  retryCount:   ${event.retryCount}`);
     console.log(`  luma type:    ${lumaType}`);
     console.log(`  buyer:        ${buyerName} <${buyerEmail}>`);
     console.log(`  amountMinor:  ${amountMinor}`);

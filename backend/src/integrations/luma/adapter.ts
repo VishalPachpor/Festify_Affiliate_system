@@ -84,7 +84,20 @@ export const lumaAdapter: ProviderAdapter = {
       amountMinor = Math.round(amountDollars * 100);
     }
 
-    const type = eventType === "ticket.refunded" ? "ticket.refunded" as const : "ticket.purchased" as const;
+    // Luma never emits a clean "ticket.refunded" event type. Refunds
+    // arrive as `guest.updated` with the guest's approval_status flipped
+    // from "approved" to "declined" and event_ticket nulled out. Detect
+    // those signals here so executeRefundFlow can run downstream. If
+    // approval_status flips to "declined" on a free registration that
+    // never produced a Sale, executeRefundFlow exits cleanly with a
+    // warning — safe to over-classify in that direction.
+    const approvalStatus = typeof data.approval_status === "string" ? data.approval_status : null;
+    const isRefund =
+      eventType === "ticket.refunded" ||
+      approvalStatus === "declined" ||
+      (eventType === "guest.updated" && eventTicket === null && (eventTicketOrders?.length ?? 0) > 0);
+
+    const type = isRefund ? ("ticket.refunded" as const) : ("ticket.purchased" as const);
 
     // ── Coupon/referral code extraction ─────────────────────────────────
     // Luma nests coupon info under data.event_ticket_orders[].coupon_info.code.
