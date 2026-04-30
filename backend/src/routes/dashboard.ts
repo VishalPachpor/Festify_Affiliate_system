@@ -65,13 +65,25 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
         const conversionRate = totalSales > 0
           ? Math.round((stats.attributedSales / totalSales) * 1000) / 10
           : 0;
-        const pendingCount = await prisma.application.count({ where: { tenantId, status: "pending" } });
+
+        // Live counts for fields that can drift between DashboardStats and
+        // the source-of-truth tables. totalAffiliates was historically read
+        // from stats but only updated by the affiliate.joined event handler;
+        // affiliates created via cleanup/seed scripts (or before that
+        // handler shipped) leave the cached value behind. The count is
+        // microseconds against the (tenantId) index — cheaper than the
+        // drift-detection bug it prevents. pendingApprovals has the same
+        // issue and is already live-counted, so we parallelize.
+        const [pendingCount, affiliateCount] = await Promise.all([
+          prisma.application.count({ where: { tenantId, status: "pending" } }),
+          prisma.campaignAffiliate.count({ where: { tenantId } }),
+        ]);
 
         const now = new Date();
         result = {
           totalRevenue: stats.totalRevenue,
           totalCommissions: stats.totalCommission,
-          totalAffiliates: stats.totalAffiliates,
+          totalAffiliates: affiliateCount,
           conversionRate,
           paidOut: stats.totalPaidOut,
           pendingApprovals: pendingCount,
