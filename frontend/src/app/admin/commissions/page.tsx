@@ -11,7 +11,7 @@ import { useSalesFilters } from "@/modules/sales/hooks/use-sales-filters";
 import { apiClient } from "@/services/api/client";
 import type { Sale } from "@/modules/sales/types";
 
-type CommissionStatus = "paid" | "approved" | "pending" | "processing" | "failed";
+type CommissionStatus = "paid" | "approved" | "pending" | "processing" | "failed" | "refunded";
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 
@@ -68,6 +68,13 @@ function StatusCell({ status }: { status: CommissionStatus }) {
     return (
       <span className={base} style={{ background: "rgba(239,68,68,0.2)", color: "#FCA5A5" }}>
         failed
+      </span>
+    );
+  }
+  if (status === "refunded") {
+    return (
+      <span className={base} style={{ background: "rgba(156,163,175,0.18)", color: "#cbd5e1" }}>
+        refunded
       </span>
     );
   }
@@ -159,7 +166,13 @@ function toCommissionStatus(s: Sale["status"]): CommissionStatus {
 }
 
 function deriveCommissionStatus(row: Sale): CommissionStatus {
+  // payoutStatus="paid" stays at "paid" even when the underlying sale is
+  // refunded — that's the post-paid-refund state where the Reverse Payout
+  // (clawback) action surfaces. Other payoutStatus values lose priority to
+  // the refund signal so the row doesn't misleadingly render as "pending"
+  // and offer an Approve button against a sale that can't be approved.
   if (row.payoutStatus === "paid") return "paid";
+  if (row.status === "refunded") return "refunded";
   if (row.payoutStatus === "processing") return "processing";
   if (row.payoutStatus === "failed") return "failed";
   if (row.payoutStatus === "pending") return "approved";
