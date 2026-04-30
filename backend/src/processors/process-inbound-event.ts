@@ -1,6 +1,7 @@
 import { prisma } from "../lib/prisma";
 import { invalidateCache } from "../lib/cache";
 import { emitEvent } from "../lib/event-bus";
+import { getAdapter } from "../integrations/core/registry";
 import type { InboundEvent, Milestone, Prisma } from "@prisma/client";
 
 /**
@@ -58,16 +59,14 @@ export async function processInboundEvent(eventId: string): Promise<void> {
   }
 
   try {
-    // Dispatch by normalized event type. Adapters write the type into
-    // payload.normalized.type — "ticket.purchased" routes through the
-    // Golden Flow, "ticket.refunded" routes through the Refund Flow.
-    // Anything else falls through to the Golden Flow for backwards
-    // compatibility with payloads that pre-date the type field.
-    const normalizedPayload = (event.payload as Record<string, unknown>)
-      ?.normalized as Record<string, unknown> | undefined;
-    const eventType = typeof normalizedPayload?.type === "string"
-      ? normalizedPayload.type
-      : null;
+    // Dispatch by event type. Re-normalize from the raw payload using
+    // the current adapter rather than reading the cached
+    // payload.normalized.type — adapter improvements (e.g. new refund-
+    // detection signals) need to apply to events that were ingested
+    // before the adapter was updated. The cached normalized.type is
+    // kept around as a fallback for any future raw payload that the
+    // adapter can no longer parse.
+    const eventType = resolveEventType(event);
 
     if (eventType === "ticket.refunded") {
       await executeRefundFlow(event);
@@ -652,6 +651,28 @@ async function emitRetroTierAdjustments(
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Resolve the event type for dispatch. Re-runs the provider adapter on the
+ * raw payload first — adapter improvements (e.g. better refund-detection
+ * signals) apply to events ingested before those improvements landed. Falls
+ * back to the cached `payload.normalized.type` if the adapter can't be
+ * found or rejects the raw payload (schema drift edge case).
+ */
+function resolveEventType(event: InboundEvent): string | null {
+  const rawPayload = event.payload as Record<string, unknown> | null;
+  const raw = rawPayload?.raw;
+  const adapter = getAdapter(event.provider);
+  if (adapter && raw !== undefined) {
+    try {
+      return adapter.normalize(raw).type;
+    } catch {
+      // fall through to cached value
+    }
+  }
+  const normalized = rawPayload?.normalized as Record<string, unknown> | undefined;
+  return typeof normalized?.type === "string" ? normalized.type : null;
+}
 
 function isPrismaUniqueConstraintError(err: unknown): boolean {
   return (
