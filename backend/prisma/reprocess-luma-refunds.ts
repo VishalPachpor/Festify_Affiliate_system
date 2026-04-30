@@ -30,7 +30,7 @@ async function main() {
     select: { id: true, externalEventId: true, payload: true, processedAt: true },
   });
 
-  type Hit = { id: string; externalEventId: string; orderId: string | null };
+  type Hit = { id: string; externalEventId: string | null; orderId: string | null };
   const hits: Hit[] = [];
   for (const event of candidates) {
     const raw = (event.payload as Record<string, unknown> | null)?.raw as
