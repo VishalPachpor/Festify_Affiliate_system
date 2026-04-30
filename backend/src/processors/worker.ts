@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma";
+import { startRedisHeartbeat } from "../lib/redis";
 import { processInboundEvent } from "./process-inbound-event";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -13,6 +14,11 @@ const BATCH_SIZE = 10;
 
 export async function startWorker(): Promise<void> {
   console.log(`[inbound-processor] starting (poll=${POLL_INTERVAL_MS}ms, batch=${BATCH_SIZE})`);
+
+  // Keep the primary Redis socket warm so managed-Redis idle-killers don't
+  // reset us between bursts. Without this, every long quiet stretch ends
+  // with a reconnect-and-replay flap visible as ECONNRESET in the logs.
+  startRedisHeartbeat();
 
   // eslint-disable-next-line no-constant-condition
   while (true) {

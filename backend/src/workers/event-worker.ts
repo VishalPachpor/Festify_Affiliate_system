@@ -1,5 +1,5 @@
 import { Worker, type Job } from "bullmq";
-import { createBullConnection } from "../lib/redis";
+import { createBullConnection, startRedisHeartbeat } from "../lib/redis";
 import { prisma } from "../lib/prisma";
 import { invalidateCache } from "../lib/cache";
 import { deadLetterQueue } from "../lib/queue";
@@ -320,6 +320,10 @@ const HANDLERS: Record<string, (data: AnyEvent) => Promise<void>> = {
 // ─── Worker Process ──────────────────────────────────────────────────────────
 
 export function startEventWorker(): Worker {
+  // Keep the primary Redis socket warm; BullMQ blocking commands are on a
+  // separate connection but the heartbeat covers cache reads in handlers.
+  startRedisHeartbeat();
+
   const worker = new Worker(
     "events",
     async (job: Job) => {

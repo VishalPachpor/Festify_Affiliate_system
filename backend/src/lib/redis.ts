@@ -37,12 +37,22 @@ export const redis = new Redis(REDIS_URL, baseOptions);
 // `redis` instance leads to cache reads silently waiting behind worker
 // blocking ops. Returns a NEW Redis instance per call — pass to BullMQ
 // constructors so each Queue/Worker gets its own dedicated socket.
+//
+// Error listener is attached eagerly so an idle-socket reset (managed
+// Redis closes idle TCP after a few minutes) doesn't bubble out as an
+// uncaught error event with a full stack. retryStrategy in baseOptions
+// reconnects automatically; the listener just keeps the noise to one
+// warn line per flap.
 export function createBullConnection(): Redis {
-  return new Redis(REDIS_URL, baseOptions);
+  const conn = new Redis(REDIS_URL, baseOptions);
+  conn.on("error", (err) => {
+    console.warn("[redis-bull] connection flap:", err instanceof Error ? err.message : err);
+  });
+  return conn;
 }
 
 redis.on("error", (err) => {
-  console.error("[redis] Connection error:", err.message);
+  console.warn("[redis] connection flap:", err.message);
 });
 
 redis.on("connect", () => {
@@ -52,3 +62,30 @@ redis.on("connect", () => {
 redis.on("reconnecting", (delay: number) => {
   console.warn(`[redis] Reconnecting in ${delay}ms`);
 });
+
+// Heartbeat: ping the primary connection every 30s so the managed Redis
+// idle-killer doesn't reset our socket between bursts of work. Polling
+// workers can sit idle for minutes between events; without this, every
+// burst pays a reconnect tax. Lazy-started via startRedisHeartbeat() so
+// short-lived scripts (migrations, one-shot ts-node tools) don't keep
+// the process alive.
+let heartbeatHandle: NodeJS.Timeout | null = null;
+
+export function startRedisHeartbeat(intervalMs = 30_000): void {
+  if (heartbeatHandle) return;
+  heartbeatHandle = setInterval(() => {
+    redis.ping().catch(() => {
+      // retryStrategy will reconnect; swallow rejection so the timer
+      // doesn't spawn an unhandled rejection on its own.
+    });
+  }, intervalMs);
+  // unref so the heartbeat alone never keeps the event loop alive.
+  heartbeatHandle.unref();
+}
+
+export function stopRedisHeartbeat(): void {
+  if (heartbeatHandle) {
+    clearInterval(heartbeatHandle);
+    heartbeatHandle = null;
+  }
+}
