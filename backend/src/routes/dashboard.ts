@@ -99,7 +99,7 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
           ...dateFilter,
         };
 
-        const [revenueSummary, salesCount, commissionSummary, paidOutSummary, milestonesAll] =
+        const [revenueSummary, salesCount, commissionSummary, paidOutSummary, reversalSummary, milestonesAll] =
           await Promise.all([
             prisma.sale.aggregate({ where: saleWhere, _sum: { amountMinor: true } }),
             prisma.sale.count({ where: saleWhere }),
@@ -109,6 +109,13 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
             }),
             prisma.payout.aggregate({
               where: { tenantId, affiliateId: affiliateId!, status: "paid" },
+              _sum: { amountMinor: true },
+            }),
+            // Sum of reversal entries for this affiliate. amountMinor is
+            // stored negative; we display absolute below to subtract from
+            // paid-out for the UX-friendly net view.
+            prisma.commissionLedgerEntry.aggregate({
+              where: { tenantId, affiliateId: affiliateId!, type: "reversal", ...dateFilter },
               _sum: { amountMinor: true },
             }),
             prisma.milestone.findMany({
@@ -123,14 +130,26 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
         // isn't meaningful, so report 0 and let the UI hide it.
         const conversionRate = 0;
 
-        // "Milestones unlocked" tile: count tiers whose targetMinor is at or
-        // below the affiliate's attributed revenue. Live computation —
-        // independent of the AffiliateMilestoneProgress aggregate so the
-        // tile stays accurate even if the event-worker missed a milestone
-        // emission.
-        const milestonesUnlocked = milestonesAll.filter(
-          (m) => totalRevenue >= m.targetMinor,
-        ).length;
+        // "Milestones unlocked" tile: count tiers crossed by the affiliate's
+        // attributed revenue. The Starter (entry) tier has targetMinor=0, so
+        // the inequality is always true even at $0 revenue — exclude it from
+        // the count when the affiliate hasn't actually made an attributed
+        // sale yet (or after a full refund nets revenue back to zero). Once
+        // they have any revenue, Starter counts as their first unlocked tier.
+        const milestonesUnlocked = totalRevenue > 0
+          ? milestonesAll.filter((m) => totalRevenue >= m.targetMinor).length
+          : 0;
+
+        // Net paid-out: actual settled payouts minus the absolute size of any
+        // commission reversals (refund-time clawback that the lenient policy
+        // doesn't physically extract — it sits in the ledger as a negative
+        // balance). Showing the net keeps the affiliate dashboard consistent
+        // with TOTAL SALES / COMMISSION EARNED after a refund. Floor at 0 so
+        // the tile never goes negative — the underlying ledger still has the
+        // truthful numbers for finance reporting.
+        const paidOutGross = paidOutSummary._sum.amountMinor ?? 0;
+        const reversalAbs = Math.abs(reversalSummary._sum.amountMinor ?? 0);
+        const paidOutNet = Math.max(0, paidOutGross - reversalAbs);
 
         const now = new Date();
         result = {
@@ -138,7 +157,7 @@ router.get("/api/dashboard/summary", async (req: Request, res: Response) => {
           totalCommissions: commissionSummary._sum.amountMinor ?? 0,
           totalAffiliates: 0,
           conversionRate,
-          paidOut: paidOutSummary._sum.amountMinor ?? 0,
+          paidOut: paidOutNet,
           pendingApprovals: 0,
           milestonesUnlocked,
           currency: "USD",
