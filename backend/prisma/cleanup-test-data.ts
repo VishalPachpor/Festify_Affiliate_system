@@ -33,6 +33,14 @@ async function main() {
   const sales = await prisma.sale.deleteMany({});
   console.log(`  Sale:                    ${sales.count} deleted`);
 
+  // Reset milestone progress for every affiliate. Without this, ghost
+  // unlockedAt timestamps + currentMinor values survive the wipe and the
+  // affiliate dashboard keeps showing "N/M unlocked" against $0 sales.
+  const milestoneReset = await prisma.affiliateMilestoneProgress.updateMany({
+    data: { currentMinor: 0, unlockedAt: null },
+  });
+  console.log(`  AffiliateMilestoneProgress: ${milestoneReset.count} reset`);
+
   // Reset aggregate/stats tables to zero
   const dashStats = await prisma.dashboardStats.updateMany({
     data: {

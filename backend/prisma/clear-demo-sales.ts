@@ -83,6 +83,21 @@ async function main() {
       })
     : [];
 
+  // Affiliates whose sales we're about to delete need their milestone
+  // progress reset — otherwise unlockedAt timestamps survive and the
+  // dashboard keeps showing "N/M unlocked" against $0 sales.
+  const affectedAffiliateIds = Array.from(new Set(claims.map((c) => c.affiliateId)));
+  const milestoneToReset = affectedAffiliateIds.length > 0
+    ? await prisma.affiliateMilestoneProgress.findMany({
+        where: {
+          tenantId: TENANT_ID,
+          affiliateId: { in: affectedAffiliateIds },
+          OR: [{ currentMinor: { not: 0 } }, { unlockedAt: { not: null } }],
+        },
+        select: { id: true, affiliateId: true, milestoneId: true, currentMinor: true, unlockedAt: true },
+      })
+    : [];
+
   console.log(`\n[clear-demo-sales] inventory:`);
   console.log(`  sales:                 ${dummySales.length}`);
   for (const s of dummySales) {
@@ -92,6 +107,12 @@ async function main() {
   console.log(`  ledger entries:        ${ledger.length}  (sum=$${(ledger.reduce((a, l) => a + l.amountMinor, 0) / 100).toFixed(2)})`);
   console.log(`  payouts to delete:     ${payoutsToDelete.length}  ${payoutsToDelete.join(", ")}`);
   console.log(`  payout idempotency:    ${idemKeys.length}`);
+  console.log(`  milestone rows to reset: ${milestoneToReset.length} (affiliates affected: ${affectedAffiliateIds.length})`);
+  for (const p of milestoneToReset) {
+    console.log(
+      `    affiliate=${p.affiliateId} milestone=${p.milestoneId} currentMinor=${p.currentMinor} unlockedAt=${p.unlockedAt?.toISOString() ?? "<null>"}`,
+    );
+  }
 
   if (!APPLY) {
     console.log(`\n[clear-demo-sales] DRY-RUN complete. Pass --apply to execute.`);
@@ -131,6 +152,14 @@ async function main() {
       where: { id: { in: saleIds } },
     });
     console.log(`[apply] deleted ${r.count} sales`);
+
+    if (milestoneToReset.length > 0) {
+      const r2 = await tx.affiliateMilestoneProgress.updateMany({
+        where: { id: { in: milestoneToReset.map((p) => p.id) } },
+        data: { currentMinor: 0, unlockedAt: null },
+      });
+      console.log(`[apply] reset ${r2.count} milestone progress rows`);
+    }
   });
 
   console.log(`\n[clear-demo-sales] APPLY complete.`);
