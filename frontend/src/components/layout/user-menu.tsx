@@ -115,7 +115,7 @@ export function UserMenu() {
             <>
               <div className="border-b border-[rgba(255,255,255,0.08)] px-[var(--space-4)] py-[var(--space-3)]">
                 <p className="font-[var(--font-sans)] text-[var(--text-sm)] font-semibold text-[var(--color-text-primary)]">
-                  {user.fullName || "Affiliate"}
+                  {user.fullName || "Marketing Partner"}
                 </p>
                 <p className="mt-[var(--space-1)] truncate font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
                   {user.email}

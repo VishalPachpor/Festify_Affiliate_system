@@ -35,7 +35,7 @@ export function LoginForm() {
       noValidate
       className="flex flex-col gap-[var(--space-4)]"
     >
-      <FormField label="Email" error={errors.email?.message} required>
+      <FormField label="Email" labelCase="normal" error={errors.email?.message} required>
         {(a11y) => (
           <TextInput
             {...a11y}
@@ -52,6 +52,7 @@ export function LoginForm() {
 
       <FormField
         label="Password"
+        labelCase="normal"
         error={errors.password?.message}
         required
         trailing={

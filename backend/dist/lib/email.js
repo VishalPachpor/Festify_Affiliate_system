@@ -4,6 +4,7 @@ exports.EmailDeliveryError = void 0;
 exports.sendVerificationCodeEmail = sendVerificationCodeEmail;
 exports.sendPasswordResetEmail = sendPasswordResetEmail;
 exports.sendAffiliateWelcomeEmail = sendAffiliateWelcomeEmail;
+exports.sendAffiliateMouEmail = sendAffiliateMouEmail;
 exports.sendAffiliateInviteEmail = sendAffiliateInviteEmail;
 class EmailDeliveryError extends Error {
     constructor(message) {
@@ -131,6 +132,29 @@ async function sendAffiliateWelcomeEmail(args) {
         <p style="margin:0 0 16px;">Hi ${safeName},</p>
         <p style="margin:0 0 16px;">Your affiliate application has been approved.</p>
         <p style="margin:0 0 16px;">Your referral code is <strong>${safeCode}</strong>.</p>
+      </div>
+    `,
+    });
+}
+async function sendAffiliateMouEmail(args) {
+    const safeName = escapeHtml(args.signerName);
+    const safeUrl = escapeHtml(args.signingUrl);
+    const safeCampaign = escapeHtml(args.campaignName);
+    await sendEmail({
+        to: args.to,
+        subject: `Sign your ${APP_NAME} affiliate MOU`,
+        text: `Hi ${args.signerName}, your application for ${args.campaignName} has been approved. Sign your affiliate MOU to activate access: ${args.signingUrl}`,
+        html: `
+      <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#111827">
+        <h1 style="margin:0 0 16px;font-size:24px;">Your affiliate application is approved</h1>
+        <p style="margin:0 0 16px;">Hi ${safeName},</p>
+        <p style="margin:0 0 16px;">Your application for <strong>${safeCampaign}</strong> has been approved. Please sign the affiliate MOU to activate your dashboard access.</p>
+        <p style="margin:0 0 24px;">
+          <a href="${safeUrl}" style="display:inline-block;padding:12px 18px;border-radius:10px;background:#3456B8;color:#ffffff;text-decoration:none;font-weight:600;">
+            Sign MOU
+          </a>
+        </p>
+        <p style="margin:0;color:#6b7280;font-size:14px;">If the button doesn't work, copy and paste this URL into your browser: ${safeUrl}</p>
       </div>
     `,
     });

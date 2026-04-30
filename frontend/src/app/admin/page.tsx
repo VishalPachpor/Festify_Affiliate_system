@@ -133,7 +133,7 @@ function AdminHeroBanner() {
         Welcome Back, {firstName}!
       </h2>
       <p className="relative mt-[8px] max-w-[46rem] font-[var(--font-sans)] text-[18px] leading-[28px] text-[#F0F0F0]">
-        Monitor and manage the {eventName} Affiliate Program
+        Monitor and manage the {eventName} Marketing Partner Program
       </p>
     </section>
   );
@@ -158,15 +158,15 @@ export default function AdminDashboardPage() {
         {/* KPI Cards */}
         <dl className="grid grid-cols-1 items-stretch gap-[24px] sm:grid-cols-2 lg:grid-cols-3">
           <AdminKpiCard
-            label="Total Affiliates"
+            label="Total Marketing Partners"
             value={String(summary?.totalAffiliates ?? 0)}
-            subtitle="Active affiliates"
+            subtitle="Active marketing partners"
             accentColor="#FFFFFF"
           />
           <AdminKpiCard
-            label="Total Affiliate Revenue"
+            label="Total Marketing Partner Revenue"
             value={formatCurrency(summary?.totalRevenue ?? 0, currency)}
-            subtitle={`${summary?.totalAffiliates ?? 0} affiliates`}
+            subtitle={`${summary?.totalAffiliates ?? 0} marketing partners`}
             accentColor="#5B8DEF"
           />
           <AdminKpiCard
@@ -187,7 +187,7 @@ export default function AdminDashboardPage() {
           >
             <div className="flex items-center justify-between">
               <h3 className="font-[var(--font-display)] font-bold text-[var(--text-lg)] leading-[var(--leading-tight)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
-                Top Affiliates
+                Top Marketing Partners
               </h3>
               <Link
                 href="/admin/affiliates"

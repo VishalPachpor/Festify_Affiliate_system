@@ -18,6 +18,12 @@ export declare function sendAffiliateWelcomeEmail(args: {
     firstName: string;
     referralCode: string;
 }): Promise<void>;
+export declare function sendAffiliateMouEmail(args: {
+    to: string;
+    signerName: string;
+    signingUrl: string;
+    campaignName: string;
+}): Promise<void>;
 export declare function sendAffiliateInviteEmail(args: {
     to: string;
     campaignName: string;

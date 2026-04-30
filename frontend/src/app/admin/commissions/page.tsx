@@ -136,7 +136,7 @@ function KpiCard({
 // ── CSV Export ────────────────────────────────────────────────────────────────
 
 function exportToCsv(sales: Sale[]) {
-  const headers = ["Affiliate", "Total Sales", "Commission", "Status", "Date"];
+  const headers = ["Marketing Partner", "Total Sales", "Commission", "Status", "Date"];
   const rows = sales.map((row) => [
     row.affiliateName,
     (row.amount / 100).toFixed(2),
@@ -381,7 +381,7 @@ export default function AdminCommissionsPage() {
               <button
                 type="button"
                 onClick={() => setFilters({ affiliateId: undefined, page: 1 })}
-                aria-label="Clear affiliate filter"
+                aria-label="Clear marketing partner filter"
                 className="ml-[var(--space-1)] transition-colors hover:text-white"
               >
                 <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -464,7 +464,7 @@ export default function AdminCommissionsPage() {
               <thead>
                 <tr>
                   {[
-                    { label: "Affiliate", align: "left" as const },
+                    { label: "Marketing Partner", align: "left" as const },
                     { label: "Total Sales", align: "right" as const },
                     { label: "Commission", align: "right" as const },
                     { label: "Status", align: "center" as const },
@@ -610,7 +610,7 @@ export default function AdminCommissionsPage() {
                         <button
                           type="button"
                           disabled
-                          title="Unattributed — assign an affiliate in the Unattributed Sales panel first"
+                          title="Unattributed — assign a marketing partner in the Unattributed Sales panel first"
                           className="rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-transparent px-[var(--space-4)] py-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-xs)] font-medium text-[rgba(255,255,255,0.50)] disabled:cursor-not-allowed"
                         >
                           Attribute first

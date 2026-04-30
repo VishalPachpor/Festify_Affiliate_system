@@ -5,7 +5,7 @@ import type { Tenant } from "./types";
  *
  * Resolution order:
  * 1. Custom domain → lookup in API
- * 2. Subdomain (e.g. acme.festify.io) → extract slug
+ * 2. Subdomain (e.g. acme.passtrack.io) → extract slug
  * 3. Fallback → null (public/auth pages)
  *
  * In dev, uses NEXT_PUBLIC_TENANT_SLUG env var.

@@ -4,7 +4,7 @@ import { AuthCard } from "@/modules/auth/components/auth-card";
 import { ResetPasswordClient } from "./client";
 
 export const metadata: Metadata = {
-  title: "Reset Password — Festify Affiliates",
+  title: "Reset Password — Passtrack Marketing Partners",
 };
 
 export default function ResetPasswordPage() {

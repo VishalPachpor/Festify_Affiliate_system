@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sales — Festify Affiliates",
+  title: "Sales — Passtrack Marketing Partners",
 };
 
 export default function SalesLayout({

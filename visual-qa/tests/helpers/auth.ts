@@ -21,12 +21,12 @@ export async function login(page: Page, creds: Creds): Promise<void> {
   // Form fields — match by accessible name, not raw selectors, so a CSS
   // refactor doesn't silently break the suite.
   await page.getByLabel(/email/i).fill(creds.email);
-  await page.getByLabel(/password/i).fill(creds.password);
+  await page.getByRole("textbox", { name: /^password$/i }).fill(creds.password);
   await page.getByRole("button", { name: /sign in|log in/i }).click();
 
-  // Post-login destination depends on role; just wait for the sidebar shell
-  // to show up since both sides render it.
-  await expect(page.getByRole("navigation")).toBeVisible({ timeout: 15_000 });
+  // Post-login destination depends on role; wait for the route rather than
+  // an ARIA landmark so this helper does not depend on sidebar markup.
+  await expect(page).toHaveURL(/\/(admin|dashboard)(\/|$)/, { timeout: 15_000 });
 }
 
 /**

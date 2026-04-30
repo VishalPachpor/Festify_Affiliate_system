@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { NotificationBell } from "./notification-bell";
 import { UserMenu } from "./user-menu";
 
 function IconSearch() {
@@ -97,8 +96,6 @@ export function AdminHeader() {
             />
           </div>
         )}
-
-        <NotificationBell recipient="tenant" />
 
         <UserMenu />
       </div>

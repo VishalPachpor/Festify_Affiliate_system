@@ -118,7 +118,7 @@ export default function ApplicationsReviewPage() {
             Applications
           </h1>
           <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
-            Review and approve incoming affiliate applications.
+            Review and approve incoming marketing partner applications.
           </p>
         </div>
         <div className="flex items-center gap-[var(--space-2)]">
@@ -305,7 +305,7 @@ export default function ApplicationsReviewPage() {
 
             {app.status === "approved" && app.affiliateId && (
               <div className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
-                Approved · affiliate id: <code className="text-[var(--color-text-primary)]">{app.affiliateId}</code>
+                Approved · marketing partner id: <code className="text-[var(--color-text-primary)]">{app.affiliateId}</code>
               </div>
             )}
           </article>

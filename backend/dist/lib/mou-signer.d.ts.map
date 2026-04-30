@@ -1,0 +1,1 @@
+{"version":3,"file":"mou-signer.d.ts","sourceRoot":"","sources":["../../src/lib/mou-signer.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,WAAW,EAAE,MAAM,gBAAgB,CAAC;AAElD,qBAAa,cAAe,SAAQ,KAAK;gBAC3B,OAAO,EAAE,MAAM;CAI5B;AAED,wBAAgB,eAAe,CAAC,WAAW,EAAE,WAAW,GAAG;IACzD,UAAU,EAAE,MAAM,CAAC;IACnB,WAAW,EAAE,MAAM,CAAC;CACrB,CAoBA"}

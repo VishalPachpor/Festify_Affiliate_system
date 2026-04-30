@@ -70,7 +70,7 @@ export function AffiliateDetailsPanel({
     <div className="rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface-card)] px-[var(--space-6)] py-[var(--space-5)]">
       <div className="flex items-center justify-between">
         <h3 className="font-[var(--font-display)] text-[var(--text-lg)] font-bold text-[var(--color-text-primary)] tracking-[var(--tracking-heading)]">
-          Affiliate Details
+          Marketing Partner Details
         </h3>
         {onClose && (
           <button
@@ -86,7 +86,7 @@ export function AffiliateDetailsPanel({
       <div className="mt-[var(--space-5)]">
         {error ? (
           <p className="font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-error)]">
-            Failed to load affiliate details.
+            Failed to load marketing partner details.
           </p>
         ) : isLoading || !data ? (
           <DetailSkeleton />

@@ -23,10 +23,10 @@ export function AffiliateApplicationForm() {
     <div className="relative z-10 mx-auto max-w-[73rem]">
       <header>
         <h2 className="font-[var(--font-display)] text-[3rem] font-bold leading-[1.08] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
-          Become an Affiliate
+          Become a Marketing Partner
         </h2>
         <p className="mt-[var(--space-3)] max-w-[44rem] font-[var(--font-sans)] text-[var(--text-lg)] leading-[1.6] text-[var(--color-text-secondary)]">
-          Join the affiliate program and earn 10% commission on every ticket sold.
+          Join the marketing partner program and earn 10% commission on every ticket sold.
         </p>
         <p className="mt-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-xs)] uppercase tracking-[var(--tracking-caption)] text-[var(--color-text-secondary)]">
           Required fields marked with *
@@ -86,7 +86,7 @@ export function AffiliateApplicationForm() {
           {(a11y) => (
             <TextInput
               {...a11y}
-              placeholder="Past affiliate programs, event promotion, etc."
+              placeholder="Past partner programs, event promotion, etc."
             />
           )}
         </FormField>
@@ -98,7 +98,7 @@ export function AffiliateApplicationForm() {
               aria-invalid={a11y["aria-invalid"]}
               aria-describedby={a11y["aria-describedby"]}
               className={textareaClass}
-              placeholder="Tell us about your audience and why you'd be a great affiliate..."
+              placeholder="Tell us about your audience and why you'd be a great marketing partner..."
             />
           )}
         </FormField>

@@ -539,7 +539,7 @@ export function ApplicationForm() {
                   label="Email Address"
                   required
                   error={errors.email}
-                  hint="We'll send the affiliate MOU here once approved. This person will be the signatory."
+                  hint="We'll send the marketing partner MOU here once approved. This person will be the signatory."
                 >
                   {(a11y) => (
                     <TextInput
@@ -644,7 +644,7 @@ export function ApplicationForm() {
                   label="Signatory Email Address"
                   required
                   error={errors.signatoryEmail}
-                  hint="We'll send the affiliate MOU here for signing on behalf of your organization."
+                  hint="We'll send the marketing partner MOU here for signing on behalf of your organization."
                 >
                   {(a11y) => (
                     <TextInput

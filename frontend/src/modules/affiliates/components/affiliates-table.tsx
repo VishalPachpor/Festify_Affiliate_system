@@ -127,7 +127,7 @@ export function AffiliatesTable({
     return (
       <div className="rounded-[var(--radius)] border border-[var(--color-error)] bg-[var(--color-surface-card)] px-[var(--space-6)] py-[var(--space-5)]">
         <p className="font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-error)]">
-          Failed to load affiliates.
+          Failed to load marketing partners.
         </p>
       </div>
     );
@@ -137,7 +137,7 @@ export function AffiliatesTable({
     <div className="rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface-card)] px-[var(--space-6)] py-[var(--space-5)]">
       <div className="flex items-center justify-between">
         <h3 className="font-[var(--font-display)] text-[var(--text-lg)] font-bold text-[var(--color-text-primary)] tracking-[var(--tracking-heading)]">
-          Affiliates
+          Marketing Partners
         </h3>
         <StatusFilter
           value={filters.status}
@@ -150,7 +150,7 @@ export function AffiliatesTable({
           <TableSkeleton />
         ) : !data || data.affiliates.length === 0 ? (
           <p className="py-[var(--space-8)] text-center font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-muted)]">
-            No affiliates found.
+            No marketing partners found.
           </p>
         ) : (
           <>

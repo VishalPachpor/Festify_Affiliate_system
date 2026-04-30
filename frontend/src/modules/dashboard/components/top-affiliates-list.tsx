@@ -40,18 +40,18 @@ export function TopAffiliatesList({
   if (error) {
     return (
       <PanelError
-        message={`Failed to load affiliates. ${error instanceof Error ? error.message : ""}`}
+        message={`Failed to load marketing partners. ${error instanceof Error ? error.message : ""}`}
       />
     );
   }
 
   return (
-    <PanelShell title="Top Affiliates">
+    <PanelShell title="Top Marketing Partners">
       {isLoading || !data ? (
         <AffiliatesSkeleton />
       ) : data.affiliates.length === 0 ? (
         <p className="font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-muted)]">
-          No affiliates yet.
+          No marketing partners yet.
         </p>
       ) : (
         <div className="flex flex-col">

@@ -65,12 +65,12 @@ export function TopAffiliates() {
 
   return (
     <section
-      aria-label="Top affiliates"
+      aria-label="Top marketing partners"
       aria-busy={isLoading}
       className="rounded-[var(--radius)] border border-[var(--color-border)] bg-[var(--color-surface-card)] px-[var(--space-6)] py-[var(--space-5)]"
     >
       <h2 className="font-[var(--font-display)] font-bold text-[var(--text-lg)] leading-[var(--leading-tight)] tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
-        Top Affiliates
+        Top Marketing Partners
       </h2>
 
       <div className="mt-[var(--space-3)] flex items-center gap-[var(--space-3)] border-b border-[var(--color-border)] pb-[var(--space-3)]">
@@ -91,7 +91,7 @@ export function TopAffiliates() {
           Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
         ) : affiliates.length === 0 ? (
           <p className="py-[var(--space-5)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-muted)]">
-            No affiliates yet.
+            No marketing partners yet.
           </p>
         ) : (
           affiliates.map((affiliate, i) => (

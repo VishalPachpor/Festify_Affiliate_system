@@ -60,7 +60,7 @@ export function ProfilePage({ variant }: { variant: ProfileVariant }) {
   const email = user?.email ?? "—";
   const initials = initialsFor(fullName);
   const referralCode = affiliate?.referralCode ?? user?.affiliateId ?? "—";
-  const roleName = variant === "admin" ? "Organizer Admin" : "Affiliate Partner";
+  const roleName = variant === "admin" ? "Organizer Admin" : "Marketing Partner";
 
   const personalFields: Field[] =
     variant === "admin"
@@ -80,7 +80,7 @@ export function ProfilePage({ variant }: { variant: ProfileVariant }) {
           { label: "Organization", value: tenant?.name ?? "—" },
         ]
       : [
-          { label: "Affiliate Code", value: referralCode },
+          { label: "Marketing Partner Code", value: referralCode },
           { label: "Payout Email", value: email },
         ];
 
@@ -133,11 +133,11 @@ export function ProfilePage({ variant }: { variant: ProfileVariant }) {
           />
 
           <SectionCard
-            title={variant === "admin" ? "Account Details" : "Affiliate Details"}
+            title={variant === "admin" ? "Account Details" : "Marketing Partner Details"}
             description={
               variant === "admin"
                 ? "Review the organization details and role information associated with this account."
-                : "Review the affiliate information tied to your profile and public referral presence."
+                : "Review the marketing partner information tied to your profile and public referral presence."
             }
             fields={accountFields}
           />
@@ -146,7 +146,7 @@ export function ProfilePage({ variant }: { variant: ProfileVariant }) {
         <div className="space-y-[var(--space-6)]">
           <section className="rounded-[var(--radius-lg)] border border-[rgba(255,255,255,0.08)] bg-[rgba(24,29,48,0.52)] px-[var(--space-5)] py-[var(--space-5)]">
             <h3 className="font-[var(--font-display)] text-[var(--text-xl)] font-bold leading-none tracking-[-0.03em] text-[var(--color-text-primary)]">
-              {variant === "admin" ? "Account Summary" : "Affiliate Summary"}
+              {variant === "admin" ? "Account Summary" : "Marketing Partner Summary"}
             </h3>
             <div className="mt-[var(--space-5)] space-y-[var(--space-3)]">
               {summaryLines.map((line) => (

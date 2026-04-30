@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { NotificationBell } from "./notification-bell";
 import { UserMenu } from "./user-menu";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -98,9 +97,6 @@ export function AppHeader() {
             />
           </div>
         )}
-
-        {/* Notification bell */}
-        <NotificationBell recipient="affiliate" />
 
         {/* User avatar + logout dropdown */}
         <UserMenu />

@@ -93,7 +93,7 @@ export function DashboardSummaryCard({
           loading={isLoading}
         />
         <StatItem
-          label="Affiliates"
+          label="Marketing Partners"
           value={String(data?.totalAffiliates ?? 0)}
           loading={isLoading}
         />

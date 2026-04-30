@@ -8,7 +8,7 @@ function formatCurrency(minorUnits: number, currency: string): string {
     style: "currency",
     currency,
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(minorUnits / 100);
 }
 

@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Festify Affiliates",
-  description: "Multi-tenant affiliate attribution platform for event organizers",
+  title: "Passtrack Marketing Partners",
+  description: "Multi-tenant marketing partner attribution platform for event organizers",
 };
 
 export default async function RootLayout({

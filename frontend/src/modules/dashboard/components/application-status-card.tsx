@@ -11,14 +11,14 @@ const STATUS_COPY: Record<
   success: {
     title: "Application Submitted!",
     body:
-      "Thank you for your interest in becoming a TOKEN2049 affiliate. We'll review your application and get back to you within 2-3 business days.",
+      "Thank you for your interest in becoming a TOKEN2049 marketing partner. We'll review your application and get back to you within 2-3 business days.",
     circleClass: "bg-[rgba(52,168,83,0.22)]",
     iconClass: "text-[var(--color-success)]",
   },
   rejected: {
     title: "Application Not Approved",
     body:
-      "Thank you for your interest in the TOKEN2049 Affiliate Program. After reviewing your application, we're unable to move forward at this time.",
+      "Thank you for your interest in the TOKEN2049 Marketing Partner Program. After reviewing your application, we're unable to move forward at this time.",
     circleClass: "bg-[rgba(239,68,68,0.22)]",
     iconClass: "text-[var(--color-error)]",
   },

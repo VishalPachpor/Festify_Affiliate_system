@@ -157,7 +157,7 @@ export function SalesTable({
           <>
             {/* Header */}
             <div className="grid grid-cols-[1fr_1fr_1fr_auto_auto] gap-[var(--space-4)] pb-[var(--space-3)] border-b border-[var(--color-border)]">
-              {["Affiliate", "Amount", "Commission", "Status", "Date"].map(
+              {["Marketing Partner", "Amount", "Commission", "Status", "Date"].map(
                 (h) => (
                   <span
                     key={h}

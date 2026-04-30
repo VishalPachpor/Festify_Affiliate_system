@@ -4,7 +4,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const path_1 = __importDefault(require("path"));
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const auth_1 = require("./middleware/auth");
 const webhook_ingest_1 = require("./routes/webhook-ingest");
@@ -21,12 +20,22 @@ const assets_1 = require("./routes/assets");
 const integrations_1 = require("./routes/integrations");
 const public_1 = require("./routes/public");
 const notifications_1 = require("./routes/notifications");
-const event_worker_1 = require("./workers/event-worker");
-const worker_1 = require("./processors/worker");
+const mou_1 = require("./routes/mou");
+const boldsign_webhook_1 = require("./routes/boldsign-webhook");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT ?? 3001;
 const LOCALHOST_ORIGIN = /^http:\/\/localhost:\d+$/;
 const VERCEL_ORIGIN = /^https:\/\/[a-z0-9-]+(?:-[a-z0-9-]+)*\.vercel\.app$/i;
+const boldSignWebhookLimiter = (0, express_rate_limit_1.default)({
+    windowMs: 1 * 60 * 1000,
+    limit: 120,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    message: { error: "Too many webhook requests" },
+});
+// DigitalOcean/Cloudflare terminate TLS before the request reaches Express.
+// Trust one proxy hop so express-rate-limit can safely read X-Forwarded-For.
+app.set("trust proxy", 1);
 function getAllowedOrigins() {
     const configuredOrigins = [
         process.env.APP_URL,
@@ -58,6 +67,10 @@ app.use((req, res, next) => {
     }
     next();
 });
+// BoldSign signs the exact raw JSON payload. Mount this before express.json()
+// so the signature verifier receives the original bytes.
+app.use("/api/webhooks/boldsign", boldSignWebhookLimiter, express_1.default.raw({ type: "application/json", limit: "2mb" }));
+app.use(boldsign_webhook_1.boldSignWebhookRouter);
 // Parse JSON bodies with size limit.
 // The `verify` callback captures the raw body for webhook signature validation.
 // express.json() stores the parsed object in req.body; the verify hook stashes
@@ -97,28 +110,6 @@ const apiLimiter = (0, express_rate_limit_1.default)({
 app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
 });
-// Static asset serving (no auth) — uploaded marketing materials live under
-// backend/uploads/<tenantId>/<file>. Files are addressed by random ids so
-// listing without auth is fine; affiliates need plain URLs to download.
-//
-// Content-Disposition is opt-in: only force a browser download when the
-// request carries ?download=1. Without it, the browser renders inline so
-// the Preview/eye button can show images/PDFs in a new tab. The HTML
-// `download` attribute alone is ignored cross-origin (dev:3000 ↔ :3001),
-// so the attachment intent has to be signalled by the server.
-// Mount a tiny pre-middleware that sets Content-Disposition: attachment when
-// the caller passes ?download=1. Express.static then serves the file with
-// that header intact. Using express.static's own setHeaders hook with
-// res.locals wasn't reliable in practice — setting the header directly on
-// the response before static runs is simpler and works.
-app.use("/uploads", (req, res, next) => {
-    if (req.query.download === "1") {
-        const filename = path_1.default.basename(req.path);
-        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-    }
-    next();
-});
-app.use("/uploads", express_1.default.static(path_1.default.resolve(process.cwd(), "uploads")));
 // Auth routes (no auth required, rate-limited)
 app.use("/api/auth", authLimiter);
 app.use(auth_2.authRouter);
@@ -137,6 +128,7 @@ app.use("/api/attribution", apiLimiter, auth_1.apiAuth);
 app.use("/api/milestones", apiLimiter, auth_1.apiAuth);
 app.use("/api/application", apiLimiter, auth_1.apiAuth);
 app.use("/api/applications", apiLimiter, auth_1.apiAuth);
+app.use("/api/mou", apiLimiter, auth_1.apiAuth);
 app.use("/api/assets", apiLimiter, auth_1.apiAuth);
 app.use("/api/integrations", apiLimiter, auth_1.apiAuth);
 app.use("/api/notifications", apiLimiter, auth_1.apiAuth);
@@ -149,16 +141,12 @@ app.use(attribution_1.attributionRouter);
 app.use(milestones_1.milestonesRouter);
 app.use(application_1.applicationRouter);
 app.use(applications_1.applicationsRouter);
+app.use(mou_1.mouRouter);
 app.use(assets_1.assetsRouter);
 app.use(integrations_1.integrationsRouter);
 app.use(notifications_1.notificationsRouter);
-// Start durable event worker (BullMQ) — consumes domain events, updates aggregates
-(0, event_worker_1.startEventWorker)();
-// Start inbound event processor — turns InboundEvent(pending) into Sale/Attribution/Commission
-(0, worker_1.startWorker)().catch((err) => {
-    console.error("[inbound-processor] crashed:", err);
-    process.exit(1);
-});
+// Workers run as separate processes in production (see .do/app.yaml).
+// Start them locally with `npm run worker` and `npm run worker:events`.
 app.listen(PORT, () => {
     console.log(`[backend] Listening on http://localhost:${PORT}`);
 });

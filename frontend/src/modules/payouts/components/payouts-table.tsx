@@ -153,7 +153,7 @@ export function PayoutsTable({
         ) : (
           <>
             <div className="grid grid-cols-[1fr_1fr_auto_auto_auto] gap-[var(--space-4)] pb-[var(--space-3)] border-b border-[var(--color-border)]">
-              {["Affiliate", "Amount", "Status", "Created", "Processed"].map((h) => (
+              {["Marketing Partner", "Amount", "Status", "Created", "Processed"].map((h) => (
                 <span
                   key={h}
                   className="font-[var(--font-sans)] text-[var(--text-xs)] font-medium uppercase tracking-[var(--tracking-label)] text-[var(--color-text-secondary)]"

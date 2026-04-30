@@ -39,9 +39,23 @@ router.get("/api/application/status", async (req, res) => {
             const application = await prisma_1.prisma.application.findFirst({
                 where: { tenantId, email: lookupEmail },
                 orderBy: { createdAt: "desc" },
+                include: {
+                    mouAgreements: {
+                        where: { isCurrent: true },
+                        orderBy: { version: "desc" },
+                        take: 1,
+                    },
+                },
             });
             if (application) {
-                res.status(200).json({ status: application.status });
+                const mou = application.mouAgreements[0] ?? null;
+                res.status(200).json({
+                    status: application.status,
+                    applicationId: application.id,
+                    mouStatus: mou?.status ?? null,
+                    mouSignerEmail: mou?.signerEmail ?? null,
+                    mouSignerName: mou?.signerName ?? null,
+                });
                 return;
             }
         }

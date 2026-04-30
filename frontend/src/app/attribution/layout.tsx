@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Attribution Insights — Festify Affiliates",
+  title: "Attribution Insights — Passtrack Marketing Partners",
 };
 
 export default function AttributionLayout({

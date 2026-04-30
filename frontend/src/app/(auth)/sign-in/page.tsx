@@ -3,8 +3,8 @@ import { AuthCard } from "@/modules/auth/components/auth-card";
 import { LoginForm } from "@/modules/auth/components/login-form";
 
 export const metadata: Metadata = {
-  title: "Log In — Festify Affiliates",
-  description: "Log in to your Festify Affiliates account",
+  title: "Log In — Passtrack Marketing Partners",
+  description: "Log in to your Passtrack Marketing Partners account",
 };
 
 export default function SignInPage() {

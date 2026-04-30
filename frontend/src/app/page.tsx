@@ -73,10 +73,10 @@ export default function HomePage() {
           Revenue Automation for Events
         </p>
         <h1 className="mt-[var(--space-3)] font-[var(--font-display)] text-[var(--text-2xl)] font-bold leading-[1.05] tracking-[-0.04em] text-[var(--color-text-primary)]">
-          Festify Affiliates
+          Passtrack Marketing Partners
         </h1>
         <p className="mt-[var(--space-4)] mx-auto max-w-[32rem] font-[var(--font-sans)] text-[var(--text-lg)] leading-[1.6] text-[var(--color-text-secondary)]">
-          Recruit affiliates, equip them with materials, track every sale, and reward commissions — all in one platform.
+          Recruit marketing partners, equip them with materials, track every sale, and reward commissions — all in one platform.
         </p>
 
         {/* CTAs */}
@@ -92,7 +92,7 @@ export default function HomePage() {
             href="/sign-up"
             className="flex items-center gap-[var(--space-2)] rounded-[var(--radius)] border border-[rgba(255,255,255,0.18)] px-[var(--space-6)] py-[var(--space-3)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[var(--color-text-primary)] transition-colors hover:border-[rgba(255,255,255,0.32)] hover:bg-[rgba(255,255,255,0.04)]"
           >
-            Apply as Affiliate
+            Apply as Marketing Partner
           </Link>
         </div>
         <p className="mt-[var(--space-4)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-secondary)]">
@@ -115,10 +115,10 @@ export default function HomePage() {
           </div>
           <ul className="mt-[var(--space-4)] flex flex-col gap-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-secondary)]">
             <li>Connect your ticketing platform (Luma)</li>
-            <li>Review and approve affiliate applications</li>
+            <li>Review and approve marketing partner applications</li>
             <li>Upload promotional materials</li>
             <li>Track revenue, attribution, and commissions</li>
-            <li>Pay affiliates from the admin dashboard</li>
+            <li>Pay marketing partners from the admin dashboard</li>
           </ul>
           <Link
             href="/signup/organizer"
@@ -134,7 +134,7 @@ export default function HomePage() {
           <div className="flex items-center gap-[var(--space-3)] text-[#22C55E]">
             <IconUsers />
             <h2 className="font-[var(--font-display)] text-[var(--text-lg)] font-bold tracking-[-0.02em] text-[var(--color-text-primary)]">
-              Affiliates
+              Marketing Partners
             </h2>
           </div>
           <ul className="mt-[var(--space-4)] flex flex-col gap-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[var(--color-text-secondary)]">
@@ -148,7 +148,7 @@ export default function HomePage() {
             href="/sign-up"
             className="mt-[var(--space-5)] inline-flex items-center gap-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] font-medium text-[#22C55E] transition-colors hover:underline"
           >
-            Apply as Affiliate
+            Apply as Marketing Partner
             <IconArrowRight />
           </Link>
         </div>
@@ -176,7 +176,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="mx-auto mt-[var(--space-10)] text-center font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.35)]">
-        Festify Affiliates — Revenue automation for events
+        Passtrack Marketing Partners — Revenue automation for events
       </footer>
     </main>
   );

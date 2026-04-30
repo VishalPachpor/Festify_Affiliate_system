@@ -4,7 +4,7 @@ import { AdminHeader } from "@/components/layout/admin-header";
 import { RouteGuard } from "@/modules/auth";
 
 export const metadata: Metadata = {
-  title: "Admin — Festify Affiliates",
+  title: "Admin — Passtrack Marketing Partners",
 };
 
 export default function AdminLayout({

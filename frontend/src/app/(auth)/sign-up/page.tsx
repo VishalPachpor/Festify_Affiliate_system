@@ -3,8 +3,8 @@ import { AuthCard } from "@/modules/auth/components/auth-card";
 import { AuthSignUpForm } from "@/modules/auth/components/auth-form";
 
 export const metadata: Metadata = {
-  title: "Sign Up — Festify Affiliates",
-  description: "Create your Festify Affiliates account",
+  title: "Sign Up — Passtrack Marketing Partners",
+  description: "Create your Passtrack Marketing Partners account",
 };
 
 export default function SignUpPage() {

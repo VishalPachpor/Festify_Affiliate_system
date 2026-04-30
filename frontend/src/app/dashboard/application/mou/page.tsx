@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DashboardContainer } from "@/modules/dashboard/components/dashboard-layout";
@@ -18,11 +18,11 @@ function statusCopy(mouStatus: string | null | undefined): string {
     case "expired":
       return "This MOU has expired. Contact the organizer to reissue the document.";
     case "signed":
-      return "MOU signed. We are activating your affiliate account.";
+      return "MOU signed. We are activating your marketing partner account.";
     case "viewed":
-      return "You have opened the MOU. Finish signing to activate affiliate access.";
+      return "You have opened the MOU. Finish signing to activate marketing partner access.";
     default:
-      return "Your application is approved. Sign the affiliate MOU to activate your dashboard access.";
+      return "Your application is approved. Sign the marketing partner MOU to activate your dashboard access.";
   }
 }
 
@@ -39,6 +39,7 @@ export default function MouSigningPage() {
     searchParams.get("signed") === "1" ? Date.now() : null,
   );
   const pollingExpired = !!pollStartedAt && Date.now() - pollStartedAt > 10 * 60 * 1000;
+  const redirectedRef = useRef(false);
 
   const mouQuery = useQuery({
     queryKey: ["mou-status", applicationId ?? "missing"],
@@ -58,12 +59,13 @@ export default function MouSigningPage() {
   });
 
   useEffect(() => {
+    if (redirectedRef.current) return;
     if (applicationStatus?.status === "approved" || mouQuery.data?.applicationStatus === "approved") {
-      // Stop the 3s mou-status poll BEFORE navigating. Without this the
-      // refetchInterval keeps firing on every render after redirect intent
-      // is set, the effect re-runs against the same approved status, and
-      // router.replace gets called repeatedly — visible to the user as a
-      // continuous flicker until they hard-refresh.
+      // Stop the 3s mou-status poll BEFORE navigating, and latch the
+      // redirect so it cannot fire twice. mouQuery.data flips first, then
+      // the application-status invalidation flips applicationStatus.status,
+      // which would otherwise re-enter the effect mid-navigation.
+      redirectedRef.current = true;
       setAwaitingActivation(false);
       setPollStartedAt(null);
       queryClient.invalidateQueries({ queryKey: ["application-status"] });
@@ -112,7 +114,7 @@ export default function MouSigningPage() {
           <div className="flex flex-col gap-[var(--space-4)] lg:flex-row lg:items-start lg:justify-between">
             <div>
               <p className="font-[var(--font-sans)] text-[var(--text-xs)] font-semibold uppercase tracking-[0.18em] text-[var(--color-primary)]">
-                Affiliate MOU
+                Marketing Partner MOU
               </p>
               <h1 className="mt-[var(--space-3)] font-[var(--font-display)] text-[3rem] font-bold leading-none tracking-[var(--tracking-heading)] text-[var(--color-text-primary)]">
                 Sign the MOU to activate access
@@ -180,7 +182,7 @@ export default function MouSigningPage() {
               </div>
               <iframe
                 src={signUrl}
-                title="Affiliate MOU signer"
+                title="Marketing Partner MOU signer"
                 className="h-[42rem] w-full rounded-[var(--radius)] border border-[rgba(255,255,255,0.12)] bg-white"
                 allow="clipboard-read; clipboard-write"
               />

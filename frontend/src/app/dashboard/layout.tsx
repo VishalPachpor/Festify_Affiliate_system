@@ -6,7 +6,7 @@ import { AffiliateProvider } from "@/modules/affiliate-shell";
 import { RouteGuard } from "@/modules/auth";
 
 export const metadata: Metadata = {
-  title: "Dashboard — Festify Affiliates",
+  title: "Dashboard — Passtrack Marketing Partners",
 };
 
 export default function DashboardLayout({

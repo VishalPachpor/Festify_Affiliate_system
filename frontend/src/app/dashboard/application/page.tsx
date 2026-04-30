@@ -83,7 +83,7 @@ export default function AffiliateApplicationPage() {
               Application Approved
             </h2>
             <p className="mx-auto mt-[var(--space-6)] max-w-[39rem] font-[var(--font-sans)] text-[var(--text-lg)] leading-[1.7] text-[var(--color-text-primary)]/85">
-              Your affiliate application has been approved. Head to the dashboard to start tracking your performance.
+              Your marketing partner application has been approved. Head to the dashboard to start tracking your performance.
             </p>
           </section>
         </DashboardStageCanvas>

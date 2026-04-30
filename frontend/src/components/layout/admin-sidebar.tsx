@@ -162,7 +162,7 @@ export function AdminSidebar() {
               {user?.fullName ?? "User"}
             </p>
             <p className="truncate font-[var(--font-sans)] text-[11px] leading-[15px] text-[#9CA4B7]">
-              {user?.role === "admin" ? "Organizer Admin" : "Affiliate"}
+              {user?.role === "admin" ? "Organizer Admin" : "Marketing Partner"}
             </p>
           </div>
           <span

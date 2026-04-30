@@ -250,7 +250,7 @@ export default function AdminMaterialsPage() {
               Marketing Materials Management
             </h2>
             <p className="mt-[var(--space-1)] font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.50)]">
-              Upload and manage marketing materials for affiliates
+              Upload and manage marketing materials for marketing partners
             </p>
           </div>
           <button
@@ -289,7 +289,7 @@ export default function AdminMaterialsPage() {
         {!isLoading && filtered.length === 0 && (
           <div className="rounded-[var(--radius)] border border-dashed border-[rgba(255,255,255,0.14)] bg-transparent px-[var(--space-6)] py-[var(--space-8)] text-center">
             <p className="font-[var(--font-sans)] text-[var(--text-sm)] text-[rgba(255,255,255,0.55)]">
-              No materials yet. Click <strong className="text-[var(--color-text-primary)]">Upload Asset</strong> to share your first banner, email template, or guide with affiliates.
+              No materials yet. Click <strong className="text-[var(--color-text-primary)]">Upload Asset</strong> to share your first banner, email template, or guide with marketing partners.
             </p>
           </div>
         )}
@@ -358,7 +358,7 @@ export default function AdminMaterialsPage() {
                   {/* Visible toggle */}
                   <div className="flex items-center gap-[var(--space-3)]">
                     <span className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.55)]">
-                      Visible to affiliates:
+                      Visible to marketing partners:
                     </span>
                     <Toggle
                       checked={mat.visible}

@@ -173,7 +173,7 @@ export function AppSidebar() {
               {user?.fullName ?? "User"}
             </p>
             <p className="truncate font-[var(--font-sans)] text-[11px] leading-[15px] text-[#9CA4B7]">
-              {user?.email ?? (isRestrictedAffiliate ? "New User" : "Affiliate")}
+              {user?.email ?? (isRestrictedAffiliate ? "New User" : "Marketing Partner")}
             </p>
           </div>
           {/* Chevron — Figma 71:60: 16px */}

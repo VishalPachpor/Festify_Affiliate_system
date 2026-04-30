@@ -146,22 +146,54 @@ async function handleMilestoneProgressed(data) {
 }
 async function handleApplicationApproved(data) {
     const { tenantId, affiliateId, email, firstName, referralCode } = data;
-    await idempotent("application.approved", data, async (tx) => {
-        await tx.notification.create({
-            data: {
-                tenantId,
-                recipientId: affiliateId,
-                type: "application.approved",
-                title: "Welcome aboard 🎉",
-                body: `Hi ${firstName}, your affiliate application has been approved. Your referral code is ${referralCode}. Start sharing your link to earn commissions.`,
-            },
+    const shouldSendEmail = await prisma_1.prisma.$transaction(async (tx) => {
+        let shouldCreateNotification = true;
+        try {
+            await tx.processedEvent.create({
+                data: { eventId: data.eventId, type: "application.approved", tenantId },
+            });
+        }
+        catch (err) {
+            if (isPrismaUniqueConstraintError(err)) {
+                shouldCreateNotification = false;
+            }
+            else {
+                throw err;
+            }
+        }
+        const application = await tx.application.findUnique({
+            where: { id: data.applicationId },
+            select: { welcomeEmailSentAt: true },
         });
+        if (!application)
+            return false;
+        if (shouldCreateNotification) {
+            await tx.notification.create({
+                data: {
+                    tenantId,
+                    recipientId: affiliateId,
+                    type: "application.approved",
+                    title: "Welcome aboard",
+                    body: `Hi ${firstName}, your affiliate MOU is signed and your account is active. Your referral code is ${referralCode}. Start sharing your link to earn commissions.`,
+                },
+            });
+        }
+        return !application.welcomeEmailSentAt;
     });
-    await (0, email_1.sendAffiliateWelcomeEmail)({
-        to: email,
-        firstName,
-        referralCode,
-    });
+    if (shouldSendEmail) {
+        await (0, email_1.sendAffiliateWelcomeEmail)({
+            to: email,
+            firstName,
+            referralCode,
+        });
+        await prisma_1.prisma.application.updateMany({
+            where: {
+                id: data.applicationId,
+                welcomeEmailSentAt: null,
+            },
+            data: { welcomeEmailSentAt: new Date() },
+        });
+    }
     await (0, cache_1.invalidateCache)(tenantId, "applications:list");
 }
 // ─── Router ──────────────────────────────────────────────────────────────────
