@@ -30,6 +30,12 @@ export const affiliateSchema = z.object({
   referralCode: z.string().nullable().optional(),
   tier: z.string().nullable().optional(),
   requestedCode: z.string().nullable().optional(),
+  // Whether the affiliate's code is verified as a real Luma coupon. When
+  // unverified (or null), buyers entering the code at checkout get silently
+  // ignored by Luma and sales land unattributed. Surfaced as a warning
+  // badge in the admin Marketing Partners list.
+  codeStatus: z.enum(["verified", "unverified"]).nullable().optional(),
+  codeSyncError: z.string().nullable().optional(),
 });
 
 export type Affiliate = z.infer<typeof affiliateSchema>;

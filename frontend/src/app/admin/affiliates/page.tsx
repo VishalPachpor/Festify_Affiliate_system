@@ -394,7 +394,25 @@ export default function AdminAffiliatesPage() {
                     {/* Referral Code */}
                     <td className="py-[var(--space-3)] pr-[var(--space-4)] whitespace-nowrap">
                       {aff.referralCode ? (
-                        <ReferralCodeBadge code={aff.referralCode} />
+                        <div className="flex flex-col gap-[2px]">
+                          <ReferralCodeBadge code={aff.referralCode} />
+                          {aff.status === "approved" && aff.codeStatus !== "verified" && (
+                            <span
+                              className="inline-flex w-fit items-center rounded-[3px] border px-[6px] py-[1px] font-[var(--font-sans)] text-[10px] font-medium leading-[14px]"
+                              style={{
+                                background: "rgba(245,158,11,0.10)",
+                                borderColor: "rgba(245,158,11,0.30)",
+                                color: "#f59e0b",
+                              }}
+                              title={
+                                aff.codeSyncError ??
+                                "This code is not registered as a coupon on Luma. Buyers entering it at checkout will not be attributed."
+                              }
+                            >
+                              Needs verification
+                            </span>
+                          )}
+                        </div>
                       ) : (
                         <span className="font-[var(--font-sans)] text-[var(--text-xs)] text-[rgba(255,255,255,0.35)]">--</span>
                       )}

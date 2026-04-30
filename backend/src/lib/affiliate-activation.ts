@@ -152,13 +152,16 @@ export async function activateAffiliateFromMou(args: {
     // mirror codes by hand. Best-effort: failure here does NOT roll back
     // activation — the affiliate row exists with codeStatus=unverified
     // and codeSyncError set, and an admin can retry from /verify-code.
-    await syncCouponToLuma({
+    const sync = await syncCouponToLuma({
       tenantId: result.tenantId,
       affiliateId: result.affiliateId,
       campaignId: result.campaignId,
       referralCode: result.referralCode,
       affiliateName: result.firstName,
     });
+    console.log(
+      `[activation] affiliate=${result.affiliateId} code=${result.referralCode} luma-sync=${sync.status}${sync.error ? ` error="${sync.error.slice(0, 200)}"` : ""}`,
+    );
 
     await emitEvent("affiliate.joined", {
       tenantId: result.tenantId,
@@ -217,11 +220,24 @@ export async function syncCouponToLuma(args: {
     },
   });
 
-  // Skip path: no Luma event linked → leave codeStatus untouched (defaults to
-  // unverified at create time). The admin must set Campaign.lumaEventId or
-  // create the coupon manually in Luma.
+  // Skip path: no Luma event linked. Write a meaningful codeSyncError so
+  // the admin UI / inspect scripts can surface WHY the affiliate's code
+  // isn't verified, instead of leaving it silently null. Without a Luma
+  // coupon, the buyer's checkout will never produce coupon_info on the
+  // webhook → sale lands unattributed and the affiliate's dashboard shows
+  // 0 referrals despite a real purchase. This is the most common cause of
+  // "I bought a ticket with my code but the dashboard shows nothing."
   if (!campaign?.lumaEventId) {
-    return { status: "skipped", error: null };
+    const skipMessage =
+      "Campaign.lumaEventId is not configured. The affiliate's code exists in our DB but no matching Luma coupon was created — buyers using this code at checkout will not be attributed. Set Campaign.lumaEventId, then click Verify Code on this affiliate, or create the coupon manually in Luma and Force-Verify.";
+    await prisma.campaignAffiliate.updateMany({
+      where: { tenantId: args.tenantId, affiliateId: args.affiliateId },
+      data: { codeStatus: "unverified", codeSyncError: skipMessage },
+    });
+    console.warn(
+      `[luma-sync] coupon create skipped (campaign has no lumaEventId) for affiliate=${args.affiliateId} code=${args.referralCode}`,
+    );
+    return { status: "skipped", error: skipMessage };
   }
 
   const result = await createEventCoupon({

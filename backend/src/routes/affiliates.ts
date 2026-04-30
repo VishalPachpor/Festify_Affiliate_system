@@ -155,6 +155,14 @@ router.get("/api/affiliates", async (req: Request, res: Response) => {
       referralCode: string | null;
       tier: string | null;
       requestedCode?: string | null;
+      // codeStatus reflects whether the affiliate's code exists as a coupon
+      // on Luma. "verified" → buyers entering the code at checkout will
+      // produce a coupon_info on the webhook → attribution works.
+      // "unverified" → the code lives only in our DB; buyers' coupons get
+      // silently ignored by Luma → sales land unattributed even with the
+      // right code at checkout. codeSyncError holds the latest reason.
+      codeStatus: "verified" | "unverified" | null;
+      codeSyncError: string | null;
     };
 
     const rows: AffiliateRow[] = [];
@@ -254,6 +262,8 @@ router.get("/api/affiliates", async (req: Request, res: Response) => {
           joinedAt: aff.createdAt.toISOString(),
           referralCode: aff.referralCode,
           tier: deriveTierKey(revenueByAff.get(aff.affiliateId) ?? 0, milestones),
+          codeStatus: aff.codeStatus === "verified" || aff.codeStatus === "unverified" ? aff.codeStatus : null,
+          codeSyncError: aff.codeSyncError ?? null,
         });
       }
     }
@@ -310,6 +320,8 @@ router.get("/api/affiliates", async (req: Request, res: Response) => {
           referralCode: rowStatus === "mou_pending" ? app.requestedCode : null,
           tier: null,
           requestedCode: app.requestedCode,
+          codeStatus: null,
+          codeSyncError: null,
         });
       }
     }
