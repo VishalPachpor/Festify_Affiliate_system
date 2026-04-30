@@ -46,9 +46,14 @@ router.get("/api/sales/summary", async (req: Request, res: Response) => {
 
     if (isAffiliate) {
       // Sales attributed to this affiliate via AttributionClaim.
+      // Refunded sales are excluded from the headline KPIs (Total Sales,
+      // Tickets Sold, Total Commissions). The /api/sales list endpoint
+      // below intentionally still includes them so ops can see refunded
+      // rows with their status badge in the table.
       const saleWhere = {
         tenantId,
         attributionClaim: { affiliateId: affiliateId! },
+        status: { not: "refunded" as const },
         ...dateFilter,
       };
       const [
@@ -74,7 +79,11 @@ router.get("/api/sales/summary", async (req: Request, res: Response) => {
       // window — so we run a separate unfiltered aggregate.
       const [lifetimeRevenue, tiers, campaign] = await Promise.all([
         prisma.sale.aggregate({
-          where: { tenantId, attributionClaim: { affiliateId: affiliateId! } },
+          where: {
+            tenantId,
+            attributionClaim: { affiliateId: affiliateId! },
+            status: { not: "refunded" },
+          },
           _sum: { amountMinor: true },
         }),
         prisma.milestone.findMany({
@@ -108,7 +117,10 @@ router.get("/api/sales/summary", async (req: Request, res: Response) => {
       return;
     }
 
-    const where = { tenantId, ...dateFilter };
+    // Refunded sales excluded from the headline KPIs only — see comment
+    // on the affiliate path above. The /api/sales list endpoint below
+    // intentionally still surfaces them with a refunded status.
+    const where = { tenantId, status: { not: "refunded" as const }, ...dateFilter };
 
     const [
       totalCount,
@@ -131,11 +143,14 @@ router.get("/api/sales/summary", async (req: Request, res: Response) => {
       }),
 
       // Sale statuses: for MVP, attributed = "confirmed", unattributed = "pending"
-      prisma.attributionClaim.count({ where: { tenantId } }),
+      prisma.attributionClaim.count({
+        where: { tenantId, sale: { status: { not: "refunded" } } },
+      }),
       prisma.sale.count({
         where: {
           tenantId,
           attributionClaim: { is: null },
+          status: { not: "refunded" },
         },
       }),
       // No rejection flow yet — return 0
