@@ -1,5 +1,5 @@
 import { Queue } from "bullmq";
-import { redis } from "./redis";
+import { createBullConnection } from "./redis";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Durable Event Queue (BullMQ + Redis)
@@ -7,11 +7,15 @@ import { redis } from "./redis";
 // Replaces the in-memory EventEmitter. Events are persisted to Redis before
 // processing — they survive crashes, restarts, and can be retried.
 //
+// Each Queue gets its own dedicated ioredis connection (see
+// createBullConnection in lib/redis.ts) so blocking commands don't starve
+// the primary cache connection.
+//
 // Dead letter: jobs that fail all attempts move to "events-dead" queue.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const eventQueue = new Queue("events", {
-  connection: redis,
+  connection: createBullConnection(),
   defaultJobOptions: {
     attempts: 5,
     backoff: {
@@ -24,5 +28,5 @@ export const eventQueue = new Queue("events", {
 });
 
 export const deadLetterQueue = new Queue("events-dead", {
-  connection: redis,
+  connection: createBullConnection(),
 });

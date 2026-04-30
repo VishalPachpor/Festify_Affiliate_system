@@ -1,5 +1,5 @@
 import { Worker, type Job } from "bullmq";
-import { redis } from "../lib/redis";
+import { createBullConnection } from "../lib/redis";
 import { prisma } from "../lib/prisma";
 import { invalidateCache } from "../lib/cache";
 import { deadLetterQueue } from "../lib/queue";
@@ -333,7 +333,7 @@ export function startEventWorker(): Worker {
       await handler(job.data as AnyEvent);
     },
     {
-      connection: redis,
+      connection: createBullConnection(),
       concurrency: 5,
     },
   );

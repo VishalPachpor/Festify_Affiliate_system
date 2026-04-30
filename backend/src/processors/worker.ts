@@ -12,10 +12,11 @@ const POLL_INTERVAL_MS = 2_000;
 const BATCH_SIZE = 10;
 
 export async function startWorker(): Promise<void> {
-  console.log("[worker] Started. Polling for pending events...");
+  console.log(`[inbound-processor] starting (poll=${POLL_INTERVAL_MS}ms, batch=${BATCH_SIZE})`);
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
+    let processedThisCycle = 0;
     try {
       // Tenant fairness: pick the OLDEST pending event per tenant.
       // Prevents one noisy tenant from starving others.
@@ -38,12 +39,19 @@ export async function startWorker(): Promise<void> {
       );
 
       for (const event of eventsToProcess) {
-        if (event) await processInboundEvent(event.id);
+        if (event) {
+          await processInboundEvent(event.id);
+          processedThisCycle += 1;
+        }
       }
     } catch (err) {
-      console.error("[worker] Poll cycle error:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[inbound-processor] poll cycle error (will retry):", msg);
     }
 
+    if (processedThisCycle > 0) {
+      console.log(`[inbound-processor] processed ${processedThisCycle} event(s) this cycle`);
+    }
     await sleep(POLL_INTERVAL_MS);
   }
 }
@@ -54,8 +62,20 @@ function sleep(ms: number): Promise<void> {
 
 // Run directly if this file is executed
 if (require.main === module) {
+  // Don't let a stray rejection or uncaught exception kill the worker
+  // process — log loudly and keep going. We've seen ioredis emit Error
+  // events outside any try/catch when the Upstash socket flaps; those
+  // would bubble up to the Node default handler and exit the process,
+  // taking the entire poll loop down with it.
+  process.on("unhandledRejection", (reason) => {
+    console.error("[inbound-processor] unhandledRejection:", reason instanceof Error ? reason.message : reason);
+  });
+  process.on("uncaughtException", (err) => {
+    console.error("[inbound-processor] uncaughtException:", err.message);
+  });
+
   startWorker().catch((err) => {
-    console.error("[worker] Fatal error:", err);
+    console.error("[inbound-processor] fatal error in startWorker:", err);
     process.exit(1);
   });
 }
