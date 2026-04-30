@@ -10,6 +10,15 @@ const REDIS_URL = process.env.REDIS_URL ?? "redis://localhost:6379";
 //                                     polls that race with BullMQ blocking
 //                                     ops and fire spurious "Connection
 //                                     is closed" errors against Upstash.
+//   • family: 0                     — let Node DNS resolve both IPv4 (A)
+//                                     and IPv6 (AAAA) records. Upstash on
+//                                     several regions (notably sgp1, our
+//                                     deployment) returns IPv6 addresses;
+//                                     ioredis defaults to family=4 and
+//                                     hangs/ECONNRESETs against an IPv6
+//                                     endpoint. This is the documented
+//                                     fix for Upstash on Fly/DO/Render.
+//                                     Ref: https://community.fly.io/t/i-am-facing-issue-while-connecting-upstash-redis-instance-with-bullmq/18095
 //   • keepAlive: 30s                — TCP-level keepalive so Upstash's
 //                                     idle-connection killer doesn't
 //                                     close the socket every few minutes.
@@ -22,10 +31,25 @@ const baseOptions: RedisOptions = {
   lazyConnect: true,
   connectTimeout: 10_000,
   keepAlive: 30_000,
+  family: 0,
   retryStrategy(times) {
     return Math.min(times * 500, 30_000);
   },
 };
+
+// Sanity-log the URL scheme on boot — Upstash REQUIRES TLS (rediss://);
+// connecting via plain redis:// silently flaps with ECONNRESET because the
+// server expects a TLS handshake and gets raw RESP. We don't enforce here
+// (local dev uses redis://) but a one-line warning surfaces the misconfig
+// instantly when reading runtime logs.
+{
+  const scheme = REDIS_URL.split(":", 1)[0];
+  if (scheme === "redis" && !REDIS_URL.startsWith("redis://localhost") && !REDIS_URL.startsWith("redis://127.")) {
+    console.warn(
+      "[redis] REDIS_URL uses plain redis:// against a non-localhost host — managed Redis providers (Upstash, etc) usually require rediss:// (TLS). If you see ECONNRESET in the logs, this is likely the cause.",
+    );
+  }
+}
 
 // Primary connection — used for direct cache reads/writes and any
 // non-blocking command. Cheap, multiplexed.
