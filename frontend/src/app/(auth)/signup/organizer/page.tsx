@@ -17,6 +17,7 @@ export default function OrganizerSignUpPage() {
       footerLinkHref="/sign-in"
       showGoogle={false}
       showTabs={false}
+      hideRequiredHint
     >
       <OrganizerSignUpForm />
     </AuthCard>

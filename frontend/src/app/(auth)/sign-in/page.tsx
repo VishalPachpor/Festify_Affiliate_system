@@ -11,7 +11,7 @@ export default function SignInPage() {
   return (
     <AuthCard
       title="Log In"
-      subtitle="Sign in to your marketing partner account."
+      subtitle="Sign in to your Passtrack account."
       footerText="Don't have an account?"
       footerLinkText="Sign up"
       footerLinkHref="/sign-up"

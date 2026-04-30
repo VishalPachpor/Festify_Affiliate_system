@@ -78,7 +78,7 @@ export function AuthCard({
         </div>
 
         {/* Google + Divider + Form */}
-        <div className="mt-[var(--card-gap)] flex flex-col gap-[var(--space-4)]">
+        <div className="mt-[var(--space-5)] flex flex-col gap-[var(--space-4)]">
           {showGoogle && (
             <div className="shrink-0 flex flex-col gap-[var(--space-5)]">
               <GoogleSignInButton mode={googleMode} />

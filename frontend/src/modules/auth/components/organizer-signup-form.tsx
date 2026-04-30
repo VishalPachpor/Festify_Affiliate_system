@@ -23,7 +23,7 @@ export function OrganizerSignUpForm() {
       noValidate
       className="flex flex-col gap-[0.8rem]"
     >
-      <FormField label="Full Name" error={errors.fullName?.message} required>
+      <FormField label="Full Name" labelCase="normal" error={errors.fullName?.message} required>
         {(a11y) => (
           <TextInput
             {...a11y}
@@ -36,7 +36,7 @@ export function OrganizerSignUpForm() {
         )}
       </FormField>
 
-      <FormField label="Email" error={errors.email?.message} required>
+      <FormField label="Email" labelCase="normal" error={errors.email?.message} required>
         {(a11y) => (
           <TextInput
             {...a11y}
@@ -51,7 +51,7 @@ export function OrganizerSignUpForm() {
         )}
       </FormField>
 
-      <FormField label="Event Name" error={errors.eventName?.message} required>
+      <FormField label="Event Name" labelCase="normal" error={errors.eventName?.message} required>
         {(a11y) => (
           <TextInput
             {...a11y}
@@ -64,7 +64,7 @@ export function OrganizerSignUpForm() {
         )}
       </FormField>
 
-      <FormField label="Password" error={errors.password?.message} required>
+      <FormField label="Password" labelCase="normal" error={errors.password?.message} required>
         {(a11y) => (
           <PasswordInput
             {...a11y}
@@ -77,7 +77,7 @@ export function OrganizerSignUpForm() {
         )}
       </FormField>
 
-      <FormField label="Confirm Password" error={errors.confirmPassword?.message} required>
+      <FormField label="Confirm Password" labelCase="normal" error={errors.confirmPassword?.message} required>
         {(a11y) => (
           <PasswordInput
             {...a11y}
