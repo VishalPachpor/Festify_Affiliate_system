@@ -94,7 +94,19 @@ router.post("/api/webhooks/:provider", async (req: Request, res: Response) => {
     }
 
     // ── 5. Build replayKey ──────────────────────────────────────────────
-    const replayKey = `${provider}_${providerConnectionId}_${externalEventId}`;
+    // Prefer the per-delivery `webhook-id` header (Standard Webhooks /
+    // Svix). It's stable across delivery retries (so the same retry
+    // dedups correctly) but unique per state transition — purchase,
+    // update, and refund of the same guest each get their own delivery
+    // id. Falling back to externalEventId for providers that don't send
+    // the header would dedup all state transitions of one entity into
+    // one InboundEvent, which collapses refunds onto the original
+    // purchase silently.
+    const webhookDeliveryId =
+      headerStr(req.headers["webhook-id"]) ?? headerStr(req.headers["svix-id"]);
+    const replayKey = webhookDeliveryId
+      ? `${provider}_${providerConnectionId}_${webhookDeliveryId}`
+      : `${provider}_${providerConnectionId}_${externalEventId}`;
 
     // ── 6. Normalize payload for metadata (but store raw) ───────────────
     let normalized;
@@ -180,6 +192,14 @@ function isPrismaUniqueConstraintError(err: unknown): boolean {
     "code" in err &&
     (err as { code: string }).code === "P2002"
   );
+}
+
+function headerStr(value: string | string[] | undefined): string | null {
+  if (typeof value === "string" && value.trim().length > 0) return value.trim();
+  if (Array.isArray(value) && value.length > 0 && typeof value[0] === "string") {
+    return value[0].trim() || null;
+  }
+  return null;
 }
 
 export { router as webhookIngestRouter };
