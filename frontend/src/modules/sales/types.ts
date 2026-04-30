@@ -2,10 +2,12 @@ import { z } from "zod";
 
 // ── Sale ─────────────────────────────────────────────────
 
-// Commission lifecycle on the backend is {pending, approved, paid}. Older
-// payloads use "confirmed" as an alias for "approved"; we accept both so a
-// rolling deploy doesn't reject in-flight responses, but UI code should read
-// "approved".
+// Sale lifecycle on the backend is {pending, approved, paid, refunded,
+// rejected}. Older payloads use "confirmed" as an alias for "approved"; we
+// accept both so a rolling deploy doesn't reject in-flight responses, but
+// UI code should read "approved". "refunded" lands here when a ticket
+// refund webhook arrives — admin Commissions surfaces these so the
+// "Reverse Payout" action can be offered when needed.
 export const saleSchema = z.object({
   id: z.string(),
   amount: z.number(),
@@ -14,7 +16,7 @@ export const saleSchema = z.object({
   affiliateId: z.string(),
   affiliateName: z.string(),
   campaignId: z.string(),
-  status: z.enum(["pending", "approved", "confirmed", "rejected", "paid"]),
+  status: z.enum(["pending", "approved", "confirmed", "rejected", "paid", "refunded"]),
   createdAt: z.string(),
   // Latest payout.processedAt across attached payouts (null until a payout lands).
   payoutDate: z.string().nullable().optional(),

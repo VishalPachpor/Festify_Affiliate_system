@@ -84,7 +84,21 @@ function StatusCell({ status }: { status: CommissionStatus }) {
 // and value. Outstanding uses the info/link blue (#A6D1FF) as its label
 // accent to flag it as the actionable metric; the other two sit muted.
 
-function KpiCard({ label, value, accentColor }: { label: string; value: string; accentColor: string }) {
+function KpiCard({
+  label,
+  value,
+  accentColor,
+  badge,
+}: {
+  label: string;
+  value: string;
+  accentColor: string;
+  badge?: { text: string; tone: "warning" | "info" };
+}) {
+  const badgeColor =
+    badge?.tone === "warning"
+      ? { background: "rgba(245,158,11,0.15)", border: "rgba(245,158,11,0.30)", text: "#f59e0b" }
+      : { background: "rgba(91,141,239,0.12)", border: "rgba(91,141,239,0.24)", text: "#A6D1FF" };
   return (
     <div className="flex flex-col gap-[var(--space-4)] rounded-[var(--radius)] border border-[rgba(255,255,255,0.08)] bg-transparent px-[var(--space-6)] py-[var(--space-6)]">
       <dt
@@ -96,6 +110,18 @@ function KpiCard({ label, value, accentColor }: { label: string; value: string; 
       <dd className="font-[var(--font-display)] font-bold text-[2rem] leading-[1.1] tracking-[var(--tracking-heading)] text-[#FFFFFF]">
         {value}
       </dd>
+      {badge && (
+        <span
+          className="inline-flex w-fit items-center rounded-[4px] px-[var(--space-2)] py-[2px] font-[var(--font-sans)] text-[11px] font-medium leading-[14.667px]"
+          style={{
+            background: badgeColor.background,
+            border: `1px solid ${badgeColor.border}`,
+            color: badgeColor.text,
+          }}
+        >
+          {badge.text}
+        </span>
+      )}
     </div>
   );
 }
@@ -175,10 +201,16 @@ export default function AdminCommissionsPage() {
 
   // Total Earned = all commissions from the ledger (via sales summary)
   // Total Paid = only payouts with status=paid (actual money out the door)
-  // Outstanding = earned minus paid
+  // Outstanding = earned minus paid, floored at $0 in the display.
+  // When the variance goes negative, it means we paid out for a sale that
+  // was later refunded — the affiliate has effectively been overpaid.
+  // We surface that as a "Clawback owed" badge on the Outstanding card and
+  // give the admin a per-row "Reverse Payout" action below.
   const totalEarned = salesSummary?.totalCommissions ?? 0;
   const totalPaid = payoutData?.totalPaid ?? 0;
-  const outstanding = totalEarned - totalPaid;
+  const rawOutstanding = totalEarned - totalPaid;
+  const outstanding = Math.max(0, rawOutstanding);
+  const clawbackOwed = rawOutstanding < 0 ? Math.abs(rawOutstanding) : 0;
 
   const startItem = (currentPage - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(currentPage * PAGE_SIZE, total);
@@ -244,10 +276,34 @@ export default function AdminCommissionsPage() {
     },
   });
 
+  // Clawback → POST /payouts/:id/clawback. Use case: row.payoutStatus="paid"
+  // AND row.status="refunded" — admin paid out, then the customer refunded
+  // the underlying ticket. Backend unlinks the ledger entries and deletes
+  // the Payout, bringing TOTAL PAID back into alignment with TOTAL EARNED.
+  const clawbackMutation = useMutation({
+    mutationFn: (payoutId: string) =>
+      apiClient<{ id: string; clawedBack: boolean }>(`/payouts/${payoutId}/clawback`, {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      setPayingSaleId(null);
+      queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["payouts"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      markPaidMutation.reset();
+      settlePendingPayoutMutation.reset();
+      approveMutation.reset();
+    },
+    onError: () => {
+      setPayingSaleId(null);
+    },
+  });
+
   const dismissMutationError = () => {
     markPaidMutation.reset();
     settlePendingPayoutMutation.reset();
     approveMutation.reset();
+    clawbackMutation.reset();
   };
 
   // Generate page numbers
@@ -281,6 +337,11 @@ export default function AdminCommissionsPage() {
             label="Outstanding"
             value={formatCurrency(outstanding)}
             accentColor="#A6D1FF"
+            badge={
+              clawbackOwed > 0
+                ? { text: `Clawback owed: ${formatCurrency(clawbackOwed)}`, tone: "warning" }
+                : undefined
+            }
           />
         </dl>
 
@@ -363,12 +424,13 @@ export default function AdminCommissionsPage() {
         </div>
 
         {/* Mutation feedback — surfaces errors from either action */}
-        {(markPaidMutation.isError || settlePendingPayoutMutation.isError || approveMutation.isError) && (
+        {(markPaidMutation.isError || settlePendingPayoutMutation.isError || approveMutation.isError || clawbackMutation.isError) && (
           <div className="flex items-center gap-[var(--space-3)] rounded-[var(--radius)] border border-[rgba(239,68,68,0.30)] bg-[rgba(239,68,68,0.08)] px-[var(--space-4)] py-[var(--space-2)] font-[var(--font-sans)] text-[var(--text-sm)] text-[#FCA5A5]">
             <span className="flex-1">
               {(markPaidMutation.error instanceof Error && markPaidMutation.error.message) ||
                 (settlePendingPayoutMutation.error instanceof Error && settlePendingPayoutMutation.error.message) ||
                 (approveMutation.error instanceof Error && approveMutation.error.message) ||
+                (clawbackMutation.error instanceof Error && clawbackMutation.error.message) ||
                 "Action failed"}
             </span>
             <button
@@ -425,9 +487,16 @@ export default function AdminCommissionsPage() {
                   const outstandingAmount = isPaid ? 0 : row.commission;
                   const isBundledPendingPayout =
                     row.payoutStatus === "pending" && (row.payoutSaleCount ?? 0) > 1;
+                  // Show "Reverse Payout" when the payout was settled and the
+                  // underlying sale was later refunded — that's the clawback
+                  // case. We refuse mark-paid in that state and offer the
+                  // reverse action instead.
+                  const canClawback =
+                    payoutSettled && !!row.payoutId && row.status === "refunded";
                   const canMarkPaid =
                     !!row.affiliateId &&
                     !isBundledPendingPayout &&
+                    !canClawback &&
                     ((row.payoutStatus === "pending" && !!row.payoutId) ||
                       (cStatus === "approved" && row.payoutStatus == null));
                   // Figma 101:9187/9210: alternating rows get a 1% white fill.
@@ -464,6 +533,20 @@ export default function AdminCommissionsPage() {
                       {payoutDate}
                     </td>
                     <td className="py-[var(--space-3)] text-center whitespace-nowrap">
+                      {canClawback && row.payoutId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPayingSaleId(row.id);
+                            clawbackMutation.mutate(row.payoutId!);
+                          }}
+                          disabled={payingSaleId !== null}
+                          title="The underlying sale was refunded after the payout was marked paid. Reversing brings TOTAL PAID back into alignment."
+                          className="rounded-[8px] border border-[rgba(245,158,11,0.40)] bg-[rgba(245,158,11,0.10)] px-[16px] py-[8px] font-[var(--font-sans)] text-[12px] leading-[18px] text-[#f59e0b] transition-colors hover:bg-[rgba(245,158,11,0.18)] disabled:opacity-50"
+                        >
+                          {payingSaleId === row.id ? "Reversing..." : "Reverse Payout"}
+                        </button>
+                      )}
                       {canMarkPaid && (
                         <button
                           type="button"

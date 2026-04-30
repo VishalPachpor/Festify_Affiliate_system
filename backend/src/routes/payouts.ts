@@ -486,4 +486,101 @@ router.patch("/api/payouts/:id/status", async (req: Request, res: Response) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/payouts/:id/clawback
+//
+// Reverses a paid payout when the underlying sale(s) have been refunded.
+// Use case: admin marked a commission paid, then the customer refunded
+// the ticket. TOTAL EARNED drops to $0 via the reversal ledger entry, but
+// TOTAL PAID stays at the historical value, so OUTSTANDING goes negative.
+// Clawback brings the cache back into alignment by removing the orphaned
+// Payout (the affiliate has effectively been overpaid; what happens with
+// the money owed is a policy decision left outside the system).
+//
+// Safety:
+//   - Only operates on payouts with status="paid". Other states already
+//     have natural reversal flows (cancel a pending payout, retry a
+//     failed one).
+//   - Refuses to act if ANY backing sale is NOT refunded. That would
+//     mean we'd be reversing live earnings — bug, not intentional.
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post("/api/payouts/:id/clawback", async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantId(req);
+    const id = String(req.params.id);
+
+    const payout = await prisma.payout.findFirst({
+      where: { id, tenantId },
+      select: { id: true, status: true, affiliateId: true, amountMinor: true },
+    });
+
+    if (!payout) {
+      res.status(404).json({ error: "Payout not found" });
+      return;
+    }
+
+    if (payout.status !== "paid") {
+      res.status(400).json({
+        error: `Clawback only applies to paid payouts (current status: ${payout.status})`,
+      });
+      return;
+    }
+
+    const entries = await prisma.commissionLedgerEntry.findMany({
+      where: { payoutId: id, tenantId },
+      select: { id: true, saleId: true },
+    });
+
+    if (entries.length === 0) {
+      // Orphan payout with no backing entries — safe to delete outright.
+      // Same outcome as the full clawback path; just no entries to unlink.
+      await prisma.$transaction(async (tx) => {
+        await tx.payoutIdempotencyKey.deleteMany({ where: { payoutId: id } });
+        await tx.payout.delete({ where: { id } });
+      });
+      await invalidateCache(tenantId, "payouts:summary", "dashboard:summary");
+      res.status(200).json({ id, clawedBack: true, ledgerEntriesUnlinked: 0 });
+      return;
+    }
+
+    const saleIds = Array.from(new Set(entries.map((e) => e.saleId)));
+    const sales = await prisma.sale.findMany({
+      where: { id: { in: saleIds }, tenantId },
+      select: { id: true, status: true, externalOrderId: true },
+    });
+    const liveSales = sales.filter((s) => s.status !== "refunded");
+    if (liveSales.length > 0) {
+      res.status(409).json({
+        error: "Cannot clawback — the payout has backing sales that have not been refunded.",
+        liveSales: liveSales.map((s) => ({ id: s.id, externalOrderId: s.externalOrderId, status: s.status })),
+      });
+      return;
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // Unlink (don't delete) the ledger entries — keeps the audit trail.
+      // The earned + reversal pair already nets to $0 commission earned.
+      await tx.commissionLedgerEntry.updateMany({
+        where: { id: { in: entries.map((e) => e.id) } },
+        data: { payoutId: null },
+      });
+      await tx.payoutIdempotencyKey.deleteMany({ where: { payoutId: id } });
+      await tx.payout.delete({ where: { id } });
+    });
+
+    await invalidateCache(tenantId, "payouts:summary", "dashboard:summary");
+
+    res.status(200).json({
+      id,
+      clawedBack: true,
+      ledgerEntriesUnlinked: entries.length,
+      amountMinor: payout.amountMinor,
+    });
+  } catch (err) {
+    console.error("[payouts] Clawback failed:", err);
+    res.status(500).json({ error: "Failed to clawback payout" });
+  }
+});
+
 export { router as payoutsRouter };

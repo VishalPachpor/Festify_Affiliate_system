@@ -27,6 +27,7 @@ const statusStyles: Record<Sale["status"], string> = {
   pending: "text-[var(--color-warning)]",
   rejected: "text-[var(--color-error)]",
   paid: "text-[var(--color-info)]",
+  refunded: "text-[var(--color-error)]",
 };
 
 function TableSkeleton() {
