@@ -59,6 +59,13 @@ export default function MouSigningPage() {
 
   useEffect(() => {
     if (applicationStatus?.status === "approved" || mouQuery.data?.applicationStatus === "approved") {
+      // Stop the 3s mou-status poll BEFORE navigating. Without this the
+      // refetchInterval keeps firing on every render after redirect intent
+      // is set, the effect re-runs against the same approved status, and
+      // router.replace gets called repeatedly — visible to the user as a
+      // continuous flicker until they hard-refresh.
+      setAwaitingActivation(false);
+      setPollStartedAt(null);
       queryClient.invalidateQueries({ queryKey: ["application-status"] });
       router.replace("/dashboard");
     }
